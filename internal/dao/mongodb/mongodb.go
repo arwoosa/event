@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"grpc_gateway_framework/internal/conf"
+	"event/internal/conf"
 )
 
 // NewMongoDB creates a new MongoDB client and a cleanup function.

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
-	"grpc_gateway_framework/internal/conf"
+	"event/internal/conf"
 	"log"
 )
 

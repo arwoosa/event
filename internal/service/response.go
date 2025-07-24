@@ -5,7 +5,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
-	"grpc_gateway_framework/api"
+	"event/api"
 )
 
 func ResponseError(c codes.Code, err error) (*api.Response, error) {

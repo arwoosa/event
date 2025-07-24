@@ -1,7 +1,7 @@
 package service
 
 import (
-	"grpc_gateway_framework/internal/constants"
+	"event/internal/constants"
 )
 
 type ResCode int64

@@ -4,7 +4,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"grpc_gateway_framework/internal/conf"
+	"event/internal/conf"
 	"os"
 )
 
