@@ -63,7 +63,7 @@
 
 ### 4. API 端點設計
 
-**Console 管理 API：**
+**Console 管理 API：(路徑需要多一個console)**
 - 建立 Event（包含多個 Session）
 - 取得 Event 列表
   - 支援分頁（page-based pagination）
@@ -78,12 +78,12 @@
 - 必填欄位：title, brand_id, sessions（至少一個）, cover_image_url, detail.content, location, visibility
 
 **前台用戶 API：**
-- GET /public/events：公開搜尋（只返回 published + public 的 Event）
+- GET /events：公開搜尋（只返回 published + public 的 Event）
   - 支援 brand_id 參數篩選
   - 支援 title 全文搜尋
   - 支援地理位置範圍搜尋
   - 支援 Session 時間範圍篩選
-- GET /public/events/{id}：分享連結查詢（只能查看 published 狀態，不限 visibility）
+- GET /events/{id}：分享連結查詢（只能查看 published 狀態，不限 visibility）
 
 **Session 管理設計：**
 - 透過 Event API 管理 Session（PATCH /events/{id}）
@@ -156,7 +156,7 @@
 **前台用戶查詢限制：**
 - Event 必須同時滿足 `status: "published"` 和 `visibility: "public"` 才能被搜尋到
 - `private` Event 只能透過分享連結（直接 ID 查詢）存取
-- **分享連結實作：**GET /public/events/{event_id}（**備註：需與 PO 討論具體實作方式**）
+- **分享連結實作：**GET /events/{event_id}（**備註：需與 PO 討論具體實作方式**）
 
 **搜尋功能：**
 - 按 Event title 全文搜尋（使用 MongoDB 文字索引）
@@ -203,11 +203,16 @@
 - Brand 成員的細分權限控制
 - 分享連結的具體實作方式
 
-**待引入公司範本後確認：**
-- API 錯誤處理標準
-- API 版本控制策略
-- Rate Limiting 規範
-- 監控和健康檢查需求
+**公司範本設計規範：**
+- **回應格式**：統一使用 `api.Response` 結構（status, code, message, data）
+- **錯誤處理**：使用 gRPC status codes，標準錯誤訊息
+- **Header 管理**：支援 X-User-Id, X-User-Email, X-User-Name, X-User-Avatar
+- **分頁機制**：Cursor-based pagination 使用 PageToken 編碼（24小時過期）
+- **協議支援**：gRPC + HTTP Gateway 雙協議
+- **成功回應碼**：使用 `1000` 作為成功狀態碼
+
+**需要新增到 Header 管理的欄位：**
+- X-Brand-Id：Brand 識別（需新增到 AllowedHeaders）
 
 **技術實作注意事項：**
 - MongoDB 索引策略：地理空間索引、複合索引支援時間範圍查詢
