@@ -1,0 +1,36 @@
+# Build artifacts
+/bin/
+/vendor/
+
+# Log files
+/logs/
+*.log
+
+# IDE settings
+/.idea/
+*.iml
+
+# Go specific
+*.test
+*.out
+coverage.txt
+
+# Environment files
+.env
+.env.local
+
+# Config files (if containing secrets)
+config_local.yaml
+
+# macOS
+.DS_Store
+
+# Temporary files
+tmp/
+temp/
+
+# Go module cache (if needed)
+go.sum.bak
+
+# Backup directories
+*_backup/

@@ -1,0 +1,22 @@
+name: "partivo_community"
+mode: "dev"
+port: 8081
+version: 1.0.0
+time_zone: "Asia/Taipei"
+log:
+  level: "debug"
+  filename: "logs/app.log"
+  max_size: 200 #MB
+  max_age: 30 #預設儲存時間
+  max_backups: 7
+mongodb:
+  host: "127.0.0.1"
+  port: 27017
+  db: "partivo_community"
+
+
+
+
+
+
+
