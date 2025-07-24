@@ -1,4 +1,4 @@
-name: "partivo_community"
+name: "partivo_event"
 mode: "dev"
 port: 8081
 version: 1.0.0
@@ -12,7 +12,7 @@ log:
 mongodb:
   host: "127.0.0.1"
   port: 27017
-  db: "partivo_community"
+  db: "partivo_event"
 
 
 

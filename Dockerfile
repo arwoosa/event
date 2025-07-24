@@ -15,7 +15,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o partivo_community ./cmd/server/
+RUN go build -o partivo_event ./cmd/server/
 
 ###################
 # multi-stage build
@@ -29,7 +29,7 @@ RUN apt install ca-certificates -y
 WORKDIR /app
 COPY ./conf /app/conf
 
-COPY --from=builder /build/partivo_community /app/
+COPY --from=builder /build/partivo_event /app/
 
 #RUN set -eux \
 #
@@ -37,4 +37,4 @@ COPY --from=builder /build/partivo_community /app/
 #    && apt-get install -y --no-install-recommends netcat \
 EXPOSE 8081
 
-ENTRYPOINT ["/app/partivo_community", "-c", "conf/config_docker.yaml"]
+ENTRYPOINT ["/app/partivo_event", "-c", "conf/config_docker.yaml"]

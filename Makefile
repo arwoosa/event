@@ -34,7 +34,7 @@ grpc:
 	api/*/*.proto api/*.proto
 
 docker_run:
-	 docker run -p 8081:8081 -d -v ./logs:/app/logs/ partivo_community:1.0
+	 docker run -p 8081:8081 -d -v ./logs:/app/logs/ partivo_event:1.0
 
 mod:
 	go mod edit -module ${BINARY}; \
