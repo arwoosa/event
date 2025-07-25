@@ -1,8 +1,6 @@
 package mongodb
 
 const (
-	CollectionStat = stats
-
-	FieldObjectId = _id
+	CollectionStats = "stats"
+	FieldObjectID   = "_id"
 )
-

@@ -34,3 +34,8 @@ go.sum.bak
 
 # Backup directories
 *_backup/
+
+# Binarys
+server
+
+*.local.*

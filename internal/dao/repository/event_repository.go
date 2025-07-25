@@ -8,17 +8,17 @@ import (
 
 // EventFilter represents filtering options for event queries
 type EventFilter struct {
-	BrandID                *string
-	Status                 *string
-	Visibility             *string
-	SessionStartTimeFrom   *time.Time
-	SessionStartTimeTo     *time.Time
-	TitleSearch           *string
-	SortBy                *string // created_at, updated_at, session_start_time
-	SortOrder             *string // asc, desc
-	Limit                 int
-	Offset                int
-	PageToken             *string
+	BrandID              *string
+	Status               *string
+	Visibility           *string
+	SessionStartTimeFrom *time.Time
+	SessionStartTimeTo   *time.Time
+	TitleSearch          *string
+	SortBy               *string // created_at, updated_at, session_start_time
+	SortOrder            *string // asc, desc
+	Limit                int
+	Offset               int
+	PageToken            *string
 }
 
 // PublicEventFilter represents filtering options for public event queries
@@ -61,19 +61,19 @@ type EventRepository interface {
 	FindByID(ctx context.Context, id string) (*models.Event, error)
 	Update(ctx context.Context, id string, event *models.Event) (*models.Event, error)
 	Delete(ctx context.Context, id string) error
-	
+
 	// Console API queries
 	FindByBrandID(ctx context.Context, brandID string, filter *EventFilter) (*EventListResult, error)
-	
+
 	// Public API queries
 	FindPublic(ctx context.Context, filter *PublicEventFilter) (*EventListResult, error)
 	FindPublicByID(ctx context.Context, id string) (*models.Event, error)
-	
+
 	// Specialized queries
 	FindNearby(ctx context.Context, lat, lng float64, radius int, filter *PublicEventFilter) (*EventListResult, error)
 	SearchByTitle(ctx context.Context, query string, filter *EventFilter) (*EventListResult, error)
 	CountByBrandAndStatus(ctx context.Context, brandID, status string) (int64, error)
-	
+
 	// Existence checks
 	ExistsByID(ctx context.Context, id string) (bool, error)
 	ExistsByBrandAndID(ctx context.Context, brandID, id string) (bool, error)

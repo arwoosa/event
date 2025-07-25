@@ -9,13 +9,14 @@ import (
 
 // AppConfig holds the application configuration.
 type AppConfig struct {
-	Mode           string `mapstructure:"mode"`
-	Port           int    `mapstructure:"port"`
-	Name           string `mapstructure:"name"`
-	Version        string `mapstructure:"version"`
-	TimeZone       string `mapstructure:"time_zone"`
-	*LogConfig     `mapstructure:"log"`
-	*MongodbConfig `mapstructure:"mongodb"`
+	Mode            string `mapstructure:"mode"`
+	Port            int    `mapstructure:"port"`
+	Name            string `mapstructure:"name"`
+	Version         string `mapstructure:"version"`
+	TimeZone        string `mapstructure:"time_zone"`
+	*LogConfig      `mapstructure:"log"`
+	*MongodbConfig  `mapstructure:"mongodb"`
+	*ExternalConfig `mapstructure:"external"`
 }
 
 // MongodbConfig holds the MongoDB configuration.
@@ -34,6 +35,18 @@ type LogConfig struct {
 	MaxSize    int    `mapstructure:"max_size"`
 	MaxAge     int    `mapstructure:"max_age"`
 	MaxBackups int    `mapstructure:"max_backups"`
+}
+
+// ExternalConfig holds external service configurations.
+type ExternalConfig struct {
+	OrderService ServiceConfig `mapstructure:"order_service"`
+	MediaService ServiceConfig `mapstructure:"media_service"`
+}
+
+// ServiceConfig holds service connection configuration.
+type ServiceConfig struct {
+	Endpoint string        `mapstructure:"endpoint"`
+	Timeout  time.Duration `mapstructure:"timeout"`
 }
 
 // NewConfig loads the application configuration from a file.
@@ -63,5 +76,3 @@ func NewConfig() (*AppConfig, error) {
 
 	return &conf, nil
 }
-
-

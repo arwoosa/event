@@ -3,40 +3,40 @@ package models
 import (
 	"errors"
 	"fmt"
-	"time"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
 )
 
 // Event represents the main event entity
 type Event struct {
-	ID             primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Title          string             `json:"title" bson:"title"`
-	BrandID        primitive.ObjectID `json:"brand_id" bson:"brand_id"`
-	Summary        string             `json:"summary" bson:"summary"`
-	Status         string             `json:"status" bson:"status"` // draft, published, archived
-	Visibility     string             `json:"visibility" bson:"visibility"` // public, private
-	CoverImageURL  string             `json:"cover_image_url" bson:"cover_image_url"`
-	Location       Location           `json:"location" bson:"location"`
-	Sessions       []Session          `json:"sessions" bson:"sessions"`
-	Detail         Detail             `json:"detail" bson:"detail"`
-	FAQ            []FAQ              `json:"faq" bson:"faq"`
-	CreatedAt      time.Time          `json:"created_at" bson:"created_at"`
-	CreatedBy      primitive.ObjectID `json:"created_by" bson:"created_by"`
-	UpdatedAt      time.Time          `json:"updated_at" bson:"updated_at"`
-	UpdatedBy      primitive.ObjectID `json:"updated_by" bson:"updated_by"`
+	ID            primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Title         string             `json:"title" bson:"title"`
+	BrandID       primitive.ObjectID `json:"brand_id" bson:"brand_id"`
+	Summary       string             `json:"summary" bson:"summary"`
+	Status        string             `json:"status" bson:"status"`         // draft, published, archived
+	Visibility    string             `json:"visibility" bson:"visibility"` // public, private
+	CoverImageURL string             `json:"cover_image_url" bson:"cover_image_url"`
+	Location      Location           `json:"location" bson:"location"`
+	Sessions      []Session          `json:"sessions" bson:"sessions"`
+	Detail        Detail             `json:"detail" bson:"detail"`
+	FAQ           []FAQ              `json:"faq" bson:"faq"`
+	CreatedAt     time.Time          `json:"created_at" bson:"created_at"`
+	CreatedBy     primitive.ObjectID `json:"created_by" bson:"created_by"`
+	UpdatedAt     time.Time          `json:"updated_at" bson:"updated_at"`
+	UpdatedBy     primitive.ObjectID `json:"updated_by" bson:"updated_by"`
 }
 
 // Location represents the event location with geospatial data
 type Location struct {
-	Name        string      `json:"name" bson:"name"`
-	Address     string      `json:"address" bson:"address"`
-	PlaceID     string      `json:"place_id" bson:"place_id"`
+	Name        string       `json:"name" bson:"name"`
+	Address     string       `json:"address" bson:"address"`
+	PlaceID     string       `json:"place_id" bson:"place_id"`
 	Coordinates GeoJSONPoint `json:"coordinates" bson:"coordinates"`
 }
 
 // GeoJSONPoint represents a GeoJSON Point for MongoDB geospatial indexing
 type GeoJSONPoint struct {
-	Type        string    `json:"type" bson:"type"` // Always "Point"
+	Type        string     `json:"type" bson:"type"`               // Always "Point"
 	Coordinates [2]float64 `json:"coordinates" bson:"coordinates"` // [longitude, latitude]
 }
 

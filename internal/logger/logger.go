@@ -1,10 +1,10 @@
 package logger
 
 import (
+	"event/internal/conf"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"event/internal/conf"
 	"os"
 )
 

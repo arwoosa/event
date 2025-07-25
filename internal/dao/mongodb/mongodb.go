@@ -2,10 +2,10 @@ package mongodb
 
 import (
 	"context"
+	"event/internal/conf"
 	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"event/internal/conf"
 )
 
 // NewMongoDB creates a new MongoDB client and a cleanup function.

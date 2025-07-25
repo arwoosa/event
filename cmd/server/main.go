@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"event/internal/conf"
-	vulpeslog "github.com/arwoosa/vulpes/log"
 	"github.com/arwoosa/vulpes/ezgrpc"
+	vulpeslog "github.com/arwoosa/vulpes/log"
 )
 
 func main() {

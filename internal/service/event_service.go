@@ -147,7 +147,7 @@ func (s *EventService) GetEvent(ctx context.Context, brandID, eventID string) (*
 func (s *EventService) GetEventList(ctx context.Context, brandID string, filter *repository.EventFilter) (*repository.EventListResult, error) {
 	// Ensure brand ID is set in filter
 	filter.BrandID = &brandID
-	
+
 	return s.eventRepo.FindByBrandID(ctx, brandID, filter)
 }
 
@@ -445,7 +445,7 @@ func (s *EventService) validateStatusTransition(ctx context.Context, event *mode
 	}
 
 	if !event.CanTransitionTo(newStatus) {
-		return models.NewBusinessError("INVALID_TRANSITION", 
+		return models.NewBusinessError("INVALID_TRANSITION",
 			fmt.Sprintf("cannot transition from %s to %s", event.Status, newStatus), models.ErrInvalidTransition)
 	}
 

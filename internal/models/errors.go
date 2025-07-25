@@ -7,14 +7,14 @@ import (
 
 // Common validation errors
 var (
-	ErrEventNotFound    = errors.New("event not found")
-	ErrInvalidStatus    = errors.New("invalid status")
-	ErrInvalidVisibility = errors.New("invalid visibility") 
+	ErrEventNotFound     = errors.New("event not found")
+	ErrInvalidStatus     = errors.New("invalid status")
+	ErrInvalidVisibility = errors.New("invalid visibility")
 	ErrInvalidTransition = errors.New("invalid status transition")
-	ErrNoSessions       = errors.New("event must have at least one session")
-	ErrHasOrders        = errors.New("event has existing orders")
-	ErrUnauthorized     = errors.New("unauthorized access")
-	ErrInvalidBrandID   = errors.New("invalid brand_id")
+	ErrNoSessions        = errors.New("event must have at least one session")
+	ErrHasOrders         = errors.New("event has existing orders")
+	ErrUnauthorized      = errors.New("unauthorized access")
+	ErrInvalidBrandID    = errors.New("invalid brand_id")
 )
 
 // ValidationError represents a field validation error

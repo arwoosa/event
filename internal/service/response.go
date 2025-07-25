@@ -5,14 +5,21 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
-	"event/api"
 )
 
-func ResponseError(c codes.Code, err error) (*api.Response, error) {
+// Temporary Response type until proto generation works
+type Response struct {
+	Status  string        `json:"status"`
+	Code    int32         `json:"code"`
+	Message *string       `json:"message,omitempty"`
+	Data    *anypb.Any    `json:"data,omitempty"`
+}
+
+func ResponseError(c codes.Code, err error) (*Response, error) {
 	return nil, status.Error(c, err.Error())
 }
 
-func ResponseSuccess(d any) (*api.Response, error) {
+func ResponseSuccess(d any) (*Response, error) {
 	var anyData *anypb.Any
 	if d != nil {
 		msg, ok := d.(proto.Message)
@@ -27,7 +34,7 @@ func ResponseSuccess(d any) (*api.Response, error) {
 		}
 	}
 
-	return &api.Response{
+	return &Response{
 		Status: "success",
 		Code:   int32(CodeSuccess),
 		//Message: CodeSuccess.Msg(),

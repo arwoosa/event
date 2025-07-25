@@ -2,10 +2,10 @@ package mongodb
 
 import (
 	"context"
+	"event/internal/conf"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"event/internal/conf"
 	"log"
 )
 
