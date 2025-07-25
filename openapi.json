@@ -1,0 +1,1211 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Event Microservice API",
+    "description": "Event management microservice with Console and Public APIs for the Partivo platform",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Partivo Platform",
+      "url": "https://partivo.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8081",
+      "description": "Local development server"
+    },
+    {
+      "url": "https://api.partivo.com",
+      "description": "Production server"
+    }
+  ],
+  "security": [
+    {
+      "BrandAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BrandAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Brand-Id",
+        "description": "Brand authentication via API Gateway headers"
+      }
+    },
+    "schemas": {
+      "Response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["success", "error"]
+          },
+          "code": {
+            "type": "integer",
+            "example": 1000
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": ["status", "code"]
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 60,
+            "example": "Tech Conference 2024"
+          },
+          "brand_id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439012"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 160,
+            "example": "Annual technology conference featuring latest innovations"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "published", "archived"],
+            "example": "published"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": ["public", "private"],
+            "example": "public"
+          },
+          "cover_image_url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://media.partivo.com/events/cover.jpg"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Session"
+            },
+            "minItems": 1
+          },
+          "detail": {
+            "$ref": "#/components/schemas/Detail"
+          },
+          "faq": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FAQ"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T10:00:00Z"
+          },
+          "created_by": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439013"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T11:00:00Z"
+          },
+          "updated_by": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439013"
+          }
+        },
+        "required": ["id", "title", "brand_id", "status", "visibility", "cover_image_url", "location", "sessions", "detail"]
+      },
+      "Location": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Convention Center"
+          },
+          "address": {
+            "type": "string",
+            "example": "123 Main St, City, State 12345"
+          },
+          "place_id": {
+            "type": "string",
+            "example": "ChIJN1t_tDeuEmsRUsoyG83frY4"
+          },
+          "coordinates": {
+            "$ref": "#/components/schemas/GeoJSONPoint"
+          }
+        },
+        "required": ["name", "address", "place_id", "coordinates"]
+      },
+      "GeoJSONPoint": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["Point"],
+            "example": "Point"
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "example": [121.5654, 25.0330]
+          }
+        },
+        "required": ["type", "coordinates"]
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439014"
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T10:00:00Z"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T12:00:00Z"
+          }
+        },
+        "required": ["start_time", "end_time"]
+      },
+      "Detail": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 65536,
+            "example": "<h1>Event Details</h1><p>Detailed description...</p>"
+          },
+          "content_type": {
+            "type": "string",
+            "enum": ["html", "json", "markdown"],
+            "example": "html"
+          }
+        },
+        "required": ["content"]
+      },
+      "FAQ": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "What should I bring?"
+          },
+          "answer": {
+            "type": "string",
+            "maxLength": 300,
+            "example": "Please bring a valid ID and your confirmation email."
+          }
+        },
+        "required": ["question", "answer"]
+      },
+      "CreateEventRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 60,
+            "example": "Tech Conference 2024"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 160,
+            "example": "Annual technology conference"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "published"],
+            "default": "draft"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": ["public", "private"],
+            "default": "private"
+          },
+          "cover_image_url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://media.partivo.com/events/cover.jpg"
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationRequest"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionRequest"
+            },
+            "minItems": 1
+          },
+          "detail": {
+            "$ref": "#/components/schemas/DetailRequest"
+          },
+          "faq": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FAQ"
+            }
+          }
+        },
+        "required": ["title", "cover_image_url", "location", "sessions", "detail"]
+      },
+      "LocationRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Convention Center"
+          },
+          "address": {
+            "type": "string",
+            "example": "123 Main St, City, State 12345"
+          },
+          "place_id": {
+            "type": "string",
+            "example": "ChIJN1t_tDeuEmsRUsoyG83frY4"
+          },
+          "coordinates": {
+            "$ref": "#/components/schemas/GeoJSONPoint"
+          }
+        },
+        "required": ["name", "address", "place_id"]
+      },
+      "SessionRequest": {
+        "type": "object",
+        "properties": {
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T10:00:00Z"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T12:00:00Z"
+          }
+        },
+        "required": ["start_time", "end_time"]
+      },
+      "DetailRequest": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 65536,
+            "example": "<h1>Event Details</h1><p>Detailed description...</p>"
+          },
+          "content_type": {
+            "type": "string",
+            "enum": ["html", "json", "markdown"],
+            "default": "html"
+          }
+        },
+        "required": ["content"]
+      },
+      "UpdateEventStatusRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["draft", "published", "archived"]
+          }
+        },
+        "required": ["status"]
+      },
+      "EventListResponse": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "next_page_token": {
+            "type": "string",
+            "nullable": true
+          },
+          "prev_page_token": {
+            "type": "string",
+            "nullable": true
+          },
+          "has_next": {
+            "type": "boolean"
+          },
+          "has_prev": {
+            "type": "boolean"
+          },
+          "total_count": {
+            "type": "integer",
+            "nullable": true
+          },
+          "current_page": {
+            "type": "integer",
+            "nullable": true
+          },
+          "total_pages": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["error"]
+          },
+          "code": {
+            "type": "integer",
+            "example": 3
+          },
+          "message": {
+            "type": "string",
+            "example": "title is required"
+          }
+        },
+        "required": ["status", "code", "message"]
+      }
+    }
+  },
+  "paths": {
+    "/console/events": {
+      "post": {
+        "tags": ["Console API"],
+        "summary": "Create a new event",
+        "description": "Creates a new event for the authenticated brand",
+        "security": [
+          {
+            "BrandAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID from API Gateway"
+          },
+          {
+            "name": "X-User-Email",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-User-Name",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Brand-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Brand ID for resource isolation"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Response"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Event"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Console API"],
+        "summary": "Get list of events",
+        "description": "Retrieves a paginated list of events for the authenticated brand",
+        "security": [
+          {
+            "BrandAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Brand-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page_token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cursor for pagination"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Page number for traditional pagination"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["draft", "published", "archived"]
+            }
+          },
+          {
+            "name": "visibility",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["public", "private"]
+            }
+          },
+          {
+            "name": "session_start_time_from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "session_start_time_to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "title_search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Full-text search on event titles"
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["created_at", "updated_at", "session_start_time"],
+              "default": "created_at"
+            }
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "default": "desc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Response"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/EventListResponse"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/console/events/{id}": {
+      "get": {
+        "tags": ["Console API"],
+        "summary": "Get event by ID",
+        "description": "Retrieves a single event by ID for the authenticated brand",
+        "security": [
+          {
+            "BrandAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Event ID"
+          },
+          {
+            "name": "X-Brand-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Response"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Event"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Console API"],
+        "summary": "Update event (full replacement)",
+        "description": "Fully updates an event with new data",
+        "security": [
+          {
+            "BrandAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Brand-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Response"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Event"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event not found"
+          },
+          "409": {
+            "description": "Published events cannot be modified"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Console API"],
+        "summary": "Update event (partial)",
+        "description": "Partially updates an event with only provided fields",
+        "security": [
+          {
+            "BrandAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Brand-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "summary": {
+                    "type": "string",
+                    "maxLength": 160
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": ["public", "private"]
+                  },
+                  "cover_image_url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "location": {
+                    "$ref": "#/components/schemas/LocationRequest"
+                  },
+                  "sessions": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/SessionRequest"
+                    }
+                  },
+                  "detail": {
+                    "$ref": "#/components/schemas/DetailRequest"
+                  },
+                  "faq": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/FAQ"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Response"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Event"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Console API"],
+        "summary": "Delete event",
+        "description": "Deletes an event (only allowed for draft and archived events without orders)",
+        "security": [
+          {
+            "BrandAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Brand-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Cannot delete published events or events with orders"
+          }
+        }
+      }
+    },
+    "/console/events/{id}/status": {
+      "put": {
+        "tags": ["Console API"],
+        "summary": "Update event status",
+        "description": "Changes the status of an event following business rules",
+        "security": [
+          {
+            "BrandAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Brand-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEventStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Response"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Event"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status transition"
+          },
+          "409": {
+            "description": "Status change not allowed due to business rules"
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "tags": ["Public API"],
+        "summary": "Search public events",
+        "description": "Searches for published and public events. No authentication required.",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter events by specific brand"
+          },
+          {
+            "name": "page_token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "title_search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Full-text search on event titles"
+          },
+          {
+            "name": "session_start_time_from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "session_start_time_to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "location_lat",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "description": "Latitude for geospatial search"
+          },
+          {
+            "name": "location_lng",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            "description": "Longitude for geospatial search"
+          },
+          {
+            "name": "location_radius",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50000,
+              "default": 1000
+            },
+            "description": "Search radius in meters"
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["session_start_time", "created_at"],
+              "default": "session_start_time"
+            }
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "default": "asc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of public events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Response"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/EventListResponse"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{id}": {
+      "get": {
+        "tags": ["Public API"],
+        "summary": "Get public event (sharing link)",
+        "description": "Retrieves a published event by ID for sharing. No authentication required.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Event ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Response"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Event"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event not found or not published"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Console API",
+      "description": "Brand management APIs requiring authentication"
+    },
+    {
+      "name": "Public API",
+      "description": "Public APIs for front-end users"
+    }
+  ]
+}
