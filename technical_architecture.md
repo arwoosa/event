@@ -404,9 +404,14 @@ service PublicEventService {
 
 2. **Header 處理**：
    - 現有 Header 映射：x-user-id, x-user-email, x-user-name 等
-   - 需要新增 x-brand-id 到 `headerTransMap`
+   - **需要新增 x-brand-id 到 `headerTransMap`** 以支援權限檢查
 
-3. **用戶資訊提取**：
+3. **權限驗證機制**：
+   - API Gateway 負責統一的身份驗證和 Brand 成員驗證
+   - 微服務接收經過驗證的 Headers，無需再次驗證權限
+   - 所有 Console API 的請求都會包含驗證過的 user_id 和 brand_id
+
+4. **用戶資訊提取**：
 ```go
 // 使用現有的 GetUser 函數
 user, err := ezgrpc.GetUser(ctx)
@@ -427,7 +432,7 @@ func GetBrandID(ctx context.Context) (string, error) {
 }
 ```
 
-4. **服務註冊**：
+5. **服務註冊**：
 ```go
 // 在 service 包的 init() 函數中註冊
 func init() {

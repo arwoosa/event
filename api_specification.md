@@ -4,6 +4,21 @@
 
 Event 微服務提供活動管理功能，支援 Console 管理端和前台用戶端的不同需求。採用 gRPC + HTTP Gateway 雙協議設計。
 
+## 權限管理
+
+### API Gateway 權限檢查責任
+API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收經過驗證的請求。
+
+### Console API 權限要求
+所有 Console API 都需要以下權限檢查：
+- **用戶身份驗證**: 必須為已登入用戶
+- **Brand 成員驗證**: 用戶必須為請求中 Brand 的成員
+- **資源隔離**: 只能操作該 Brand 下的 Event 資源
+
+### Public API 權限要求
+- **公開搜尋** (`GET /events`): 無需身份驗證，僅返回 `published` + `public` 的 Event
+- **分享連結** (`GET /events/{id}`): 無需身份驗證，僅返回 `published` 狀態的 Event
+
 ## 通用規範
 
 ### 回應格式
@@ -29,17 +44,14 @@ Event 微服務提供活動管理功能，支援 Console 管理端和前台用�
 ### Header 管理
 
 **Console API 必需 Headers：**
-- `X-User-Id`: 用戶 ID
+- `X-User-Id`: 用戶 ID（API Gateway 驗證後傳遞）
 - `X-User-Email`: 用戶 Email
 - `X-User-Name`: 用戶名稱
 - `X-User-Avatar`: 用戶頭像 URL
-- `X-Brand-Id`: Brand ID（需新增到 AllowedHeaders）
+- `X-Brand-Id`: Brand ID（需新增到 AllowedHeaders，用於權限檢查）
 
 **Public API Headers：**
-- `X-User-Id`: 用戶 ID
-- `X-User-Email`: 用戶 Email
-- `X-User-Name`: 用戶名稱
-- `X-User-Avatar`: 用戶頭像 URL
+- 無必需 Headers，支援匿名存取
 
 
 ### 分頁機制
@@ -336,7 +348,7 @@ Event 微服務提供活動管理功能，支援 Console 管理端和前台用�
 
 - `InvalidArgument` (3): 參數驗證失敗
 - `NotFound` (5): Event 不存在
-- `PermissionDenied` (7): 權限不足
+- `PermissionDenied` (7): 權限不足（用戶非 Brand 成員或嘗試存取其他 Brand 的資源）
 - `FailedPrecondition` (9): 業務規則驗證失敗
 - `Internal` (13): 內部錯誤
 
