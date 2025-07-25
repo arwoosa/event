@@ -6,6 +6,7 @@ var AllowedHeaders = map[string]struct{}{
 	"X-User-Email":  {},
 	"X-User-Name":   {},
 	"X-User-Avatar": {},
+	"X-Brand-Id":    {},
 }
 
 func NewAllowedHeaders() map[string]struct{} {
