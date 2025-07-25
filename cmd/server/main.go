@@ -8,6 +8,9 @@ import (
 	"event/internal/conf"
 	"github.com/arwoosa/vulpes/ezgrpc"
 	vulpeslog "github.com/arwoosa/vulpes/log"
+	
+	// Import service package
+	"event/internal/service"
 )
 
 func main() {
@@ -27,8 +30,8 @@ func main() {
 
 	vulpeslog.Info("Starting Event microservice")
 
-	// Register services (will be done in service init() functions)
-	// Services will use ezgrpc.InjectGrpcService() and ezgrpc.RegisterHandlerFromEndpoint()
+	// Register services directly
+	service.RegisterServices(appConfig)
 
 	// Run the complete gRPC + Gateway server using vulpes
 	if err := ezgrpc.RunGrpcGateway(context.Background(), appConfig.Port); err != nil {

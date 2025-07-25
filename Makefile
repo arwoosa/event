@@ -26,12 +26,11 @@ help:
 	@echo "make gotool - Go tool 'fmt' and 'vet'"
 
 grpc:
-	protoc -I api \
-	--go_out=api --go_opt=paths=source_relative \
-	--go-grpc_out=api --go-grpc_opt=paths=source_relative \
-	--grpc-gateway_out=api --grpc-gateway_opt=paths=source_relative \
-	--validate_out=paths=source_relative,lang=go:api \
-	api/*/*.proto api/*.proto
+	protoc -I . -I third_party/googleapis \
+	--go_out=. --go_opt=paths=source_relative \
+	--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+	--grpc-gateway_out=. --grpc-gateway_opt=paths=source_relative \
+	api/event/*.proto api/*.proto
 
 docker_run:
 	 docker run -p 8081:8081 -d -v ./logs:/app/logs/ partivo_event:1.0
