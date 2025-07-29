@@ -136,13 +136,13 @@ message FAQ {
 message CreateEventRequest {
   string title = 1;
   string summary = 2;
-  string status = 3;
-  string visibility = 4;
-  string cover_image_url = 5;
-  Location location = 6;
-  repeated Session sessions = 7;
-  Detail detail = 8;
-  repeated FAQ faq = 9;
+  // status field removed - events are always created as draft
+  string visibility = 3;
+  string cover_image_url = 4;
+  Location location = 5;
+  repeated Session sessions = 6;
+  Detail detail = 7;
+  repeated FAQ faq = 8;
 }
 
 message GetEventListRequest {

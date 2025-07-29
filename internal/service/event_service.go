@@ -35,7 +35,7 @@ func NewEventService(
 type CreateEventRequest struct {
 	Title         string
 	Summary       string
-	Status        string
+	// Status field removed - events are always created as draft
 	Visibility    string
 	CoverImageURL string
 	Location      *LocationRequest
@@ -115,17 +115,12 @@ type OrderServiceClient interface {
 
 // CreateEvent creates a new event
 func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest) (*models.Event, error) {
-	// Validate request
-	if err := s.validateCreateRequest(req); err != nil {
+	// Validate draft requirements (minimal validation)
+	if err := s.validateDraftRequest(req); err != nil {
 		return nil, err
 	}
 
-	// Validate sessions separately
-	if err := s.sessionService.ValidateSessionsForEvent(ctx, "", req.BrandID, req.Sessions); err != nil {
-		return nil, err
-	}
-
-	// Convert request to model (without sessions)
+	// Convert request to model - will force draft status
 	event, err := s.convertCreateRequestToModel(req)
 	if err != nil {
 		return nil, err
@@ -140,12 +135,14 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 		return nil, err
 	}
 
-	// Create sessions for the event
-	_, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.BrandID, req.Sessions)
-	if err != nil {
-		// If session creation fails, we should delete the event to maintain consistency
-		s.eventRepo.Delete(ctx, createdEvent.ID.Hex())
-		return nil, fmt.Errorf("failed to create sessions: %w", err)
+	// Create sessions for the event if provided
+	if len(req.Sessions) > 0 {
+		_, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.BrandID, req.Sessions)
+		if err != nil {
+			// If session creation fails, we should delete the event to maintain consistency
+			s.eventRepo.Delete(ctx, createdEvent.ID.Hex())
+			return nil, fmt.Errorf("failed to create sessions: %w", err)
+		}
 	}
 
 	return createdEvent, nil
@@ -282,7 +279,54 @@ func (s *EventService) UpdateEventStatus(ctx context.Context, brandID, eventID, 
 
 // Validation methods
 
-func (s *EventService) validateCreateRequest(req *CreateEventRequest) error {
+// validateDraftRequest validates minimal requirements for draft event creation
+func (s *EventService) validateDraftRequest(req *CreateEventRequest) error {
+	// Only title is required for draft
+	if req.Title == "" {
+		return models.NewValidationError("title", "title is required")
+	}
+	if len(req.Title) > 60 {
+		return models.NewValidationError("title", "title must be 60 characters or less")
+	}
+
+	// Optional fields but must be valid if provided
+	if len(req.Summary) > 160 {
+		return models.NewValidationError("summary", "summary must be 160 characters or less")
+	}
+	
+	// Validate visibility if provided
+	if req.Visibility != "" && !models.IsValidVisibility(req.Visibility) {
+		return models.NewValidationError("visibility", "invalid visibility")
+	}
+
+	// Optional location validation - if provided, must be valid format
+	if req.Location != nil {
+		if err := s.validateLocation(req.Location); err != nil {
+			return err
+		}
+	}
+
+	// Sessions validation is handled by SessionService during creation
+
+	// Optional detail validation - if provided, must be valid format
+	if req.Detail != nil {
+		if err := s.validateDetailFormat(req.Detail); err != nil {
+			return err
+		}
+	}
+
+	// Optional FAQ validation - if provided, must be valid format
+	if len(req.FAQ) > 0 {
+		if err := s.validateFAQ(req.FAQ); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *EventService) validateUpdateRequest(req *UpdateEventRequest) error {
+	// For updates, we need strict validation like publishing requirements
 	if req.Title == "" {
 		return models.NewValidationError("title", "title is required")
 	}
@@ -304,9 +348,6 @@ func (s *EventService) validateCreateRequest(req *CreateEventRequest) error {
 	if req.Detail == nil || req.Detail.Content == "" {
 		return models.NewValidationError("detail.content", "detail content is required")
 	}
-	if len(req.Detail.Content) > 65536 { // 64KB
-		return models.NewValidationError("detail.content", "detail content must be 64KB or less")
-	}
 
 	// Validate status and visibility
 	if req.Status != "" && !models.IsValidStatus(req.Status) {
@@ -321,7 +362,12 @@ func (s *EventService) validateCreateRequest(req *CreateEventRequest) error {
 		return err
 	}
 
-	// Sessions validation is now handled by SessionService
+	// Sessions validation is handled by SessionService
+
+	// Validate detail format (includes content length and type validation)
+	if err := s.validateDetailFormat(req.Detail); err != nil {
+		return err
+	}
 
 	// Validate FAQ
 	if err := s.validateFAQ(req.FAQ); err != nil {
@@ -329,20 +375,6 @@ func (s *EventService) validateCreateRequest(req *CreateEventRequest) error {
 	}
 
 	return nil
-}
-
-func (s *EventService) validateUpdateRequest(req *UpdateEventRequest) error {
-	return s.validateCreateRequest(&CreateEventRequest{
-		Title:         req.Title,
-		Summary:       req.Summary,
-		Status:        req.Status,
-		Visibility:    req.Visibility,
-		CoverImageURL: req.CoverImageURL,
-		Location:      req.Location,
-		Sessions:      req.Sessions,
-		Detail:        req.Detail,
-		FAQ:           req.FAQ,
-	})
 }
 
 func (s *EventService) validateLocation(loc *LocationRequest) error {
@@ -493,6 +525,23 @@ func (s *EventService) validatePublishRequirements(ctx context.Context, event *m
 	return nil
 }
 
+// Format validation methods for draft events
+
+
+func (s *EventService) validateDetailFormat(detail *DetailRequest) error {
+	if detail == nil {
+		return nil // Allow nil detail for drafts
+	}
+	
+	if len(detail.Content) > 65536 { // 64KB
+		return models.NewValidationError("detail.content", "detail content must be 64KB or less")
+	}
+	if detail.ContentType != "" && !models.IsValidContentType(detail.ContentType) {
+		return models.NewValidationError("detail.content_type", "invalid content type")
+	}
+	return nil
+}
+
 // Conversion methods
 
 func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*models.Event, error) {
@@ -506,38 +555,57 @@ func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*mo
 		return nil, models.NewValidationError("user_id", "invalid user_id")
 	}
 
-	// Default values
-	status := req.Status
-	if status == "" {
-		status = models.StatusDraft
-	}
+	// Force draft status for all created events
+	status := models.StatusDraft
+	
+	// Default visibility
 	visibility := req.Visibility
 	if visibility == "" {
 		visibility = models.VisibilityPrivate
 	}
 
-	// Convert location
-	location := models.Location{
-		Name:    req.Location.Name,
-		Address: req.Location.Address,
-		PlaceID: req.Location.PlaceID,
-	}
-	if req.Location.Coordinates != nil {
-		location.Coordinates = models.GeoJSONPoint{
-			Type:        models.GeoJSONTypePoint,
-			Coordinates: req.Location.Coordinates.Coordinates,
+	// Convert location (optional for drafts)
+	var location models.Location
+	if req.Location != nil {
+		location = models.Location{
+			Name:    req.Location.Name,
+			Address: req.Location.Address,
+			PlaceID: req.Location.PlaceID,
+		}
+		if req.Location.Coordinates != nil {
+			location.Coordinates = models.GeoJSONPoint{
+				Type:        models.GeoJSONTypePoint,
+				Coordinates: req.Location.Coordinates.Coordinates,
+			}
+		} else {
+			// For drafts without coordinates, set minimal valid GeoJSON
+			location.Coordinates = models.GeoJSONPoint{
+				Type:        models.GeoJSONTypePoint,
+				Coordinates: [2]float64{0.0, 0.0},
+			}
+		}
+	} else {
+		// For drafts without location, set minimal valid GeoJSON to avoid MongoDB error
+		location = models.Location{
+			Coordinates: models.GeoJSONPoint{
+				Type:        models.GeoJSONTypePoint,
+				Coordinates: [2]float64{0.0, 0.0},
+			},
 		}
 	}
 
 	// Sessions are now handled by SessionService
 
-	// Convert detail
-	detail := models.Detail{
-		Content:     req.Detail.Content,
-		ContentType: req.Detail.ContentType,
-	}
-	if detail.ContentType == "" {
-		detail.ContentType = models.ContentTypeHTML
+	// Convert detail (optional for drafts)
+	var detail models.Detail
+	if req.Detail != nil {
+		detail = models.Detail{
+			Content:     req.Detail.Content,
+			ContentType: req.Detail.ContentType,
+		}
+		if detail.ContentType == "" {
+			detail.ContentType = models.ContentTypeHTML
+		}
 	}
 
 	// Convert FAQ

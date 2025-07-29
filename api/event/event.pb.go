@@ -471,16 +471,16 @@ func (x *FAQ) GetAnswer() string {
 
 // Request messages
 type CreateEventRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Summary       string                 `protobuf:"bytes,2,opt,name=summary,proto3" json:"summary,omitempty"`
-	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	Visibility    string                 `protobuf:"bytes,4,opt,name=visibility,proto3" json:"visibility,omitempty"`
-	CoverImageUrl string                 `protobuf:"bytes,5,opt,name=cover_image_url,json=coverImageUrl,proto3" json:"cover_image_url,omitempty"`
-	Location      *Location              `protobuf:"bytes,6,opt,name=location,proto3" json:"location,omitempty"`
-	Sessions      []*Session             `protobuf:"bytes,7,rep,name=sessions,proto3" json:"sessions,omitempty"`
-	Detail        *Detail                `protobuf:"bytes,8,opt,name=detail,proto3" json:"detail,omitempty"`
-	Faq           []*FAQ                 `protobuf:"bytes,9,rep,name=faq,proto3" json:"faq,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Title   string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Summary string                 `protobuf:"bytes,2,opt,name=summary,proto3" json:"summary,omitempty"`
+	// status field removed - events are always created as draft
+	Visibility    string     `protobuf:"bytes,3,opt,name=visibility,proto3" json:"visibility,omitempty"`
+	CoverImageUrl string     `protobuf:"bytes,4,opt,name=cover_image_url,json=coverImageUrl,proto3" json:"cover_image_url,omitempty"`
+	Location      *Location  `protobuf:"bytes,5,opt,name=location,proto3" json:"location,omitempty"`
+	Sessions      []*Session `protobuf:"bytes,6,rep,name=sessions,proto3" json:"sessions,omitempty"`
+	Detail        *Detail    `protobuf:"bytes,7,opt,name=detail,proto3" json:"detail,omitempty"`
+	Faq           []*FAQ     `protobuf:"bytes,8,rep,name=faq,proto3" json:"faq,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -525,13 +525,6 @@ func (x *CreateEventRequest) GetTitle() string {
 func (x *CreateEventRequest) GetSummary() string {
 	if x != nil {
 		return x.Summary
-	}
-	return ""
-}
-
-func (x *CreateEventRequest) GetStatus() string {
-	if x != nil {
-		return x.Status
 	}
 	return ""
 }
@@ -1353,19 +1346,18 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\"9\n" +
 	"\x03FAQ\x12\x1a\n" +
 	"\bquestion\x18\x01 \x01(\tR\bquestion\x12\x16\n" +
-	"\x06answer\x18\x02 \x01(\tR\x06answer\"\xc2\x02\n" +
+	"\x06answer\x18\x02 \x01(\tR\x06answer\"\xaa\x02\n" +
 	"\x12CreateEventRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x18\n" +
-	"\asummary\x18\x02 \x01(\tR\asummary\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\tR\x06status\x12\x1e\n" +
+	"\asummary\x18\x02 \x01(\tR\asummary\x12\x1e\n" +
 	"\n" +
-	"visibility\x18\x04 \x01(\tR\n" +
+	"visibility\x18\x03 \x01(\tR\n" +
 	"visibility\x12&\n" +
-	"\x0fcover_image_url\x18\x05 \x01(\tR\rcoverImageUrl\x12+\n" +
-	"\blocation\x18\x06 \x01(\v2\x0f.event.LocationR\blocation\x12*\n" +
-	"\bsessions\x18\a \x03(\v2\x0e.event.SessionR\bsessions\x12%\n" +
-	"\x06detail\x18\b \x01(\v2\r.event.DetailR\x06detail\x12\x1c\n" +
-	"\x03faq\x18\t \x03(\v2\n" +
+	"\x0fcover_image_url\x18\x04 \x01(\tR\rcoverImageUrl\x12+\n" +
+	"\blocation\x18\x05 \x01(\v2\x0f.event.LocationR\blocation\x12*\n" +
+	"\bsessions\x18\x06 \x03(\v2\x0e.event.SessionR\bsessions\x12%\n" +
+	"\x06detail\x18\a \x01(\v2\r.event.DetailR\x06detail\x12\x1c\n" +
+	"\x03faq\x18\b \x03(\v2\n" +
 	".event.FAQR\x03faq\"\xb6\x04\n" +
 	"\x13GetEventListRequest\x12\"\n" +
 	"\n" +

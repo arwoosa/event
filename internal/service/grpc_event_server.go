@@ -43,7 +43,7 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEven
 	serviceReq := &CreateEventRequest{
 		Title:         req.Title,
 		Summary:       req.Summary,
-		Status:        req.Status,
+		// Status field removed - events are always created as draft
 		Visibility:    req.Visibility,
 		CoverImageURL: req.CoverImageUrl,
 		Location:      s.converter.ConvertLocationFromPB(req.Location),
