@@ -33,9 +33,9 @@ func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 		// This allows the service to start even without proper config during development
 		mockOrderService := NewMockOrderServiceClient(false, nil)
 		
-		// Use minimal setup for testing
-		eventSvc := &EventService{orderService: mockOrderService}
-		publicSvc := &PublicService{}
+		// Create minimal mock services - these won't work but allow startup
+		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
+		publicSvc := &PublicService{eventRepo: nil, sessionService: nil}
 		
 		// Register with mock services
 		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
@@ -48,8 +48,8 @@ func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 	if err != nil {
 		// Use mock services if MongoDB connection fails
 		mockOrderService := NewMockOrderServiceClient(false, nil)
-		eventSvc := &EventService{orderService: mockOrderService}
-		publicSvc := &PublicService{}
+		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
+		publicSvc := &PublicService{eventRepo: nil, sessionService: nil}
 		
 		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
 		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
@@ -59,8 +59,9 @@ func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 	// Note: In production, you'd want proper graceful shutdown handling
 	_ = cleanup
 
-	// Initialize repository
+	// Initialize repositories
 	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB)
+	sessionRepo := repository.NewMongoSessionRepository(mongoClient, appConfig.MongodbConfig.DB)
 
 	// Initialize external services
 	var orderService OrderServiceClient
@@ -72,8 +73,9 @@ func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 	}
 
 	// Initialize business services
-	eventSvc := NewEventService(eventRepo, orderService)
-	publicSvc := NewPublicService(eventRepo)
+	sessionSvc := NewSessionService(sessionRepo, eventRepo)
+	eventSvc := NewEventService(eventRepo, sessionSvc, orderService)
+	publicSvc := NewPublicService(eventRepo, sessionSvc)
 
 	// Register gRPC services with the server
 	pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))

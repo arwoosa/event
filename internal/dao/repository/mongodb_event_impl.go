@@ -41,13 +41,6 @@ func (r *MongoEventRepository) Create(ctx context.Context, event *models.Event) 
 	event.CreatedAt = now
 	event.UpdatedAt = now
 
-	// Generate IDs for sessions if not provided
-	for i := range event.Sessions {
-		if event.Sessions[i].ID.IsZero() {
-			event.Sessions[i].ID = primitive.NewObjectID()
-		}
-	}
-
 	_, err := r.collection.InsertOne(ctx, event)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create event: %w", err)
@@ -83,13 +76,6 @@ func (r *MongoEventRepository) Update(ctx context.Context, id string, event *mod
 	}
 
 	event.UpdatedAt = time.Now()
-
-	// Generate IDs for new sessions
-	for i := range event.Sessions {
-		if event.Sessions[i].ID.IsZero() {
-			event.Sessions[i].ID = primitive.NewObjectID()
-		}
-	}
 
 	result, err := r.collection.ReplaceOne(ctx, bson.M{"_id": objectID}, event)
 	if err != nil {
@@ -138,15 +124,11 @@ func (r *MongoEventRepository) FindByBrandID(ctx context.Context, brandID string
 	if filter.Visibility != nil {
 		query["visibility"] = *filter.Visibility
 	}
+	// TODO: Session time filtering now requires separate session collection query
+	// This functionality will be implemented in the service layer
 	if filter.SessionStartTimeFrom != nil || filter.SessionStartTimeTo != nil {
-		sessionFilter := bson.M{}
-		if filter.SessionStartTimeFrom != nil {
-			sessionFilter["$gte"] = *filter.SessionStartTimeFrom
-		}
-		if filter.SessionStartTimeTo != nil {
-			sessionFilter["$lte"] = *filter.SessionStartTimeTo
-		}
-		query["sessions.start_time"] = sessionFilter
+		// For now, we skip session time filtering in event queries
+		// This will be handled by the service layer using SessionService
 	}
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
 		query["$text"] = bson.M{"$search": *filter.TitleSearch}
@@ -170,15 +152,11 @@ func (r *MongoEventRepository) FindPublic(ctx context.Context, filter *PublicEve
 		}
 		query["brand_id"] = brandObjectID
 	}
+	// TODO: Session time filtering now requires separate session collection query
+	// This functionality will be implemented in the service layer
 	if filter.SessionStartTimeFrom != nil || filter.SessionStartTimeTo != nil {
-		sessionFilter := bson.M{}
-		if filter.SessionStartTimeFrom != nil {
-			sessionFilter["$gte"] = *filter.SessionStartTimeFrom
-		}
-		if filter.SessionStartTimeTo != nil {
-			sessionFilter["$lte"] = *filter.SessionStartTimeTo
-		}
-		query["sessions.start_time"] = sessionFilter
+		// For now, we skip session time filtering in event queries
+		// This will be handled by the service layer using SessionService
 	}
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
 		query["$text"] = bson.M{"$search": *filter.TitleSearch}

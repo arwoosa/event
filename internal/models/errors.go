@@ -8,6 +8,7 @@ import (
 // Common validation errors
 var (
 	ErrEventNotFound     = errors.New("event not found")
+	ErrSessionNotFound   = errors.New("session not found")
 	ErrInvalidStatus     = errors.New("invalid status")
 	ErrInvalidVisibility = errors.New("invalid visibility")
 	ErrInvalidTransition = errors.New("invalid status transition")

@@ -10,13 +10,15 @@ import (
 
 // PublicService implements the business logic for public event access
 type PublicService struct {
-	eventRepo repository.EventRepository
+	eventRepo      repository.EventRepository
+	sessionService *SessionService
 }
 
 // NewPublicService creates a new public service
-func NewPublicService(eventRepo repository.EventRepository) *PublicService {
+func NewPublicService(eventRepo repository.EventRepository, sessionService *SessionService) *PublicService {
 	return &PublicService{
-		eventRepo: eventRepo,
+		eventRepo:      eventRepo,
+		sessionService: sessionService,
 	}
 }
 

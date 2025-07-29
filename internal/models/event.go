@@ -1,8 +1,6 @@
 package models
 
 import (
-	"errors"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
@@ -17,7 +15,7 @@ type Event struct {
 	Visibility    string             `json:"visibility" bson:"visibility"` // public, private
 	CoverImageURL string             `json:"cover_image_url" bson:"cover_image_url"`
 	Location      Location           `json:"location" bson:"location"`
-	Sessions      []Session          `json:"sessions" bson:"sessions"`
+	SessionCount  int                `json:"session_count" bson:"session_count"` // Cache of session count
 	Detail        Detail             `json:"detail" bson:"detail"`
 	FAQ           []FAQ              `json:"faq" bson:"faq"`
 	CreatedAt     time.Time          `json:"created_at" bson:"created_at"`
@@ -40,12 +38,6 @@ type GeoJSONPoint struct {
 	Coordinates [2]float64 `json:"coordinates" bson:"coordinates"` // [longitude, latitude]
 }
 
-// Session represents a time-based event session
-type Session struct {
-	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	StartTime time.Time          `json:"start_time" bson:"start_time"`
-	EndTime   time.Time          `json:"end_time" bson:"end_time"`
-}
 
 // Detail represents the event detail content
 type Detail struct {
@@ -124,65 +116,10 @@ func (e *Event) IsShareable() bool {
 
 // HasSessions validates that the event has at least one session
 func (e *Event) HasSessions() bool {
-	return len(e.Sessions) > 0
+	return e.SessionCount > 0
 }
 
-// ValidateSessions checks for session overlaps and time validity
-func (e *Event) ValidateSessions() error {
-	if !e.HasSessions() {
-		return errors.New("event must have at least one session")
-	}
-
-	// Check each session's time validity
-	for i, session := range e.Sessions {
-		if !session.StartTime.Before(session.EndTime) {
-			return fmt.Errorf("session %d: start_time must be before end_time", i)
-		}
-	}
-
-	// Check for overlapping sessions
-	for i := 0; i < len(e.Sessions); i++ {
-		for j := i + 1; j < len(e.Sessions); j++ {
-			if e.Sessions[i].OverlapsWith(e.Sessions[j]) {
-				return fmt.Errorf("sessions %d and %d overlap", i, j)
-			}
-		}
-	}
-
-	return nil
-}
-
-// OverlapsWith checks if two sessions overlap in time
-func (s *Session) OverlapsWith(other Session) bool {
-	return s.StartTime.Before(other.EndTime) && other.StartTime.Before(s.EndTime)
-}
-
-// GetEarliestSessionTime returns the earliest start time among all sessions
-func (e *Event) GetEarliestSessionTime() *time.Time {
-	if !e.HasSessions() {
-		return nil
-	}
-
-	earliest := e.Sessions[0].StartTime
-	for _, session := range e.Sessions[1:] {
-		if session.StartTime.Before(earliest) {
-			earliest = session.StartTime
-		}
-	}
-	return &earliest
-}
-
-// GetLatestSessionTime returns the latest end time among all sessions
-func (e *Event) GetLatestSessionTime() *time.Time {
-	if !e.HasSessions() {
-		return nil
-	}
-
-	latest := e.Sessions[0].EndTime
-	for _, session := range e.Sessions[1:] {
-		if session.EndTime.After(latest) {
-			latest = session.EndTime
-		}
-	}
-	return &latest
+// UpdateSessionCount updates the cached session count
+func (e *Event) UpdateSessionCount(count int) {
+	e.SessionCount = count
 }

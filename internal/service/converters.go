@@ -17,7 +17,7 @@ func NewProtobufConverter() *ProtobufConverter {
 }
 
 // ConvertEventToPB converts a domain Event to protobuf Event
-func (c *ProtobufConverter) ConvertEventToPB(event *models.Event) *pb.Event {
+func (c *ProtobufConverter) ConvertEventToPB(event *models.Event, sessions []*models.Session) *pb.Event {
 	return &pb.Event{
 		Id:            event.ID.Hex(),
 		Title:         event.Title,
@@ -27,7 +27,7 @@ func (c *ProtobufConverter) ConvertEventToPB(event *models.Event) *pb.Event {
 		Visibility:    event.Visibility,
 		CoverImageUrl: event.CoverImageURL,
 		Location:      c.ConvertLocationToPB(&event.Location),
-		Sessions:      c.ConvertSessionsToPB(event.Sessions),
+		Sessions:      c.ConvertSessionCollectionToPB(sessions),
 		Detail:        c.ConvertDetailToPB(&event.Detail),
 		Faq:           c.ConvertFAQToPB(event.FAQ),
 		CreatedAt:     event.CreatedAt.Format(time.RFC3339),
@@ -50,7 +50,24 @@ func (c *ProtobufConverter) ConvertLocationToPB(location *models.Location) *pb.L
 	}
 }
 
-// ConvertSessionsToPB converts domain Sessions to protobuf Sessions
+// ConvertSessionCollectionToPB converts Session collection models to protobuf Sessions
+func (c *ProtobufConverter) ConvertSessionCollectionToPB(sessions []*models.Session) []*pb.Session {
+	if sessions == nil {
+		return []*pb.Session{}
+	}
+	
+	sessionsPB := make([]*pb.Session, len(sessions))
+	for i, session := range sessions {
+		sessionsPB[i] = &pb.Session{
+			Id:        session.ID.Hex(),
+			StartTime: session.StartTime.Format(time.RFC3339),
+			EndTime:   session.EndTime.Format(time.RFC3339),
+		}
+	}
+	return sessionsPB
+}
+
+// ConvertSessionsToPB converts domain Sessions to protobuf Sessions (deprecated - use ConvertSessionCollectionToPB)
 func (c *ProtobufConverter) ConvertSessionsToPB(sessions []models.Session) []*pb.Session {
 	sessionsPB := make([]*pb.Session, len(sessions))
 	for i, session := range sessions {

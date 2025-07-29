@@ -13,15 +13,21 @@ import (
 
 // EventService implements the business logic for event management
 type EventService struct {
-	eventRepo    repository.EventRepository
-	orderService OrderServiceClient
+	eventRepo      repository.EventRepository
+	sessionService *SessionService
+	orderService   OrderServiceClient
 }
 
 // NewEventService creates a new event service
-func NewEventService(eventRepo repository.EventRepository, orderService OrderServiceClient) *EventService {
+func NewEventService(
+	eventRepo repository.EventRepository, 
+	sessionService *SessionService,
+	orderService OrderServiceClient,
+) *EventService {
 	return &EventService{
-		eventRepo:    eventRepo,
-		orderService: orderService,
+		eventRepo:      eventRepo,
+		sessionService: sessionService,
+		orderService:   orderService,
 	}
 }
 
@@ -114,19 +120,35 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 		return nil, err
 	}
 
-	// Convert request to model
+	// Validate sessions separately
+	if err := s.sessionService.ValidateSessionsForEvent(ctx, "", req.BrandID, req.Sessions); err != nil {
+		return nil, err
+	}
+
+	// Convert request to model (without sessions)
 	event, err := s.convertCreateRequestToModel(req)
 	if err != nil {
 		return nil, err
 	}
 
-	// Validate business rules
-	if err := s.validateEventBusinessRules(event); err != nil {
+	// Set session count
+	event.SessionCount = len(req.Sessions)
+
+	// Create event first
+	createdEvent, err := s.eventRepo.Create(ctx, event)
+	if err != nil {
 		return nil, err
 	}
 
-	// Create event
-	return s.eventRepo.Create(ctx, event)
+	// Create sessions for the event
+	_, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.BrandID, req.Sessions)
+	if err != nil {
+		// If session creation fails, we should delete the event to maintain consistency
+		s.eventRepo.Delete(ctx, createdEvent.ID.Hex())
+		return nil, fmt.Errorf("failed to create sessions: %w", err)
+	}
+
+	return createdEvent, nil
 }
 
 // GetEvent retrieves an event by ID for the specified brand
@@ -169,16 +191,20 @@ func (s *EventService) UpdateEvent(ctx context.Context, brandID string, req *Upd
 		return nil, err
 	}
 
-	// Convert request to model
+	// Update sessions using SessionService
+	_, err = s.sessionService.UpdateSessionsForEvent(ctx, req.ID, brandID, req.Sessions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update sessions: %w", err)
+	}
+
+	// Convert request to model (without sessions)
 	event, err := s.convertUpdateRequestToModel(req, existingEvent)
 	if err != nil {
 		return nil, err
 	}
 
-	// Validate business rules
-	if err := s.validateEventBusinessRules(event); err != nil {
-		return nil, err
-	}
+	// Update session count
+	event.SessionCount = len(req.Sessions)
 
 	return s.eventRepo.Update(ctx, req.ID, event)
 }
@@ -196,13 +222,18 @@ func (s *EventService) PatchEvent(ctx context.Context, brandID string, req *Patc
 		return nil, err
 	}
 
+	// Update sessions if provided
+	if len(req.Sessions) > 0 {
+		_, err = s.sessionService.UpdateSessionsForEvent(ctx, req.ID, brandID, req.Sessions)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update sessions: %w", err)
+		}
+		// Update session count in existing event
+		existingEvent.SessionCount = len(req.Sessions)
+	}
+
 	// Apply partial updates
 	updatedEvent := s.applyPatchToEvent(existingEvent, req)
-
-	// Validate business rules
-	if err := s.validateEventBusinessRules(updatedEvent); err != nil {
-		return nil, err
-	}
 
 	return s.eventRepo.Update(ctx, req.ID, updatedEvent)
 }
@@ -218,6 +249,11 @@ func (s *EventService) DeleteEvent(ctx context.Context, brandID, eventID, userID
 	// Check if deletion is allowed
 	if err := s.validateDeletePermissions(existingEvent); err != nil {
 		return err
+	}
+
+	// Delete sessions first
+	if err := s.sessionService.DeleteSessionsForEvent(ctx, eventID, brandID); err != nil {
+		return fmt.Errorf("failed to delete sessions: %w", err)
 	}
 
 	return s.eventRepo.Delete(ctx, eventID)
@@ -285,10 +321,7 @@ func (s *EventService) validateCreateRequest(req *CreateEventRequest) error {
 		return err
 	}
 
-	// Validate sessions
-	if err := s.validateSessions(req.Sessions); err != nil {
-		return err
-	}
+	// Sessions validation is now handled by SessionService
 
 	// Validate FAQ
 	if err := s.validateFAQ(req.FAQ); err != nil {
@@ -337,41 +370,6 @@ func (s *EventService) validateLocation(loc *LocationRequest) error {
 	return nil
 }
 
-func (s *EventService) validateSessions(sessions []*SessionRequest) error {
-	if len(sessions) == 0 {
-		return models.NewValidationError("sessions", "at least one session is required")
-	}
-
-	parsedSessions := make([]models.Session, len(sessions))
-	for i, session := range sessions {
-		startTime, err := time.Parse(time.RFC3339, session.StartTime)
-		if err != nil {
-			return models.NewValidationErrorWithIndex("sessions", "invalid start_time format, must be RFC3339", i)
-		}
-		endTime, err := time.Parse(time.RFC3339, session.EndTime)
-		if err != nil {
-			return models.NewValidationErrorWithIndex("sessions", "invalid end_time format, must be RFC3339", i)
-		}
-		if !startTime.Before(endTime) {
-			return models.NewValidationErrorWithIndex("sessions", "start_time must be before end_time", i)
-		}
-		parsedSessions[i] = models.Session{
-			StartTime: startTime,
-			EndTime:   endTime,
-		}
-	}
-
-	// Check for overlaps
-	for i := 0; i < len(parsedSessions); i++ {
-		for j := i + 1; j < len(parsedSessions); j++ {
-			if parsedSessions[i].OverlapsWith(parsedSessions[j]) {
-				return models.NewValidationError("sessions", fmt.Sprintf("sessions %d and %d overlap", i, j))
-			}
-		}
-	}
-
-	return nil
-}
 
 func (s *EventService) validateFAQ(faqs []*FAQRequest) error {
 	for i, faq := range faqs {
@@ -391,9 +389,6 @@ func (s *EventService) validateFAQ(faqs []*FAQRequest) error {
 	return nil
 }
 
-func (s *EventService) validateEventBusinessRules(event *models.Event) error {
-	return event.ValidateSessions()
-}
 
 func (s *EventService) validateUpdatePermissions(event *models.Event, userID string) error {
 	// If event is published, it cannot be modified
@@ -453,7 +448,7 @@ func (s *EventService) validateStatusTransition(ctx context.Context, event *mode
 	switch newStatus {
 	case models.StatusPublished:
 		// Validate all required fields for publishing
-		if err := s.validatePublishRequirements(event); err != nil {
+		if err := s.validatePublishRequirements(ctx, event); err != nil {
 			return err
 		}
 	case models.StatusDraft:
@@ -472,7 +467,7 @@ func (s *EventService) validateStatusTransition(ctx context.Context, event *mode
 	return nil
 }
 
-func (s *EventService) validatePublishRequirements(event *models.Event) error {
+func (s *EventService) validatePublishRequirements(ctx context.Context, event *models.Event) error {
 	if event.Title == "" {
 		return models.NewValidationError("title", "title is required for publishing")
 	}
@@ -482,9 +477,16 @@ func (s *EventService) validatePublishRequirements(event *models.Event) error {
 	if event.Detail.Content == "" {
 		return models.NewValidationError("detail.content", "detail content is required for publishing")
 	}
-	if !event.HasSessions() {
+	
+	// Check actual session count from database instead of cached count
+	sessionCount, err := s.sessionService.sessionRepo.CountByEventID(ctx, event.ID.Hex())
+	if err != nil {
+		return fmt.Errorf("failed to check session count: %w", err)
+	}
+	if sessionCount == 0 {
 		return models.NewValidationError("sessions", "at least one session is required for publishing")
 	}
+	
 	if event.Location.Name == "" || event.Location.Address == "" {
 		return models.NewValidationError("location", "complete location information is required for publishing")
 	}
@@ -527,17 +529,7 @@ func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*mo
 		}
 	}
 
-	// Convert sessions
-	sessions := make([]models.Session, len(req.Sessions))
-	for i, sessionReq := range req.Sessions {
-		startTime, _ := time.Parse(time.RFC3339, sessionReq.StartTime)
-		endTime, _ := time.Parse(time.RFC3339, sessionReq.EndTime)
-		sessions[i] = models.Session{
-			ID:        primitive.NewObjectID(),
-			StartTime: startTime,
-			EndTime:   endTime,
-		}
-	}
+	// Sessions are now handled by SessionService
 
 	// Convert detail
 	detail := models.Detail{
@@ -565,7 +557,7 @@ func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*mo
 		Visibility:    visibility,
 		CoverImageURL: req.CoverImageURL,
 		Location:      location,
-		Sessions:      sessions,
+		SessionCount:  len(req.Sessions),
 		Detail:        detail,
 		FAQ:           faq,
 		CreatedBy:     userID,
@@ -592,17 +584,7 @@ func (s *EventService) convertUpdateRequestToModel(req *UpdateEventRequest, exis
 		}
 	}
 
-	// Convert sessions
-	sessions := make([]models.Session, len(req.Sessions))
-	for i, sessionReq := range req.Sessions {
-		startTime, _ := time.Parse(time.RFC3339, sessionReq.StartTime)
-		endTime, _ := time.Parse(time.RFC3339, sessionReq.EndTime)
-		sessions[i] = models.Session{
-			ID:        primitive.NewObjectID(),
-			StartTime: startTime,
-			EndTime:   endTime,
-		}
-	}
+	// Sessions are now handled by SessionService
 
 	// Convert detail
 	detail := models.Detail{
@@ -629,7 +611,7 @@ func (s *EventService) convertUpdateRequestToModel(req *UpdateEventRequest, exis
 	existing.Visibility = req.Visibility
 	existing.CoverImageURL = req.CoverImageURL
 	existing.Location = location
-	existing.Sessions = sessions
+	// Sessions are handled separately by SessionService
 	existing.Detail = detail
 	existing.FAQ = faq
 	existing.UpdatedBy = userID
@@ -685,7 +667,7 @@ func (s *EventService) applyPatchToEvent(existing *models.Event, req *PatchEvent
 				EndTime:   endTime,
 			}
 		}
-		existing.Sessions = sessions
+		// Sessions are handled separately by SessionService
 	}
 
 	if req.Detail != nil {
