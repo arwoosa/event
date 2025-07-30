@@ -67,7 +67,7 @@ func ValidateSessions(sessions []*Session) error {
 	for i, session := range sessions {
 		// Create unique key from start and end times
 		key := fmt.Sprintf("%d-%d", session.StartTime.Unix(), session.EndTime.Unix())
-		
+
 		if existingIndex, exists := seen[key]; exists {
 			return fmt.Errorf("sessions %d and %d have identical start and end times", existingIndex, i)
 		}

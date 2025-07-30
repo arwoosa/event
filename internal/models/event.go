@@ -38,7 +38,6 @@ type GeoJSONPoint struct {
 	Coordinates [2]float64 `json:"coordinates" bson:"coordinates"` // [longitude, latitude]
 }
 
-
 // Detail represents the event detail content
 type Detail struct {
 	Content     string `json:"content" bson:"content"`

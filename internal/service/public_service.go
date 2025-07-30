@@ -41,16 +41,34 @@ type SearchEventsRequest struct {
 // SearchEvents searches for public events
 func (s *PublicService) SearchEvents(ctx context.Context, req *SearchEventsRequest) (*repository.EventListResult, error) {
 	filter := &repository.PublicEventFilter{
-		BrandID:        req.BrandID,
-		TitleSearch:    req.TitleSearch,
-		LocationLat:    req.LocationLat,
-		LocationLng:    req.LocationLng,
-		LocationRadius: req.LocationRadius,
-		SortBy:         req.SortBy,
-		SortOrder:      req.SortOrder,
-		PageToken:      req.PageToken,
-		Limit:          20, // Default
-		Offset:         0,
+		Limit:  20, // Default
+		Offset: 0,
+	}
+
+	// Only set non-nil and non-empty values
+	if req.BrandID != nil && *req.BrandID != "" {
+		filter.BrandID = req.BrandID
+	}
+	if req.TitleSearch != nil && *req.TitleSearch != "" {
+		filter.TitleSearch = req.TitleSearch
+	}
+	if req.LocationLat != nil {
+		filter.LocationLat = req.LocationLat
+	}
+	if req.LocationLng != nil {
+		filter.LocationLng = req.LocationLng
+	}
+	if req.LocationRadius != nil {
+		filter.LocationRadius = req.LocationRadius
+	}
+	if req.SortBy != nil && *req.SortBy != "" {
+		filter.SortBy = req.SortBy
+	}
+	if req.SortOrder != nil && *req.SortOrder != "" {
+		filter.SortOrder = req.SortOrder
+	}
+	if req.PageToken != nil && *req.PageToken != "" {
+		filter.PageToken = req.PageToken
 	}
 
 	// Handle time filters

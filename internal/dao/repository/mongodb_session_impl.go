@@ -23,7 +23,7 @@ type MongoSessionRepository struct {
 // NewMongoSessionRepository creates a new MongoDB-based session repository
 func NewMongoSessionRepository(client *mongo.Client, database string) SessionRepository {
 	collection := client.Database(database).Collection("sessions")
-	
+
 	// Create indexes
 	ctx := context.Background()
 	collection.Indexes().CreateOne(ctx, mongo.IndexModel{
@@ -85,7 +85,7 @@ func (r *MongoSessionRepository) CreateBatch(ctx context.Context, sessions []*mo
 
 	now := time.Now()
 	documents := make([]interface{}, len(sessions))
-	
+
 	for i, session := range sessions {
 		if session.ID.IsZero() {
 			session.ID = primitive.NewObjectID()
@@ -96,7 +96,7 @@ func (r *MongoSessionRepository) CreateBatch(ctx context.Context, sessions []*mo
 		if err := session.IsValid(); err != nil {
 			return nil, fmt.Errorf("invalid session at index %d: %w", i, err)
 		}
-		
+
 		documents[i] = session
 	}
 
@@ -401,4 +401,3 @@ func (r *MongoSessionRepository) ExistsByEventAndBrand(ctx context.Context, even
 
 	return count > 0, nil
 }
-

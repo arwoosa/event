@@ -5,6 +5,7 @@ package event;
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "api/common.proto";
+import "third_party/validate/validate.proto";
 
 option go_package = "event/api/event";
 
@@ -102,15 +103,15 @@ message Event {
 
 // Location with GeoJSON Point structure
 message Location {
-  string name = 1;
-  string address = 2;
-  string place_id = 3;
-  GeoJSONPoint coordinates = 4;
+  string name = 1 [(validate.rules).string.min_len = 1];
+  string address = 2 [(validate.rules).string.min_len = 1];
+  string place_id = 3 [(validate.rules).string.min_len = 1];
+  GeoJSONPoint coordinates = 4 [(validate.rules).message.required = true];
 }
 
 message GeoJSONPoint {
-  string type = 1; // Always "Point"
-  repeated double coordinates = 2; // [longitude, latitude]
+  string type = 1 [(validate.rules).string.const = "Point"]; // Always "Point"
+  repeated double coordinates = 2 [(validate.rules).repeated = {min_items: 2, max_items: 2}]; // [longitude, latitude]
 }
 
 // Session for time-based event scheduling
@@ -122,67 +123,67 @@ message Session {
 
 // Event detail content
 message Detail {
-  string content = 1;
-  string content_type = 2; // html, json, markdown
+  string content = 1 [(validate.rules).string.max_len = 65536];
+  string content_type = 2 [(validate.rules).string = {ignore_empty: true, in: ["html", "markdown", "plain"]}]; // html, json, markdown
 }
 
 // FAQ entry
 message FAQ {
-  string question = 1;
-  string answer = 2;
+  string question = 1 [(validate.rules).string = {min_len: 1, max_len: 100}];
+  string answer = 2 [(validate.rules).string = {min_len: 1, max_len: 300}];
 }
 
 // Request messages
 message CreateEventRequest {
-  string title = 1;
-  string summary = 2;
+  string title = 1 [(validate.rules).string = {min_len: 1, max_len: 60}];
+  string summary = 2 [(validate.rules).string.max_len = 160];
   // status field removed - events are always created as draft
-  string visibility = 3;
-  string cover_image_url = 4;
-  Location location = 5;
+  string visibility = 3 [(validate.rules).string = {ignore_empty: true, in: ["public", "private"]}];
+  string cover_image_url = 4 [(validate.rules).string = {ignore_empty: true, uri: true}];
+  optional Location location = 5;
   repeated Session sessions = 6;
-  Detail detail = 7;
+  optional Detail detail = 7;
   repeated FAQ faq = 8;
 }
 
 message GetEventListRequest {
   // Pagination
   optional string page_token = 1; // for cursor-based pagination
-  optional int32 page = 2;        // for page-based pagination
-  optional int32 page_size = 3;   // default 20, max 100
+  optional int32 page = 2 [(validate.rules).int32.gte = 1];        // for page-based pagination
+  optional int32 page_size = 3 [(validate.rules).int32 = {gte: 1, lte: 100}];   // default 20, max 100
   
   // Filters
-  optional string status = 4;     // draft|published|archived
-  optional string visibility = 5; // public|private
+  optional string status = 4 [(validate.rules).string = {ignore_empty: true, in: ["draft", "published", "archived"]}];     // draft|published|archived
+  optional string visibility = 5 [(validate.rules).string = {ignore_empty: true, in: ["public", "private"]}]; // public|private
   optional string session_start_time_from = 6; // RFC3339
   optional string session_start_time_to = 7;   // RFC3339
   optional string title_search = 8;           // full-text search
   
   // Sorting
-  optional string sort_by = 9;    // created_at|updated_at|session_start_time
-  optional string sort_order = 10; // asc|desc, default desc
+  optional string sort_by = 9 [(validate.rules).string = {ignore_empty: true, in: ["created_at", "updated_at", "session_start_time"]}];    // created_at|updated_at|session_start_time
+  optional string sort_order = 10 [(validate.rules).string = {ignore_empty: true, in: ["asc", "desc"]}]; // asc|desc, default desc
 }
 
 message UpdateEventRequest {
-  string id = 1;
-  string title = 2;
-  string summary = 3;
-  string status = 4;
-  string visibility = 5;
-  string cover_image_url = 6;
-  Location location = 7;
-  repeated Session sessions = 8;
-  Detail detail = 9;
+  string id = 1 [(validate.rules).string.min_len = 1];
+  string title = 2 [(validate.rules).string = {min_len: 1, max_len: 60}];
+  string summary = 3 [(validate.rules).string.max_len = 160];
+  string status = 4 [(validate.rules).string = {ignore_empty: true, in: ["draft", "published", "archived"]}];
+  string visibility = 5 [(validate.rules).string = {ignore_empty: true, in: ["public", "private"]}];
+  string cover_image_url = 6 [(validate.rules).string = {uri: true}];
+  Location location = 7 [(validate.rules).message.required = true];
+  repeated Session sessions = 8 [(validate.rules).repeated.min_items = 1];
+  Detail detail = 9 [(validate.rules).message.required = true];
   repeated FAQ faq = 10;
 }
 
 message PatchEventRequest {
-  string id = 1;
-  optional string title = 2;
-  optional string summary = 3;
-  optional string status = 4;
-  optional string visibility = 5;
-  optional string cover_image_url = 6;
+  string id = 1 [(validate.rules).string.min_len = 1];
+  optional string title = 2 [(validate.rules).string = {ignore_empty: true, min_len: 1, max_len: 60}];
+  optional string summary = 3 [(validate.rules).string = {ignore_empty: true, max_len: 160}];
+  optional string status = 4 [(validate.rules).string = {ignore_empty: true, in: ["draft", "published", "archived"]}];
+  optional string visibility = 5 [(validate.rules).string = {ignore_empty: true, in: ["public", "private"]}];
+  optional string cover_image_url = 6 [(validate.rules).string = {ignore_empty: true, uri: true}];
   optional Location location = 7;
   repeated Session sessions = 8; // Replace all sessions if provided
   optional Detail detail = 9;
@@ -190,15 +191,15 @@ message PatchEventRequest {
 }
 
 message UpdateEventStatusRequest {
-  string id = 1;
-  string status = 2; // draft|published|archived
+  string id = 1 [(validate.rules).string.min_len = 1];
+  string status = 2 [(validate.rules).string = {in: ["draft", "published", "archived"]}]; // draft|published|archived
 }
 
 message SearchEventsRequest {
   // Pagination
   optional string page_token = 1;
-  optional int32 page = 2;
-  optional int32 page_size = 3;
+  optional int32 page = 2 [(validate.rules).int32.gte = 1];
+  optional int32 page_size = 3 [(validate.rules).int32 = {gte: 1, lte: 100}];
   
   // Filters
   optional string brand_id = 4;     // filter by specific brand
@@ -207,13 +208,13 @@ message SearchEventsRequest {
   optional string session_start_time_to = 7;
   
   // Location-based search
-  optional double location_lat = 8;
-  optional double location_lng = 9;
-  optional int32 location_radius = 10; // in meters, default 1000
+  optional double location_lat = 8 [(validate.rules).double = {gte: -90, lte: 90}];
+  optional double location_lng = 9 [(validate.rules).double = {gte: -180, lte: 180}];
+  optional int32 location_radius = 10 [(validate.rules).int32.gte = 1]; // in meters, default 1000
   
   // Sorting
-  optional string sort_by = 11;    // session_start_time|created_at
-  optional string sort_order = 12; // asc|desc
+  optional string sort_by = 11 [(validate.rules).string = {ignore_empty: true, in: ["session_start_time", "created_at"]}];    // session_start_time|created_at
+  optional string sort_order = 12 [(validate.rules).string = {ignore_empty: true, in: ["asc", "desc"]}]; // asc|desc
 }
 
 // Response messages

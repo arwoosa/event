@@ -47,7 +47,6 @@ type SessionRepository interface {
 
 	// ExistsByEventAndBrand checks if sessions exist for an event within a brand
 	ExistsByEventAndBrand(ctx context.Context, eventID, brandID string) (bool, error)
-
 }
 
 // SessionFilter represents filtering options for session queries

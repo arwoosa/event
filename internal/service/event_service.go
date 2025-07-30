@@ -20,7 +20,7 @@ type EventService struct {
 
 // NewEventService creates a new event service
 func NewEventService(
-	eventRepo repository.EventRepository, 
+	eventRepo repository.EventRepository,
 	sessionService *SessionService,
 	orderService OrderServiceClient,
 ) *EventService {
@@ -33,8 +33,8 @@ func NewEventService(
 
 // CreateEventRequest represents the request to create an event
 type CreateEventRequest struct {
-	Title         string
-	Summary       string
+	Title   string
+	Summary string
 	// Status field removed - events are always created as draft
 	Visibility    string
 	CoverImageURL string
@@ -279,148 +279,19 @@ func (s *EventService) UpdateEventStatus(ctx context.Context, brandID, eventID, 
 
 // Validation methods
 
-// validateDraftRequest validates minimal requirements for draft event creation
+// validateDraftRequest validates business logic requirements for draft event creation
+// Basic field validation is now handled by proto-gen-validate
 func (s *EventService) validateDraftRequest(req *CreateEventRequest) error {
-	// Only title is required for draft
-	if req.Title == "" {
-		return models.NewValidationError("title", "title is required")
-	}
-	if len(req.Title) > 60 {
-		return models.NewValidationError("title", "title must be 60 characters or less")
-	}
-
-	// Optional fields but must be valid if provided
-	if len(req.Summary) > 160 {
-		return models.NewValidationError("summary", "summary must be 160 characters or less")
-	}
-	
-	// Validate visibility if provided
-	if req.Visibility != "" && !models.IsValidVisibility(req.Visibility) {
-		return models.NewValidationError("visibility", "invalid visibility")
-	}
-
-	// Optional location validation - if provided, must be valid format
-	if req.Location != nil {
-		if err := s.validateLocation(req.Location); err != nil {
-			return err
-		}
-	}
-
-	// Sessions validation is handled by SessionService during creation
-
-	// Optional detail validation - if provided, must be valid format
-	if req.Detail != nil {
-		if err := s.validateDetailFormat(req.Detail); err != nil {
-			return err
-		}
-	}
-
-	// Optional FAQ validation - if provided, must be valid format
-	if len(req.FAQ) > 0 {
-		if err := s.validateFAQ(req.FAQ); err != nil {
-			return err
-		}
-	}
-
+	// All basic field validation (title, summary, visibility, etc.) is now handled by PGV
+	// Only business logic validation remains here
 	return nil
 }
 
 func (s *EventService) validateUpdateRequest(req *UpdateEventRequest) error {
-	// For updates, we need strict validation like publishing requirements
-	if req.Title == "" {
-		return models.NewValidationError("title", "title is required")
-	}
-	if len(req.Title) > 60 {
-		return models.NewValidationError("title", "title must be 60 characters or less")
-	}
-	if len(req.Summary) > 160 {
-		return models.NewValidationError("summary", "summary must be 160 characters or less")
-	}
-	if req.CoverImageURL == "" {
-		return models.NewValidationError("cover_image_url", "cover image URL is required")
-	}
-	if req.Location == nil {
-		return models.NewValidationError("location", "location is required")
-	}
-	if len(req.Sessions) == 0 {
-		return models.NewValidationError("sessions", "at least one session is required")
-	}
-	if req.Detail == nil || req.Detail.Content == "" {
-		return models.NewValidationError("detail.content", "detail content is required")
-	}
-
-	// Validate status and visibility
-	if req.Status != "" && !models.IsValidStatus(req.Status) {
-		return models.NewValidationError("status", "invalid status")
-	}
-	if req.Visibility != "" && !models.IsValidVisibility(req.Visibility) {
-		return models.NewValidationError("visibility", "invalid visibility")
-	}
-
-	// Validate location
-	if err := s.validateLocation(req.Location); err != nil {
-		return err
-	}
-
-	// Sessions validation is handled by SessionService
-
-	// Validate detail format (includes content length and type validation)
-	if err := s.validateDetailFormat(req.Detail); err != nil {
-		return err
-	}
-
-	// Validate FAQ
-	if err := s.validateFAQ(req.FAQ); err != nil {
-		return err
-	}
-
+	// All field validation (title, summary, status, visibility, etc.) is now handled by PGV
+	// Only business logic validation remains here
 	return nil
 }
-
-func (s *EventService) validateLocation(loc *LocationRequest) error {
-	if loc.Name == "" {
-		return models.NewValidationError("location.name", "location name is required")
-	}
-	if loc.Address == "" {
-		return models.NewValidationError("location.address", "location address is required")
-	}
-	if loc.PlaceID == "" {
-		return models.NewValidationError("location.place_id", "location place_id is required")
-	}
-	if loc.Coordinates != nil {
-		if loc.Coordinates.Type != "Point" {
-			return models.NewValidationError("location.coordinates.type", "coordinates type must be 'Point'")
-		}
-		lng, lat := loc.Coordinates.Coordinates[0], loc.Coordinates.Coordinates[1]
-		if lng < -180 || lng > 180 {
-			return models.NewValidationError("location.coordinates", "longitude must be between -180 and 180")
-		}
-		if lat < -90 || lat > 90 {
-			return models.NewValidationError("location.coordinates", "latitude must be between -90 and 90")
-		}
-	}
-	return nil
-}
-
-
-func (s *EventService) validateFAQ(faqs []*FAQRequest) error {
-	for i, faq := range faqs {
-		if faq.Question == "" {
-			return models.NewValidationErrorWithIndex("faq", "question is required", i)
-		}
-		if faq.Answer == "" {
-			return models.NewValidationErrorWithIndex("faq", "answer is required", i)
-		}
-		if len(faq.Question) > 100 {
-			return models.NewValidationErrorWithIndex("faq", "question must be 100 characters or less", i)
-		}
-		if len(faq.Answer) > 300 {
-			return models.NewValidationErrorWithIndex("faq", "answer must be 300 characters or less", i)
-		}
-	}
-	return nil
-}
-
 
 func (s *EventService) validateUpdatePermissions(event *models.Event, userID string) error {
 	// If event is published, it cannot be modified
@@ -509,7 +380,7 @@ func (s *EventService) validatePublishRequirements(ctx context.Context, event *m
 	if event.Detail.Content == "" {
 		return models.NewValidationError("detail.content", "detail content is required for publishing")
 	}
-	
+
 	// Check actual session count from database instead of cached count
 	sessionCount, err := s.sessionService.sessionRepo.CountByEventID(ctx, event.ID.Hex())
 	if err != nil {
@@ -518,26 +389,9 @@ func (s *EventService) validatePublishRequirements(ctx context.Context, event *m
 	if sessionCount == 0 {
 		return models.NewValidationError("sessions", "at least one session is required for publishing")
 	}
-	
+
 	if event.Location.Name == "" || event.Location.Address == "" {
 		return models.NewValidationError("location", "complete location information is required for publishing")
-	}
-	return nil
-}
-
-// Format validation methods for draft events
-
-
-func (s *EventService) validateDetailFormat(detail *DetailRequest) error {
-	if detail == nil {
-		return nil // Allow nil detail for drafts
-	}
-	
-	if len(detail.Content) > 65536 { // 64KB
-		return models.NewValidationError("detail.content", "detail content must be 64KB or less")
-	}
-	if detail.ContentType != "" && !models.IsValidContentType(detail.ContentType) {
-		return models.NewValidationError("detail.content_type", "invalid content type")
 	}
 	return nil
 }
@@ -557,7 +411,7 @@ func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*mo
 
 	// Force draft status for all created events
 	status := models.StatusDraft
-	
+
 	// Default visibility
 	visibility := req.Visibility
 	if visibility == "" {

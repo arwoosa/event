@@ -31,16 +31,35 @@ func NewPublicEventServiceServer(publicService *PublicService) *PublicEventServi
 // SearchEvents implements the gRPC SearchEvents method
 func (s *PublicEventServiceServer) SearchEvents(ctx context.Context, req *pb.SearchEventsRequest) (*api.Response, error) {
 	// Convert gRPC request to service request
-	serviceReq := &SearchEventsRequest{
-		BrandID:     req.BrandId,
-		TitleSearch: req.TitleSearch,
-		LocationLat: req.LocationLat,
-		LocationLng: req.LocationLng,
-		SortBy:      req.SortBy,
-		SortOrder:   req.SortOrder,
-		PageToken:   req.PageToken,
-		Page:        req.Page,
-		PageSize:    req.PageSize,
+	serviceReq := &SearchEventsRequest{}
+
+	// Only set optional fields if they are provided and non-empty
+	if req.BrandId != nil && *req.BrandId != "" {
+		serviceReq.BrandID = req.BrandId
+	}
+	if req.TitleSearch != nil && *req.TitleSearch != "" {
+		serviceReq.TitleSearch = req.TitleSearch
+	}
+	if req.LocationLat != nil {
+		serviceReq.LocationLat = req.LocationLat
+	}
+	if req.LocationLng != nil {
+		serviceReq.LocationLng = req.LocationLng
+	}
+	if req.SortBy != nil && *req.SortBy != "" {
+		serviceReq.SortBy = req.SortBy
+	}
+	if req.SortOrder != nil && *req.SortOrder != "" {
+		serviceReq.SortOrder = req.SortOrder
+	}
+	if req.PageToken != nil && *req.PageToken != "" {
+		serviceReq.PageToken = req.PageToken
+	}
+	if req.Page != nil {
+		serviceReq.Page = req.Page
+	}
+	if req.PageSize != nil {
+		serviceReq.PageSize = req.PageSize
 	}
 
 	// Handle location radius
@@ -50,10 +69,10 @@ func (s *PublicEventServiceServer) SearchEvents(ctx context.Context, req *pb.Sea
 	}
 
 	// Handle time filters
-	if req.SessionStartTimeFrom != nil {
+	if req.SessionStartTimeFrom != nil && *req.SessionStartTimeFrom != "" {
 		serviceReq.SessionStartTimeFrom = req.SessionStartTimeFrom
 	}
-	if req.SessionStartTimeTo != nil {
+	if req.SessionStartTimeTo != nil && *req.SessionStartTimeTo != "" {
 		serviceReq.SessionStartTimeTo = req.SessionStartTimeTo
 	}
 

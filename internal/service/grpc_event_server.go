@@ -81,25 +81,39 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventL
 		return nil, err
 	}
 
-	// Build filter
+	// Build filter - only set non-empty string values
 	filter := &repository.EventFilter{
-		Status:       req.Status,
-		Visibility:   req.Visibility,
-		TitleSearch:  req.TitleSearch,
-		SortBy:       req.SortBy,
-		SortOrder:    req.SortOrder,
-		PageToken:    req.PageToken,
-		Limit:        20, // Default
-		Offset:       0,
+		Limit:  20, // Default
+		Offset: 0,
+	}
+
+	// Only set filter values if they are non-empty
+	if req.Status != nil && *req.Status != "" {
+		filter.Status = req.Status
+	}
+	if req.Visibility != nil && *req.Visibility != "" {
+		filter.Visibility = req.Visibility
+	}
+	if req.TitleSearch != nil && *req.TitleSearch != "" {
+		filter.TitleSearch = req.TitleSearch
+	}
+	if req.SortBy != nil && *req.SortBy != "" {
+		filter.SortBy = req.SortBy
+	}
+	if req.SortOrder != nil && *req.SortOrder != "" {
+		filter.SortOrder = req.SortOrder
+	}
+	if req.PageToken != nil && *req.PageToken != "" {
+		filter.PageToken = req.PageToken
 	}
 
 	// Handle time filters
-	if req.SessionStartTimeFrom != nil {
+	if req.SessionStartTimeFrom != nil && *req.SessionStartTimeFrom != "" {
 		if t, err := time.Parse(time.RFC3339, *req.SessionStartTimeFrom); err == nil {
 			filter.SessionStartTimeFrom = &t
 		}
 	}
-	if req.SessionStartTimeTo != nil {
+	if req.SessionStartTimeTo != nil && *req.SessionStartTimeTo != "" {
 		if t, err := time.Parse(time.RFC3339, *req.SessionStartTimeTo); err == nil {
 			filter.SessionStartTimeTo = &t
 		}
@@ -234,13 +248,25 @@ func (s *EventServiceServer) PatchEvent(ctx context.Context, req *pb.PatchEventR
 
 	// Convert gRPC request to service request
 	serviceReq := &PatchEventRequest{
-		ID:            req.Id,
-		Title:         req.Title,
-		Summary:       req.Summary,
-		Status:        req.Status,
-		Visibility:    req.Visibility,
-		CoverImageURL: req.CoverImageUrl,
-		UserID:        userID,
+		ID:     req.Id,
+		UserID: userID,
+	}
+
+	// Only set optional fields if they are provided and non-empty
+	if req.Title != nil && *req.Title != "" {
+		serviceReq.Title = req.Title
+	}
+	if req.Summary != nil && *req.Summary != "" {
+		serviceReq.Summary = req.Summary
+	}
+	if req.Status != nil && *req.Status != "" {
+		serviceReq.Status = req.Status
+	}
+	if req.Visibility != nil && *req.Visibility != "" {
+		serviceReq.Visibility = req.Visibility
+	}
+	if req.CoverImageUrl != nil && *req.CoverImageUrl != "" {
+		serviceReq.CoverImageURL = req.CoverImageUrl
 	}
 
 	if req.Location != nil {

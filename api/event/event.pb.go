@@ -8,6 +8,7 @@ package event
 
 import (
 	api "event/api"
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -477,9 +478,9 @@ type CreateEventRequest struct {
 	// status field removed - events are always created as draft
 	Visibility    string     `protobuf:"bytes,3,opt,name=visibility,proto3" json:"visibility,omitempty"`
 	CoverImageUrl string     `protobuf:"bytes,4,opt,name=cover_image_url,json=coverImageUrl,proto3" json:"cover_image_url,omitempty"`
-	Location      *Location  `protobuf:"bytes,5,opt,name=location,proto3" json:"location,omitempty"`
+	Location      *Location  `protobuf:"bytes,5,opt,name=location,proto3,oneof" json:"location,omitempty"`
 	Sessions      []*Session `protobuf:"bytes,6,rep,name=sessions,proto3" json:"sessions,omitempty"`
-	Detail        *Detail    `protobuf:"bytes,7,opt,name=detail,proto3" json:"detail,omitempty"`
+	Detail        *Detail    `protobuf:"bytes,7,opt,name=detail,proto3,oneof" json:"detail,omitempty"`
 	Faq           []*FAQ     `protobuf:"bytes,8,rep,name=faq,proto3" json:"faq,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1303,7 +1304,7 @@ var File_api_event_event_proto protoreflect.FileDescriptor
 
 const file_api_event_event_proto_rawDesc = "" +
 	"\n" +
-	"\x15api/event/event.proto\x12\x05event\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x10api/common.proto\"\xdc\x03\n" +
+	"\x15api/event/event.proto\x12\x05event\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x10api/common.proto\x1a#third_party/validate/validate.proto\"\xdc\x03\n" +
 	"\x05Event\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x19\n" +
@@ -1327,54 +1328,61 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\x0e \x01(\tR\tupdatedAt\x12\x1d\n" +
 	"\n" +
-	"updated_by\x18\x0f \x01(\tR\tupdatedBy\"\x8a\x01\n" +
-	"\bLocation\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\aaddress\x18\x02 \x01(\tR\aaddress\x12\x19\n" +
-	"\bplace_id\x18\x03 \x01(\tR\aplaceId\x125\n" +
-	"\vcoordinates\x18\x04 \x01(\v2\x13.event.GeoJSONPointR\vcoordinates\"D\n" +
-	"\fGeoJSONPoint\x12\x12\n" +
-	"\x04type\x18\x01 \x01(\tR\x04type\x12 \n" +
-	"\vcoordinates\x18\x02 \x03(\x01R\vcoordinates\"S\n" +
+	"updated_by\x18\x0f \x01(\tR\tupdatedBy\"\xaf\x01\n" +
+	"\bLocation\x12\x1b\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x04name\x12!\n" +
+	"\aaddress\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aaddress\x12\"\n" +
+	"\bplace_id\x18\x03 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aplaceId\x12?\n" +
+	"\vcoordinates\x18\x04 \x01(\v2\x13.event.GeoJSONPointB\b\xfaB\x05\x8a\x01\x02\x10\x01R\vcoordinates\"^\n" +
+	"\fGeoJSONPoint\x12 \n" +
+	"\x04type\x18\x01 \x01(\tB\f\xfaB\tr\a\n" +
+	"\x05PointR\x04type\x12,\n" +
+	"\vcoordinates\x18\x02 \x03(\x01B\n" +
+	"\xfaB\a\x92\x01\x04\b\x02\x10\x02R\vcoordinates\"S\n" +
 	"\aSession\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
 	"start_time\x18\x02 \x01(\tR\tstartTime\x12\x19\n" +
-	"\bend_time\x18\x03 \x01(\tR\aendTime\"E\n" +
-	"\x06Detail\x12\x18\n" +
-	"\acontent\x18\x01 \x01(\tR\acontent\x12!\n" +
-	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\"9\n" +
-	"\x03FAQ\x12\x1a\n" +
-	"\bquestion\x18\x01 \x01(\tR\bquestion\x12\x16\n" +
-	"\x06answer\x18\x02 \x01(\tR\x06answer\"\xaa\x02\n" +
-	"\x12CreateEventRequest\x12\x14\n" +
-	"\x05title\x18\x01 \x01(\tR\x05title\x12\x18\n" +
-	"\asummary\x18\x02 \x01(\tR\asummary\x12\x1e\n" +
+	"\bend_time\x18\x03 \x01(\tR\aendTime\"q\n" +
+	"\x06Detail\x12#\n" +
+	"\acontent\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x18\x80\x80\x04R\acontent\x12B\n" +
+	"\fcontent_type\x18\x02 \x01(\tB\x1f\xfaB\x1cr\x1aR\x04htmlR\bmarkdownR\x05plain\xd0\x01\x01R\vcontentType\"P\n" +
+	"\x03FAQ\x12%\n" +
+	"\bquestion\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18dR\bquestion\x12\"\n" +
+	"\x06answer\x18\x02 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x18\xac\x02R\x06answer\"\x89\x03\n" +
+	"\x12CreateEventRequest\x12\x1f\n" +
+	"\x05title\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18<R\x05title\x12\"\n" +
+	"\asummary\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xa0\x01R\asummary\x129\n" +
 	"\n" +
-	"visibility\x18\x03 \x01(\tR\n" +
-	"visibility\x12&\n" +
-	"\x0fcover_image_url\x18\x04 \x01(\tR\rcoverImageUrl\x12+\n" +
-	"\blocation\x18\x05 \x01(\v2\x0f.event.LocationR\blocation\x12*\n" +
-	"\bsessions\x18\x06 \x03(\v2\x0e.event.SessionR\bsessions\x12%\n" +
-	"\x06detail\x18\a \x01(\v2\r.event.DetailR\x06detail\x12\x1c\n" +
+	"visibility\x18\x03 \x01(\tB\x19\xfaB\x16r\x14R\x06publicR\aprivate\xd0\x01\x01R\n" +
+	"visibility\x123\n" +
+	"\x0fcover_image_url\x18\x04 \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\x88\x01\x01R\rcoverImageUrl\x120\n" +
+	"\blocation\x18\x05 \x01(\v2\x0f.event.LocationH\x00R\blocation\x88\x01\x01\x12*\n" +
+	"\bsessions\x18\x06 \x03(\v2\x0e.event.SessionR\bsessions\x12*\n" +
+	"\x06detail\x18\a \x01(\v2\r.event.DetailH\x01R\x06detail\x88\x01\x01\x12\x1c\n" +
 	"\x03faq\x18\b \x03(\v2\n" +
-	".event.FAQR\x03faq\"\xb6\x04\n" +
+	".event.FAQR\x03faqB\v\n" +
+	"\t_locationB\t\n" +
+	"\a_detail\"\xd6\x05\n" +
 	"\x13GetEventListRequest\x12\"\n" +
 	"\n" +
-	"page_token\x18\x01 \x01(\tH\x00R\tpageToken\x88\x01\x01\x12\x17\n" +
-	"\x04page\x18\x02 \x01(\x05H\x01R\x04page\x88\x01\x01\x12 \n" +
-	"\tpage_size\x18\x03 \x01(\x05H\x02R\bpageSize\x88\x01\x01\x12\x1b\n" +
-	"\x06status\x18\x04 \x01(\tH\x03R\x06status\x88\x01\x01\x12#\n" +
+	"page_token\x18\x01 \x01(\tH\x00R\tpageToken\x88\x01\x01\x12 \n" +
+	"\x04page\x18\x02 \x01(\x05B\a\xfaB\x04\x1a\x02(\x01H\x01R\x04page\x88\x01\x01\x12+\n" +
+	"\tpage_size\x18\x03 \x01(\x05B\t\xfaB\x06\x1a\x04\x18d(\x01H\x02R\bpageSize\x88\x01\x01\x12A\n" +
+	"\x06status\x18\x04 \x01(\tB$\xfaB!r\x1fR\x05draftR\tpublishedR\barchived\xd0\x01\x01H\x03R\x06status\x88\x01\x01\x12>\n" +
 	"\n" +
-	"visibility\x18\x05 \x01(\tH\x04R\n" +
+	"visibility\x18\x05 \x01(\tB\x19\xfaB\x16r\x14R\x06publicR\aprivate\xd0\x01\x01H\x04R\n" +
 	"visibility\x88\x01\x01\x12:\n" +
 	"\x17session_start_time_from\x18\x06 \x01(\tH\x05R\x14sessionStartTimeFrom\x88\x01\x01\x126\n" +
 	"\x15session_start_time_to\x18\a \x01(\tH\x06R\x12sessionStartTimeTo\x88\x01\x01\x12&\n" +
-	"\ftitle_search\x18\b \x01(\tH\aR\vtitleSearch\x88\x01\x01\x12\x1c\n" +
-	"\asort_by\x18\t \x01(\tH\bR\x06sortBy\x88\x01\x01\x12\"\n" +
+	"\ftitle_search\x18\b \x01(\tH\aR\vtitleSearch\x88\x01\x01\x12R\n" +
+	"\asort_by\x18\t \x01(\tB4\xfaB1r/R\n" +
+	"created_atR\n" +
+	"updated_atR\x12session_start_time\xd0\x01\x01H\bR\x06sortBy\x88\x01\x01\x127\n" +
 	"\n" +
 	"sort_order\x18\n" +
-	" \x01(\tH\tR\tsortOrder\x88\x01\x01B\r\n" +
+	" \x01(\tB\x13\xfaB\x10r\x0eR\x03ascR\x04desc\xd0\x01\x01H\tR\tsortOrder\x88\x01\x01B\r\n" +
 	"\v_page_tokenB\a\n" +
 	"\x05_pageB\f\n" +
 	"\n" +
@@ -1386,31 +1394,31 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\r_title_searchB\n" +
 	"\n" +
 	"\b_sort_byB\r\n" +
-	"\v_sort_order\"\xd2\x02\n" +
-	"\x12UpdateEventRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
-	"\asummary\x18\x03 \x01(\tR\asummary\x12\x16\n" +
-	"\x06status\x18\x04 \x01(\tR\x06status\x12\x1e\n" +
+	"\v_sort_order\"\xd9\x03\n" +
+	"\x12UpdateEventRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\x1f\n" +
+	"\x05title\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18<R\x05title\x12\"\n" +
+	"\asummary\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xa0\x01R\asummary\x12<\n" +
+	"\x06status\x18\x04 \x01(\tB$\xfaB!r\x1fR\x05draftR\tpublishedR\barchived\xd0\x01\x01R\x06status\x129\n" +
 	"\n" +
-	"visibility\x18\x05 \x01(\tR\n" +
-	"visibility\x12&\n" +
-	"\x0fcover_image_url\x18\x06 \x01(\tR\rcoverImageUrl\x12+\n" +
-	"\blocation\x18\a \x01(\v2\x0f.event.LocationR\blocation\x12*\n" +
-	"\bsessions\x18\b \x03(\v2\x0e.event.SessionR\bsessions\x12%\n" +
-	"\x06detail\x18\t \x01(\v2\r.event.DetailR\x06detail\x12\x1c\n" +
+	"visibility\x18\x05 \x01(\tB\x19\xfaB\x16r\x14R\x06publicR\aprivate\xd0\x01\x01R\n" +
+	"visibility\x120\n" +
+	"\x0fcover_image_url\x18\x06 \x01(\tB\b\xfaB\x05r\x03\x88\x01\x01R\rcoverImageUrl\x125\n" +
+	"\blocation\x18\a \x01(\v2\x0f.event.LocationB\b\xfaB\x05\x8a\x01\x02\x10\x01R\blocation\x124\n" +
+	"\bsessions\x18\b \x03(\v2\x0e.event.SessionB\b\xfaB\x05\x92\x01\x02\b\x01R\bsessions\x12/\n" +
+	"\x06detail\x18\t \x01(\v2\r.event.DetailB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06detail\x12\x1c\n" +
 	"\x03faq\x18\n" +
 	" \x03(\v2\n" +
-	".event.FAQR\x03faq\"\xd0\x03\n" +
-	"\x11PatchEventRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
-	"\x05title\x18\x02 \x01(\tH\x00R\x05title\x88\x01\x01\x12\x1d\n" +
-	"\asummary\x18\x03 \x01(\tH\x01R\asummary\x88\x01\x01\x12\x1b\n" +
-	"\x06status\x18\x04 \x01(\tH\x02R\x06status\x88\x01\x01\x12#\n" +
+	".event.FAQR\x03faq\"\xc2\x04\n" +
+	"\x11PatchEventRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12'\n" +
+	"\x05title\x18\x02 \x01(\tB\f\xfaB\tr\a\x10\x01\x18<\xd0\x01\x01H\x00R\x05title\x88\x01\x01\x12*\n" +
+	"\asummary\x18\x03 \x01(\tB\v\xfaB\br\x06\x18\xa0\x01\xd0\x01\x01H\x01R\asummary\x88\x01\x01\x12A\n" +
+	"\x06status\x18\x04 \x01(\tB$\xfaB!r\x1fR\x05draftR\tpublishedR\barchived\xd0\x01\x01H\x02R\x06status\x88\x01\x01\x12>\n" +
 	"\n" +
-	"visibility\x18\x05 \x01(\tH\x03R\n" +
-	"visibility\x88\x01\x01\x12+\n" +
-	"\x0fcover_image_url\x18\x06 \x01(\tH\x04R\rcoverImageUrl\x88\x01\x01\x120\n" +
+	"visibility\x18\x05 \x01(\tB\x19\xfaB\x16r\x14R\x06publicR\aprivate\xd0\x01\x01H\x03R\n" +
+	"visibility\x88\x01\x01\x128\n" +
+	"\x0fcover_image_url\x18\x06 \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\x88\x01\x01H\x04R\rcoverImageUrl\x88\x01\x01\x120\n" +
 	"\blocation\x18\a \x01(\v2\x0f.event.LocationH\x05R\blocation\x88\x01\x01\x12*\n" +
 	"\bsessions\x18\b \x03(\v2\x0e.event.SessionR\bsessions\x12*\n" +
 	"\x06detail\x18\t \x01(\v2\r.event.DetailH\x06R\x06detail\x88\x01\x01\x12\x1c\n" +
@@ -1424,27 +1432,28 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\v_visibilityB\x12\n" +
 	"\x10_cover_image_urlB\v\n" +
 	"\t_locationB\t\n" +
-	"\a_detail\"B\n" +
-	"\x18UpdateEventStatusRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\"\xbb\x05\n" +
+	"\a_detail\"n\n" +
+	"\x18UpdateEventStatusRequest\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x129\n" +
+	"\x06status\x18\x02 \x01(\tB!\xfaB\x1er\x1cR\x05draftR\tpublishedR\barchivedR\x06status\"\xc9\x06\n" +
 	"\x13SearchEventsRequest\x12\"\n" +
 	"\n" +
-	"page_token\x18\x01 \x01(\tH\x00R\tpageToken\x88\x01\x01\x12\x17\n" +
-	"\x04page\x18\x02 \x01(\x05H\x01R\x04page\x88\x01\x01\x12 \n" +
-	"\tpage_size\x18\x03 \x01(\x05H\x02R\bpageSize\x88\x01\x01\x12\x1e\n" +
+	"page_token\x18\x01 \x01(\tH\x00R\tpageToken\x88\x01\x01\x12 \n" +
+	"\x04page\x18\x02 \x01(\x05B\a\xfaB\x04\x1a\x02(\x01H\x01R\x04page\x88\x01\x01\x12+\n" +
+	"\tpage_size\x18\x03 \x01(\x05B\t\xfaB\x06\x1a\x04\x18d(\x01H\x02R\bpageSize\x88\x01\x01\x12\x1e\n" +
 	"\bbrand_id\x18\x04 \x01(\tH\x03R\abrandId\x88\x01\x01\x12&\n" +
 	"\ftitle_search\x18\x05 \x01(\tH\x04R\vtitleSearch\x88\x01\x01\x12:\n" +
 	"\x17session_start_time_from\x18\x06 \x01(\tH\x05R\x14sessionStartTimeFrom\x88\x01\x01\x126\n" +
-	"\x15session_start_time_to\x18\a \x01(\tH\x06R\x12sessionStartTimeTo\x88\x01\x01\x12&\n" +
-	"\flocation_lat\x18\b \x01(\x01H\aR\vlocationLat\x88\x01\x01\x12&\n" +
-	"\flocation_lng\x18\t \x01(\x01H\bR\vlocationLng\x88\x01\x01\x12,\n" +
+	"\x15session_start_time_to\x18\a \x01(\tH\x06R\x12sessionStartTimeTo\x88\x01\x01\x12?\n" +
+	"\flocation_lat\x18\b \x01(\x01B\x17\xfaB\x14\x12\x12\x19\x00\x00\x00\x00\x00\x80V@)\x00\x00\x00\x00\x00\x80V\xc0H\aR\vlocationLat\x88\x01\x01\x12?\n" +
+	"\flocation_lng\x18\t \x01(\x01B\x17\xfaB\x14\x12\x12\x19\x00\x00\x00\x00\x00\x80f@)\x00\x00\x00\x00\x00\x80f\xc0H\bR\vlocationLng\x88\x01\x01\x125\n" +
 	"\x0flocation_radius\x18\n" +
-	" \x01(\x05H\tR\x0elocationRadius\x88\x01\x01\x12\x1c\n" +
-	"\asort_by\x18\v \x01(\tH\n" +
-	"R\x06sortBy\x88\x01\x01\x12\"\n" +
+	" \x01(\x05B\a\xfaB\x04\x1a\x02(\x01H\tR\x0elocationRadius\x88\x01\x01\x12F\n" +
+	"\asort_by\x18\v \x01(\tB(\xfaB%r#R\x12session_start_timeR\n" +
+	"created_at\xd0\x01\x01H\n" +
+	"R\x06sortBy\x88\x01\x01\x127\n" +
 	"\n" +
-	"sort_order\x18\f \x01(\tH\vR\tsortOrder\x88\x01\x01B\r\n" +
+	"sort_order\x18\f \x01(\tB\x13\xfaB\x10r\x0eR\x03ascR\x04desc\xd0\x01\x01H\vR\tsortOrder\x88\x01\x01B\r\n" +
 	"\v_page_tokenB\a\n" +
 	"\x05_pageB\f\n" +
 	"\n" +
@@ -1580,6 +1589,7 @@ func file_api_event_event_proto_init() {
 	if File_api_event_event_proto != nil {
 		return
 	}
+	file_api_event_event_proto_msgTypes[6].OneofWrappers = []any{}
 	file_api_event_event_proto_msgTypes[7].OneofWrappers = []any{}
 	file_api_event_event_proto_msgTypes[9].OneofWrappers = []any{}
 	file_api_event_event_proto_msgTypes[11].OneofWrappers = []any{}

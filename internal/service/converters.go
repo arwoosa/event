@@ -55,7 +55,7 @@ func (c *ProtobufConverter) ConvertSessionCollectionToPB(sessions []*models.Sess
 	if sessions == nil {
 		return []*pb.Session{}
 	}
-	
+
 	sessionsPB := make([]*pb.Session, len(sessions))
 	for i, session := range sessions {
 		sessionsPB[i] = &pb.Session{
