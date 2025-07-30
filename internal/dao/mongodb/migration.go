@@ -4,9 +4,10 @@ import (
 	"context"
 	"event/internal/conf"
 	"fmt"
+	"log"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"log"
 )
 
 // Migration defines the structure for a collection migration
@@ -71,6 +72,19 @@ var migrations = []Migration{
 					{Key: "sessions.start_time", Value: 1},
 				},
 			},
+		},
+	},
+	{
+		Collection: "sessions",
+		Indexes: []mongo.IndexModel{
+			// 1. 事件查詢
+			{Keys: bson.D{{Key: "event_id", Value: 1}}},
+			// 2. Brand 隔離 + 時間排序
+			{Keys: bson.D{{Key: "brand_id", Value: 1}, {Key: "start_time", Value: 1}}},
+			// 3. 事件內 session 排序
+			{Keys: bson.D{{Key: "event_id", Value: 1}, {Key: "start_time", Value: 1}}},
+			// 4. 時間範圍查詢
+			{Keys: bson.D{{Key: "start_time", Value: 1}, {Key: "end_time", Value: 1}}},
 		},
 	},
 }
