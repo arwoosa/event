@@ -103,7 +103,7 @@
 - Session 必填欄位：start_time, end_time
 - Location 必填欄位：name, address, place_id, coordinates（支援 Google Maps 整合和地理位置搜尋）
 - Detail 必填欄位：content（不可空白）
-- FAQ：為可選欄位，但若新增則 question, answer 都必填
+- FAQ：為可選欄位，但若新增則 question, answer 都必填（最多 20 個）
 - Visibility 預設值：private
 
 **欄位長度限制：**（**備註：需與 PO 確認最終規格**）
@@ -113,6 +113,7 @@
 - Detail.content：最大 64KB（考慮 HTML/Markdown 語法）
 - FAQ question：最大 100 字
 - FAQ answer：最大 300 字
+- FAQ 數量：最多 20 個
 
 **特殊驗證規則：**
 - 時間格式：一律使用 RFC 3339

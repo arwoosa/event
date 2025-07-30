@@ -1046,6 +1046,17 @@ func (m *CreateEventRequest) validate(all bool) error {
 
 	}
 
+	if len(m.GetFaq()) > 20 {
+		err := CreateEventRequestValidationError{
+			field:  "Faq",
+			reason: "value must contain no more than 20 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	for idx, item := range m.GetFaq() {
 		_, _ = idx, item
 
@@ -1708,6 +1719,17 @@ func (m *UpdateEventRequest) validate(all bool) error {
 		}
 	}
 
+	if len(m.GetFaq()) > 20 {
+		err := UpdateEventRequestValidationError{
+			field:  "Faq",
+			reason: "value must contain no more than 20 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
 	for idx, item := range m.GetFaq() {
 		_, _ = idx, item
 
@@ -1898,6 +1920,17 @@ func (m *PatchEventRequest) validate(all bool) error {
 			}
 		}
 
+	}
+
+	if len(m.GetFaq()) > 20 {
+		err := PatchEventRequestValidationError{
+			field:  "Faq",
+			reason: "value must contain no more than 20 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
 	}
 
 	for idx, item := range m.GetFaq() {

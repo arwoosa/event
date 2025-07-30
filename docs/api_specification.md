@@ -326,7 +326,7 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 - **Session**: start_time, end_time  
 - **Location**: name, address, place_id, coordinates
 - **Detail**: content
-- **FAQ**: question, answer (當 FAQ 存在時)
+- **FAQ**: question, answer (當 FAQ 存在時，最多 20 個)
 
 ### 長度限制
 - title: 最大 60 字
@@ -334,6 +334,7 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 - detail.content: 最大 64KB
 - faq.question: 最大 100 字
 - faq.answer: 最大 300 字
+- faq 數量: 最多 20 個
 
 ### 業務規則驗證
 - Sessions 至少一個

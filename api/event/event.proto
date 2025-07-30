@@ -143,7 +143,7 @@ message CreateEventRequest {
   optional Location location = 5;
   repeated Session sessions = 6;
   optional Detail detail = 7;
-  repeated FAQ faq = 8;
+  repeated FAQ faq = 8 [(validate.rules).repeated = {min_items: 0, max_items: 20}];
 }
 
 message GetEventListRequest {
@@ -174,7 +174,7 @@ message UpdateEventRequest {
   Location location = 7 [(validate.rules).message.required = true];
   repeated Session sessions = 8 [(validate.rules).repeated.min_items = 1];
   Detail detail = 9 [(validate.rules).message.required = true];
-  repeated FAQ faq = 10;
+  repeated FAQ faq = 10 [(validate.rules).repeated = {min_items: 0, max_items: 20}];
 }
 
 message PatchEventRequest {
@@ -187,7 +187,7 @@ message PatchEventRequest {
   optional Location location = 7;
   repeated Session sessions = 8; // Replace all sessions if provided
   optional Detail detail = 9;
-  repeated FAQ faq = 10; // Replace all FAQ if provided
+  repeated FAQ faq = 10 [(validate.rules).repeated = {min_items: 0, max_items: 20}]; // Replace all FAQ if provided
 }
 
 message UpdateEventStatusRequest {

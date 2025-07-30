@@ -1350,7 +1350,7 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\x03FAQ\x12%\n" +
 	"\bquestion\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18dR\bquestion\x12\"\n" +
 	"\x06answer\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\xac\x02R\x06answer\"\x89\x03\n" +
+	"\xfaB\ar\x05\x10\x01\x18\xac\x02R\x06answer\"\x95\x03\n" +
 	"\x12CreateEventRequest\x12\x1f\n" +
 	"\x05title\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18<R\x05title\x12\"\n" +
 	"\asummary\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xa0\x01R\asummary\x129\n" +
@@ -1360,9 +1360,10 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\x0fcover_image_url\x18\x04 \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\x88\x01\x01R\rcoverImageUrl\x120\n" +
 	"\blocation\x18\x05 \x01(\v2\x0f.event.LocationH\x00R\blocation\x88\x01\x01\x12*\n" +
 	"\bsessions\x18\x06 \x03(\v2\x0e.event.SessionR\bsessions\x12*\n" +
-	"\x06detail\x18\a \x01(\v2\r.event.DetailH\x01R\x06detail\x88\x01\x01\x12\x1c\n" +
+	"\x06detail\x18\a \x01(\v2\r.event.DetailH\x01R\x06detail\x88\x01\x01\x12(\n" +
 	"\x03faq\x18\b \x03(\v2\n" +
-	".event.FAQR\x03faqB\v\n" +
+	".event.FAQB\n" +
+	"\xfaB\a\x92\x01\x04\b\x00\x10\x14R\x03faqB\v\n" +
 	"\t_locationB\t\n" +
 	"\a_detail\"\xd6\x05\n" +
 	"\x13GetEventListRequest\x12\"\n" +
@@ -1394,7 +1395,7 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\r_title_searchB\n" +
 	"\n" +
 	"\b_sort_byB\r\n" +
-	"\v_sort_order\"\xd9\x03\n" +
+	"\v_sort_order\"\xe5\x03\n" +
 	"\x12UpdateEventRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12\x1f\n" +
 	"\x05title\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18<R\x05title\x12\"\n" +
@@ -1406,10 +1407,11 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\x0fcover_image_url\x18\x06 \x01(\tB\b\xfaB\x05r\x03\x88\x01\x01R\rcoverImageUrl\x125\n" +
 	"\blocation\x18\a \x01(\v2\x0f.event.LocationB\b\xfaB\x05\x8a\x01\x02\x10\x01R\blocation\x124\n" +
 	"\bsessions\x18\b \x03(\v2\x0e.event.SessionB\b\xfaB\x05\x92\x01\x02\b\x01R\bsessions\x12/\n" +
-	"\x06detail\x18\t \x01(\v2\r.event.DetailB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06detail\x12\x1c\n" +
+	"\x06detail\x18\t \x01(\v2\r.event.DetailB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06detail\x12(\n" +
 	"\x03faq\x18\n" +
 	" \x03(\v2\n" +
-	".event.FAQR\x03faq\"\xc2\x04\n" +
+	".event.FAQB\n" +
+	"\xfaB\a\x92\x01\x04\b\x00\x10\x14R\x03faq\"\xce\x04\n" +
 	"\x11PatchEventRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12'\n" +
 	"\x05title\x18\x02 \x01(\tB\f\xfaB\tr\a\x10\x01\x18<\xd0\x01\x01H\x00R\x05title\x88\x01\x01\x12*\n" +
@@ -1421,10 +1423,11 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\x0fcover_image_url\x18\x06 \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\x88\x01\x01H\x04R\rcoverImageUrl\x88\x01\x01\x120\n" +
 	"\blocation\x18\a \x01(\v2\x0f.event.LocationH\x05R\blocation\x88\x01\x01\x12*\n" +
 	"\bsessions\x18\b \x03(\v2\x0e.event.SessionR\bsessions\x12*\n" +
-	"\x06detail\x18\t \x01(\v2\r.event.DetailH\x06R\x06detail\x88\x01\x01\x12\x1c\n" +
+	"\x06detail\x18\t \x01(\v2\r.event.DetailH\x06R\x06detail\x88\x01\x01\x12(\n" +
 	"\x03faq\x18\n" +
 	" \x03(\v2\n" +
-	".event.FAQR\x03faqB\b\n" +
+	".event.FAQB\n" +
+	"\xfaB\a\x92\x01\x04\b\x00\x10\x14R\x03faqB\b\n" +
 	"\x06_titleB\n" +
 	"\n" +
 	"\b_summaryB\t\n" +
