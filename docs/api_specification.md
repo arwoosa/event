@@ -128,6 +128,11 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 }
 ```
 
+**交易處理：**
+- Event 建立採用兩階段提交：先建立 Event，再建立 Sessions
+- 如果 Sessions 建立失敗，會自動刪除已建立的 Event（Rollback）
+- 建立失敗時會回傳詳細的錯誤訊息，使用者需重新提交請求
+
 ### 2. 取得 Event 列表
 
 **端點：** `GET /console/events`

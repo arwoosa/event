@@ -316,6 +316,89 @@ func (s *StateTransition) CanTransition(ctx context.Context, event *Event, newSt
 }
 ```
 
+### 4.4 事件建立邏輯與交易處理
+
+**目前實作邏輯：**
+
+Event 建立採用兩階段提交模式：
+1. 先建立 Event 資料
+2. 再建立相關的 Sessions 資料
+
+```go
+func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest) (*models.Event, error) {
+    // 1. 驗證並轉換請求
+    event, err := s.convertCreateRequestToModel(req)
+    if err != nil {
+        return nil, err
+    }
+
+    // 2. 建立 Event（草稿狀態）
+    createdEvent, err := s.eventRepo.Create(ctx, event)
+    if err != nil {
+        return nil, err
+    }
+
+    // 3. 建立 Sessions（如果失敗則 Rollback Event）
+    if len(req.Sessions) > 0 {
+        _, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.BrandID, req.Sessions)
+        if err != nil {
+            // Rollback: 刪除已建立的 Event
+            s.eventRepo.Delete(ctx, createdEvent.ID.Hex())
+            return nil, fmt.Errorf("failed to create sessions: %w", err)
+        }
+    }
+
+    return createdEvent, nil
+}
+```
+
+**設計考量：**
+
+**優點：**
+- ✅ **資料一致性**：避免產生孤兒 Event（無 Sessions 的 Event）
+- ✅ **原子性操作**：CreateEvent 是完整的業務操作
+- ✅ **錯誤處理清晰**：失敗時會回傳明確的錯誤原因
+
+**潛在問題：**
+- ⚠️ **使用者體驗**：Session 驗證錯誤會導致整個建立失敗
+- ⚠️ **前端兼容性**：與自動儲存 + Patch 更新模式可能衝突
+- ⚠️ **資料恢復**：使用者需要重新填寫所有資料
+
+**【待決議】替代方案：**
+
+**方案 1：條件式 Rollback**
+```go
+if err != nil {
+    // 驗證錯誤：允許建立不完整草稿
+    if isValidationError(err) {
+        log.Warn("Session validation failed, event created without sessions")
+        return createdEvent, nil
+    }
+    // 系統錯誤：執行 Rollback
+    s.eventRepo.Delete(ctx, createdEvent.ID.Hex())
+    return nil, err
+}
+```
+
+**方案 2：取消 Rollback**
+```go
+if err != nil {
+    log.Warn("Failed to create sessions, event created as draft")
+    // 不 rollback，讓前端透過 Patch API 完善
+}
+return createdEvent, nil
+```
+
+**方案 3：真正的資料庫交易**
+```go
+// 使用 MongoDB Transaction
+session.WithTransaction(ctx, func(ctx mongo.SessionContext) error {
+    // 在交易中建立 Event 和 Sessions
+})
+```
+
+**建議**：考慮前端自動儲存架構，建議採用**方案 1**，在 Session 驗證錯誤時允許草稿狀態，系統錯誤時才 Rollback。
+
 ## 5. API 層設計
 
 ### 5.1 gRPC 服務定義
