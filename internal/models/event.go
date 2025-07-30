@@ -15,7 +15,6 @@ type Event struct {
 	Visibility    string             `json:"visibility" bson:"visibility"` // public, private
 	CoverImageURL string             `json:"cover_image_url" bson:"cover_image_url"`
 	Location      Location           `json:"location" bson:"location"`
-	SessionCount  int                `json:"session_count" bson:"session_count"` // Cache of session count
 	Detail        Detail             `json:"detail" bson:"detail"`
 	FAQ           []FAQ              `json:"faq" bson:"faq"`
 	CreatedAt     time.Time          `json:"created_at" bson:"created_at"`
@@ -113,12 +112,3 @@ func (e *Event) IsShareable() bool {
 	return e.Status == StatusPublished
 }
 
-// HasSessions validates that the event has at least one session
-func (e *Event) HasSessions() bool {
-	return e.SessionCount > 0
-}
-
-// UpdateSessionCount updates the cached session count
-func (e *Event) UpdateSessionCount(count int) {
-	e.SessionCount = count
-}

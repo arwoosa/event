@@ -126,9 +126,6 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 		return nil, err
 	}
 
-	// Set session count
-	event.SessionCount = len(req.Sessions)
-
 	// Create event first
 	createdEvent, err := s.eventRepo.Create(ctx, event)
 	if err != nil {
@@ -200,9 +197,6 @@ func (s *EventService) UpdateEvent(ctx context.Context, brandID string, req *Upd
 		return nil, err
 	}
 
-	// Update session count
-	event.SessionCount = len(req.Sessions)
-
 	return s.eventRepo.Update(ctx, req.ID, event)
 }
 
@@ -225,8 +219,6 @@ func (s *EventService) PatchEvent(ctx context.Context, brandID string, req *Patc
 		if err != nil {
 			return nil, fmt.Errorf("failed to update sessions: %w", err)
 		}
-		// Update session count in existing event
-		existingEvent.SessionCount = len(req.Sessions)
 	}
 
 	// Apply partial updates
@@ -479,7 +471,6 @@ func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*mo
 		Visibility:    visibility,
 		CoverImageURL: req.CoverImageURL,
 		Location:      location,
-		SessionCount:  len(req.Sessions),
 		Detail:        detail,
 		FAQ:           faq,
 		CreatedBy:     userID,
