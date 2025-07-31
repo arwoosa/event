@@ -4,65 +4,87 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
+
+	orderpb "event/api/order"
 	"event/internal/conf"
 )
 
 // OrderServiceClientImpl implements OrderServiceClient interface
 type OrderServiceClientImpl struct {
-	endpoint string
-	timeout  time.Duration
-	client   *http.Client
+	conn    *grpc.ClientConn
+	client  orderpb.OrdersClient
+	timeout time.Duration
 }
 
 // NewOrderServiceClient creates a new order service client
 func NewOrderServiceClient(config conf.ServiceConfig) OrderServiceClient {
-	return &OrderServiceClientImpl{
-		endpoint: config.Endpoint,
-		timeout:  config.Timeout,
-		client: &http.Client{
-			Timeout: config.Timeout,
-		},
-	}
-}
-
-// OrderExistsResponse represents the response from order service
-type OrderExistsResponse struct {
-	HasOrders bool `json:"has_orders"`
-}
-
-// HasOrders checks if an event has any orders
-func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) (bool, error) {
-	url := fmt.Sprintf("http://%s/orders/events/%s/exists", c.endpoint, eventID)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	conn, err := grpc.NewClient(config.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return false, fmt.Errorf("failed to create request: %w", err)
+		// For development, we'll use a mock client if connection fails
+		return NewMockOrderServiceClient(false, fmt.Errorf("failed to connect to order service: %w", err))
 	}
 
-	resp, err := c.client.Do(req)
+	client := orderpb.NewOrdersClient(conn)
+	
+	return &OrderServiceClientImpl{
+		conn:    conn,
+		client:  client,
+		timeout: config.Timeout,
+	}
+}
+
+// HasOrders checks if an event has any orders using gRPC
+func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) (bool, error) {
+	// Create timeout context
+	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	// Create request
+	req := &orderpb.IsEventHasOrdersRequest{
+		Event: eventID,
+	}
+
+	// Call gRPC service
+	resp, err := c.client.IsEventHasOrders(timeoutCtx, req)
 	if err != nil {
 		return false, fmt.Errorf("failed to call order service: %w", err)
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotFound {
-		// If event not found in order service, assume no orders
+	// Parse response data to get has_orders boolean
+	if resp.Data == nil {
 		return false, nil
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("order service returned status %d", resp.StatusCode)
+	// Convert Any to JSON and parse
+	jsonBytes, err := protojson.Marshal(resp.Data)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshal response data: %w", err)
 	}
 
-	var response OrderExistsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return false, fmt.Errorf("failed to decode response: %w", err)
+	var data map[string]interface{}
+	if err := json.Unmarshal(jsonBytes, &data); err != nil {
+		return false, fmt.Errorf("failed to unmarshal response data: %w", err)
 	}
 
-	return response.HasOrders, nil
+	hasOrders, ok := data["has_orders"].(bool)
+	if !ok {
+		return false, nil
+	}
+
+	return hasOrders, nil
+}
+
+// Close closes the gRPC connection
+func (c *OrderServiceClientImpl) Close() error {
+	if c.conn != nil {
+		return c.conn.Close()
+	}
+	return nil
 }
 
 // MockOrderServiceClient is a mock implementation for testing

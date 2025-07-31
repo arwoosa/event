@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+option go_package = "event/api/order";
+
+package api.orders;
+
+import "api/common.proto";
+import "google/api/annotations.proto";
+import "third_party/buf/validate/validate.proto";
+
+
+service Orders {
+  rpc AddOrder (AddOrderRequest) returns (api.Response) {
+    option (google.api.http) = {
+      post: "/api/v1/{event}/tickets"
+      body: "*"
+    };
+  };
+
+  rpc IsEventHasOrders (IsEventHasOrdersRequest) returns (api.Response) {
+    option (google.api.http) = {
+      get: "/api/v1/events/{event}/orders/exist"
+    };
+  }
+}
+
+message AddOrderRequest {
+  string payment =1 [(buf.validate.field).string.len = 24];
+  message Item {
+    string ticket = 1 [(buf.validate.field).string.len = 24] ;
+    uint32 quantity = 2 [(buf.validate.field).uint32.gt = 0];
+  }
+  repeated Item items = 3 [(buf.validate.field).repeated = {min_items: 1}];
+  string subtotal = 4 [(buf.validate.field).string.min_len = 1];
+  string total = 5 [(buf.validate.field).string.min_len = 1];
+  string form = 6 [(buf.validate.field).string.min_len = 1];
+  string event = 7 [(buf.validate.field).string.len = 24] ;
+}
+
+message IsEventHasOrdersRequest {
+  string event = 1 [(buf.validate.field).string.len = 24];
+}

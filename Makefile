@@ -26,13 +26,17 @@ help:
 	@echo "make gotool - Go tool 'fmt' and 'vet'"
 
 grpc:
+	# Generate Go code for all proto files (including order for client usage)
 	protoc -I . -I third_party/googleapis \
-	--go_out=. --go_opt=paths=source_relative \
-	--go-grpc_out=. --go-grpc_opt=paths=source_relative \
-	--grpc-gateway_out=. --grpc-gateway_opt=paths=source_relative \
-	--validate_out="lang=go,paths=source_relative:." \
-	--openapiv2_out=docs --openapiv2_opt=logtostderr=true,json_names_for_fields=false,allow_merge=true \
-	api/event/*.proto api/*.proto
+		--go_out=. --go_opt=paths=source_relative \
+		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
+		--validate_out="lang=go,paths=source_relative:." \
+		api/event/*.proto api/order/*.proto api/*.proto
+	# Generate gRPC-Gateway and OpenAPI only for event service APIs (exclude order)
+	protoc -I . -I third_party/googleapis \
+		--grpc-gateway_out=. --grpc-gateway_opt=paths=source_relative \
+		--openapiv2_out=docs --openapiv2_opt=logtostderr=true,json_names_for_fields=false,allow_merge=true \
+		api/event/*.proto api/*.proto
 
 docker_run:
 	 docker run -p 8081:8081 -d -v ./logs:/app/logs/ partivo_event:1.0
