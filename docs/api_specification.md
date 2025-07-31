@@ -99,6 +99,7 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
   },
   "sessions": [
     {
+      "id": "",  // 空值表示新增場次
       "start_time": "2024-01-01T10:00:00Z",
       "end_time": "2024-01-01T12:00:00Z"
     }
@@ -253,12 +254,24 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
   "title": "新標題",
   "sessions": [
     {
+      "id": "existing_session_id",  // 有值表示修改現有場次
       "start_time": "2024-01-02T10:00:00Z",
       "end_time": "2024-01-02T12:00:00Z"
+    },
+    {
+      "id": "",  // 空值表示新增場次
+      "start_time": "2024-01-02T14:00:00Z",
+      "end_time": "2024-01-02T16:00:00Z"
     }
   ]
 }
 ```
+
+**Session 陣列更新機制：**
+- **新增場次**：`id` 為空字串或不提供
+- **修改場次**：`id` 為現有 session 的 ID
+- **刪除場次**：不在陣列中的現有 session 會被刪除
+- **批次操作**：使用 MongoDB BulkWrite 確保操作效率和部分原子性
 
 ### 6. 刪除 Event
 

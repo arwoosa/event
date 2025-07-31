@@ -47,6 +47,9 @@ type SessionRepository interface {
 
 	// ExistsByEventAndBrand checks if sessions exist for an event within a brand
 	ExistsByEventAndBrand(ctx context.Context, eventID, brandID string) (bool, error)
+
+	// BulkUpdateSessions performs bulk operations (create, update, delete) in a single request
+	BulkUpdateSessions(ctx context.Context, creates []*models.Session, updates []*models.Session, deleteIDs []string) error
 }
 
 // SessionFilter represents filtering options for session queries

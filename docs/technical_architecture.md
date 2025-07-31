@@ -643,12 +643,57 @@ func TranslateError(err error) (codes.Code, string) {
 - 地理位置查詢使用 2dsphere 索引
 - 全文搜尋使用 text 索引
 
-### 8.2 連接池管理
+### 8.2 Session 更新機制優化
+
+**智慧型差異更新**：
+- 採用陣列差異比對，支援新增、修改、刪除的混合操作
+- 使用 MongoDB BulkWrite API 進行批次操作，提升性能
+
+**BulkWrite 策略**：
+```go
+func (r *MongoSessionRepository) BulkUpdateSessions(ctx context.Context, 
+    creates []*models.Session, updates []*models.Session, deleteIDs []string) error {
+    
+    writeModels := []mongo.WriteModel{}
+    
+    // Delete operations
+    for _, id := range deleteIDs {
+        deleteModel := mongo.NewDeleteOneModel().SetFilter(bson.M{"_id": objectID})
+        writeModels = append(writeModels, deleteModel)
+    }
+    
+    // Update operations  
+    for _, session := range updates {
+        updateModel := mongo.NewUpdateOneModel().
+            SetFilter(bson.M{"_id": session.ID}).
+            SetUpdate(bson.M{"$set": session})
+        writeModels = append(writeModels, updateModel)
+    }
+    
+    // Insert operations
+    for _, session := range creates {
+        insertModel := mongo.NewInsertOneModel().SetDocument(session)
+        writeModels = append(writeModels, insertModel)
+    }
+    
+    // Execute with unordered mode for better performance
+    opts := options.BulkWrite().SetOrdered(false)
+    _, err := r.collection.BulkWrite(ctx, writeModels, opts)
+    return err
+}
+```
+
+**效能優勢**：
+- **網路往返減少**：從 N+M+1 次操作降為 1 次 BulkWrite
+- **並行處理**：`SetOrdered(false)` 允許 MongoDB 並行執行操作
+- **部分原子性**：失敗操作不影響成功操作，提升可用性
+
+### 8.3 連接池管理
 - MongoDB 連接池大小根據負載調整
 - 設定合理的連接超時時間
 - 監控連接池使用率
 
-### 8.3 快取策略（未來擴展）
+### 8.4 快取策略（未來擴展）
 - Redis 快取熱門查詢結果
 - Event 詳細資料快取
 - 搜尋結果快取（短時間）

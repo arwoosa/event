@@ -124,6 +124,7 @@ Events follow a state machine: `draft → published → archived`
 ### Database Operations
 - Use repository pattern in `dao/repository/`
 - MongoDB operations with proper indexing
+- **Session Updates**: Smart diff-based bulk operations using MongoDB BulkWrite API
 - Geospatial queries for location-based features
 
 ### Validation

@@ -92,8 +92,9 @@ type GeoJSONPointRequest struct {
 
 // SessionRequest represents session data in requests
 type SessionRequest struct {
-	StartTime string // RFC3339 format
-	EndTime   string // RFC3339 format
+	ID        string `json:"id,omitempty"` // Empty = create new, Non-empty = update existing
+	StartTime string `json:"start_time"`   // RFC3339 format
+	EndTime   string `json:"end_time"`     // RFC3339 format
 }
 
 // DetailRequest represents detail content in requests

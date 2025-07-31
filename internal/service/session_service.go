@@ -73,7 +73,8 @@ func (s *SessionService) GetSessionsForEvents(ctx context.Context, eventIDs []st
 	return s.sessionRepo.FindByEventIDs(ctx, eventIDs)
 }
 
-// UpdateSessionsForEvent replaces all sessions for an event
+// UpdateSessionsForEvent updates sessions for an event with smart diff-based approach
+// Handles create, update, delete operations based on session IDs in the request
 func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, brandID string, sessionReqs []*SessionRequest) ([]*models.Session, error) {
 	// Validate event exists and belongs to brand
 	event, err := s.eventRepo.FindByID(ctx, eventID)
@@ -84,28 +85,97 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, br
 		return nil, models.ErrUnauthorized
 	}
 
-	// Check if event can be modified
+	// Check if event can be modified (basic event-level check)
 	if err := s.validateEventModification(event); err != nil {
 		return nil, err
 	}
 
-	// Convert session requests to models
-	newSessions, err := s.convertSessionRequestsToModels(sessionReqs, eventID, brandID)
+	// TODO: Add session-level order checking here
+	// Currently we only check event-level orders, but we should:
+	// 1. Check individual sessions for existing orders before allowing delete/time changes
+	// 2. Allow adding new sessions even if some sessions have orders
+	// 3. Allow updating session times only if no orders exist for that specific session
+	// 4. Prevent deletion of sessions that have existing orders
+	// Implementation: call orderService.HasOrdersForSession(ctx, sessionID) for each affected session
+
+	// Get existing sessions
+	existingSessions, err := s.sessionRepo.FindByEventID(ctx, eventID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch existing sessions: %w", err)
 	}
 
-	// Validate sessions for duplicates
-	if err := models.ValidateSessions(newSessions); err != nil {
+	// Build existing sessions map for quick lookup
+	existingSessionsMap := make(map[string]*models.Session)
+	for _, session := range existingSessions {
+		existingSessionsMap[session.ID.Hex()] = session
+	}
+
+	// Classify operations: create, update, delete
+	var sessionsToCreate []*models.Session
+	var sessionsToUpdate []*models.Session
+	var sessionIDsToDelete []string
+
+	// Build request sessions map to track which existing sessions are in the request
+	requestedSessionIDs := make(map[string]bool)
+
+	for _, sessionReq := range sessionReqs {
+		if sessionReq.ID == "" {
+			// Create new session
+			newSession, err := s.convertSessionRequestToModel(sessionReq, eventID, brandID)
+			if err != nil {
+				return nil, fmt.Errorf("invalid new session: %w", err)
+			}
+			sessionsToCreate = append(sessionsToCreate, newSession)
+		} else {
+			// Update existing session
+			requestedSessionIDs[sessionReq.ID] = true
+
+			existingSession, exists := existingSessionsMap[sessionReq.ID]
+			if !exists {
+				return nil, models.NewValidationError("session_id", fmt.Sprintf("session with ID %s not found", sessionReq.ID))
+			}
+
+			updatedSession, err := s.convertSessionRequestToModel(sessionReq, eventID, brandID)
+			if err != nil {
+				return nil, fmt.Errorf("invalid update for session %s: %w", sessionReq.ID, err)
+			}
+
+			// Preserve original ID, created time
+			updatedSession.ID = existingSession.ID
+			updatedSession.CreatedAt = existingSession.CreatedAt
+
+			sessionsToUpdate = append(sessionsToUpdate, updatedSession)
+		}
+	}
+
+	// Find sessions to delete (existing sessions not in request)
+	for sessionID := range existingSessionsMap {
+		if !requestedSessionIDs[sessionID] {
+			sessionIDsToDelete = append(sessionIDsToDelete, sessionID)
+		}
+	}
+
+	// Validate final session collection for duplicates
+	allFinalSessions := make([]*models.Session, 0, len(sessionsToCreate)+len(sessionsToUpdate))
+	allFinalSessions = append(allFinalSessions, sessionsToCreate...)
+	allFinalSessions = append(allFinalSessions, sessionsToUpdate...)
+
+	if err := models.ValidateSessions(allFinalSessions); err != nil {
 		return nil, models.NewValidationError("sessions", err.Error())
 	}
 
-	// Delete existing sessions and create new ones in transaction-like operation
-	if err := s.sessionRepo.DeleteByEventID(ctx, eventID); err != nil {
-		return nil, fmt.Errorf("failed to delete existing sessions: %w", err)
+	// Ensure at least one session remains
+	if len(allFinalSessions) == 0 {
+		return nil, models.NewBusinessError("NO_SESSIONS", "at least one session is required", models.ErrNoSessions)
 	}
 
-	return s.sessionRepo.CreateBatch(ctx, newSessions)
+	// Execute all operations in a single bulk write
+	if err := s.sessionRepo.BulkUpdateSessions(ctx, sessionsToCreate, sessionsToUpdate, sessionIDsToDelete); err != nil {
+		return nil, fmt.Errorf("failed to bulk update sessions: %w", err)
+	}
+
+	// Return final session list
+	return s.sessionRepo.FindByEventID(ctx, eventID)
 }
 
 // DeleteSessionsForEvent removes all sessions for an event
@@ -263,13 +333,25 @@ func (s *SessionService) convertSessionRequestToModel(sessionReq *SessionRequest
 		return nil, models.NewValidationError("time", "start_time must be before end_time")
 	}
 
-	return &models.Session{
-		ID:        primitive.NewObjectID(),
+	session := &models.Session{
 		EventID:   eventObjectID,
 		BrandID:   brandObjectID,
 		StartTime: startTime,
 		EndTime:   endTime,
-	}, nil
+	}
+
+	// Set ID if provided (for updates), otherwise generate new one (for creates)
+	if sessionReq.ID != "" {
+		sessionObjectID, err := primitive.ObjectIDFromHex(sessionReq.ID)
+		if err != nil {
+			return nil, models.NewValidationError("session_id", "invalid session_id")
+		}
+		session.ID = sessionObjectID
+	} else {
+		session.ID = primitive.NewObjectID()
+	}
+
+	return session, nil
 }
 
 func (s *SessionService) validateEventModification(event *models.Event) error {
@@ -289,7 +371,7 @@ func (s *SessionService) validateSessionUpdate(ctx context.Context, updatedSessi
 
 	// Create unique key for the updated session
 	updatedKey := fmt.Sprintf("%d-%d", updatedSession.StartTime.Unix(), updatedSession.EndTime.Unix())
-	
+
 	// Build hash set of existing sessions (excluding the one being updated) - O(n) complexity
 	existingKeys := make(map[string]bool)
 	for _, session := range allSessions {
@@ -298,7 +380,7 @@ func (s *SessionService) validateSessionUpdate(ctx context.Context, updatedSessi
 			existingKeys[sessionKey] = true
 		}
 	}
-	
+
 	// Check if the updated session conflicts with existing ones - O(1) lookup
 	if existingKeys[updatedKey] {
 		return models.NewValidationError("sessions", "session with identical start and end times already exists")

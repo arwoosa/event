@@ -401,3 +401,60 @@ func (r *MongoSessionRepository) ExistsByEventAndBrand(ctx context.Context, even
 
 	return count > 0, nil
 }
+
+// BulkUpdateSessions performs bulk operations (create, update, delete) in a single request
+func (r *MongoSessionRepository) BulkUpdateSessions(ctx context.Context, creates []*models.Session, updates []*models.Session, deleteIDs []string) error {
+	if len(creates) == 0 && len(updates) == 0 && len(deleteIDs) == 0 {
+		return nil // No operations to perform
+	}
+
+	writeModels := make([]mongo.WriteModel, 0, len(creates)+len(updates)+len(deleteIDs))
+	now := time.Now()
+
+	// Add delete operations first
+	for _, id := range deleteIDs {
+		objectID, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			return fmt.Errorf("invalid session ID for delete %s: %w", id, err)
+		}
+		deleteModel := mongo.NewDeleteOneModel().SetFilter(bson.M{"_id": objectID})
+		writeModels = append(writeModels, deleteModel)
+	}
+
+	// Add update operations
+	for _, session := range updates {
+		if err := session.IsValid(); err != nil {
+			return fmt.Errorf("invalid session for update: %w", err)
+		}
+		session.UpdatedAt = now
+
+		updateModel := mongo.NewUpdateOneModel().
+			SetFilter(bson.M{"_id": session.ID}).
+			SetUpdate(bson.M{"$set": session})
+		writeModels = append(writeModels, updateModel)
+	}
+
+	// Add create operations
+	for _, session := range creates {
+		if err := session.IsValid(); err != nil {
+			return fmt.Errorf("invalid session for create: %w", err)
+		}
+		if session.ID.IsZero() {
+			session.ID = primitive.NewObjectID()
+		}
+		session.CreatedAt = now
+		session.UpdatedAt = now
+
+		insertModel := mongo.NewInsertOneModel().SetDocument(session)
+		writeModels = append(writeModels, insertModel)
+	}
+
+	// Execute bulk write operation
+	opts := options.BulkWrite().SetOrdered(false) // Allow parallel execution for better performance
+	_, err := r.collection.BulkWrite(ctx, writeModels, opts)
+	if err != nil {
+		return fmt.Errorf("bulk write operation failed: %w", err)
+	}
+
+	return nil
+}
