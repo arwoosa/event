@@ -15,6 +15,45 @@ gotool:
 	go fmt ./...
 	go vet ./...
 
+# Testing
+test:
+	go test ./... -v
+
+test-coverage:
+	go test ./... -coverprofile=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+
+test-unit:
+	go test ./internal/models ./internal/service -v
+
+test-models:
+	go test ./internal/models -v
+
+test-service:
+	go test ./internal/service -v
+
+test-integration:
+	go test ./internal/dao/repository -v
+
+test-clean:
+	rm -f coverage.out coverage.html
+
+# Run tests with race detection
+test-race:
+	go test ./... -race -v
+
+# Run tests with short flag (skip long-running tests)
+test-short:
+	go test ./... -short -v
+
+# Run integration tests (requires Docker for testcontainers)
+test-integration-testcontainer:
+	go test ./internal/dao/repository -v -tags=integration
+
+# Run unit tests only (exclude integration tests)
+test-unit-only:
+	go test ./internal/models ./internal/service -v
+
 clean:
 	@if [ -f ./bin/${BINARY} ]; then rm ./bin/${BINARY} ; fi
 
@@ -24,6 +63,17 @@ help:
 	@echo "make run - go run"
 	@echo "make clean - 移除二進制檔案 和 vim swap files"
 	@echo "make gotool - Go tool 'fmt' and 'vet'"
+	@echo ""
+	@echo "Testing:"
+	@echo "make test - 運行所有測試"
+	@echo "make test-coverage - 運行測試並生成覆蓋率報告"
+	@echo "make test-unit - 運行單元測試 (models + service)"
+	@echo "make test-models - 運行 models 測試"
+	@echo "make test-service - 運行 service 測試" 
+	@echo "make test-integration - 運行集成測試"
+	@echo "make test-race - 運行測試並檢測競態條件"
+	@echo "make test-short - 運行快速測試"
+	@echo "make test-clean - 清理測試生成的文件"
 
 grpc:
 	# Generate Go code for all proto files (including order for client usage)

@@ -1,0 +1,406 @@
+package models
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestIsValidStatus(t *testing.T) {
+	tests := []struct {
+		name     string
+		status   string
+		expected bool
+	}{
+		{"Valid draft status", StatusDraft, true},
+		{"Valid published status", StatusPublished, true},
+		{"Valid archived status", StatusArchived, true},
+		{"Invalid status", "invalid", false},
+		{"Empty status", "", false},
+		{"Case sensitive", "Draft", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IsValidStatus(tt.status)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestIsValidVisibility(t *testing.T) {
+	tests := []struct {
+		name       string
+		visibility string
+		expected   bool
+	}{
+		{"Valid public visibility", VisibilityPublic, true},
+		{"Valid private visibility", VisibilityPrivate, true},
+		{"Invalid visibility", "invalid", false},
+		{"Empty visibility", "", false},
+		{"Case sensitive", "Public", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IsValidVisibility(tt.visibility)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestIsValidContentType(t *testing.T) {
+	tests := []struct {
+		name        string
+		contentType string
+		expected    bool
+	}{
+		{"Valid HTML content type", ContentTypeHTML, true},
+		{"Valid JSON content type", ContentTypeJSON, true},
+		{"Valid Markdown content type", ContentTypeMarkdown, true},
+		{"Invalid content type", "invalid", false},
+		{"Empty content type", "", false},
+		{"Case sensitive", "Html", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IsValidContentType(tt.contentType)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestEvent_CanTransitionTo(t *testing.T) {
+	tests := []struct {
+		name        string
+		fromStatus  string
+		toStatus    string
+		expected    bool
+		description string
+	}{
+		// Draft transitions
+		{"Draft to Published", StatusDraft, StatusPublished, true, "Draft can be published"},
+		{"Draft to Archived", StatusDraft, StatusArchived, false, "Draft cannot be directly archived"},
+		{"Draft to Draft", StatusDraft, StatusDraft, false, "No self-transition"},
+
+		// Published transitions
+		{"Published to Archived", StatusPublished, StatusArchived, true, "Published can be archived"},
+		{"Published to Draft", StatusPublished, StatusDraft, false, "Published cannot go back to draft"},
+		{"Published to Published", StatusPublished, StatusPublished, false, "No self-transition"},
+
+		// Archived transitions
+		{"Archived to Published", StatusArchived, StatusPublished, true, "Archived can be republished"},
+		{"Archived to Draft", StatusArchived, StatusDraft, true, "Archived can be back to draft"},
+		{"Archived to Archived", StatusArchived, StatusArchived, false, "No self-transition"},
+
+		// Invalid transitions
+		{"Invalid from status", "invalid", StatusPublished, false, "Invalid from status"},
+		{"Invalid to status", StatusDraft, "invalid", false, "Invalid to status"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			event := &Event{Status: tt.fromStatus}
+			result := event.CanTransitionTo(tt.toStatus)
+			assert.Equal(t, tt.expected, result, tt.description)
+		})
+	}
+}
+
+func TestEvent_IsPublic(t *testing.T) {
+	tests := []struct {
+		name       string
+		status     string
+		visibility string
+		expected   bool
+	}{
+		{"Published and public", StatusPublished, VisibilityPublic, true},
+		{"Published but private", StatusPublished, VisibilityPrivate, false},
+		{"Draft and public", StatusDraft, VisibilityPublic, false},
+		{"Archived and public", StatusArchived, VisibilityPublic, false},
+		{"Draft and private", StatusDraft, VisibilityPrivate, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			event := &Event{
+				Status:     tt.status,
+				Visibility: tt.visibility,
+			}
+			result := event.IsPublic()
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestEvent_IsShareable(t *testing.T) {
+	tests := []struct {
+		name       string
+		status     string
+		visibility string
+		expected   bool
+	}{
+		{"Published and public", StatusPublished, VisibilityPublic, true},
+		{"Published and private", StatusPublished, VisibilityPrivate, true},
+		{"Draft and public", StatusDraft, VisibilityPublic, false},
+		{"Draft and private", StatusDraft, VisibilityPrivate, false},
+		{"Archived and public", StatusArchived, VisibilityPublic, false},
+		{"Archived and private", StatusArchived, VisibilityPrivate, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			event := &Event{
+				Status:     tt.status,
+				Visibility: tt.visibility,
+			}
+			result := event.IsShareable()
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestGeoJSONPoint_Validation(t *testing.T) {
+	tests := []struct {
+		name        string
+		geoPoint    GeoJSONPoint
+		expectValid bool
+	}{
+		{
+			name: "Valid GeoJSON Point",
+			geoPoint: GeoJSONPoint{
+				Type:        GeoJSONTypePoint,
+				Coordinates: [2]float64{121.5654, 25.0330}, // Taipei
+			},
+			expectValid: true,
+		},
+		{
+			name: "Valid GeoJSON Point - boundary longitude",
+			geoPoint: GeoJSONPoint{
+				Type:        GeoJSONTypePoint,
+				Coordinates: [2]float64{180.0, 0.0},
+			},
+			expectValid: true,
+		},
+		{
+			name: "Valid GeoJSON Point - boundary latitude",
+			geoPoint: GeoJSONPoint{
+				Type:        GeoJSONTypePoint,
+				Coordinates: [2]float64{0.0, 90.0},
+			},
+			expectValid: true,
+		},
+		{
+			name: "Invalid type",
+			geoPoint: GeoJSONPoint{
+				Type:        "LineString",
+				Coordinates: [2]float64{121.5654, 25.0330},
+			},
+			expectValid: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test type validation
+			if tt.expectValid {
+				assert.Equal(t, GeoJSONTypePoint, tt.geoPoint.Type)
+			} else {
+				assert.NotEqual(t, GeoJSONTypePoint, tt.geoPoint.Type)
+			}
+
+			// Test coordinate bounds (longitude: -180 to 180, latitude: -90 to 90)
+			if tt.expectValid && tt.geoPoint.Type == GeoJSONTypePoint {
+				lng, lat := tt.geoPoint.Coordinates[0], tt.geoPoint.Coordinates[1]
+				assert.GreaterOrEqual(t, lng, -180.0, "Longitude should be >= -180")
+				assert.LessOrEqual(t, lng, 180.0, "Longitude should be <= 180")
+				assert.GreaterOrEqual(t, lat, -90.0, "Latitude should be >= -90")
+				assert.LessOrEqual(t, lat, 90.0, "Latitude should be <= 90")
+			}
+		})
+	}
+}
+
+func TestLocation_Complete(t *testing.T) {
+	tests := []struct {
+		name        string
+		location    Location
+		expectValid bool
+	}{
+		{
+			name: "Complete location",
+			location: Location{
+				Name:    "Test Location",
+				Address: "123 Test St",
+				PlaceID: "place123",
+				Coordinates: GeoJSONPoint{
+					Type:        GeoJSONTypePoint,
+					Coordinates: [2]float64{121.5654, 25.0330},
+				},
+			},
+			expectValid: true,
+		},
+		{
+			name: "Missing name",
+			location: Location{
+				Address: "123 Test St",
+				PlaceID: "place123",
+				Coordinates: GeoJSONPoint{
+					Type:        GeoJSONTypePoint,
+					Coordinates: [2]float64{121.5654, 25.0330},
+				},
+			},
+			expectValid: false,
+		},
+		{
+			name: "Missing coordinates",
+			location: Location{
+				Name:    "Test Location",
+				Address: "123 Test St",
+				PlaceID: "place123",
+			},
+			expectValid: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectValid {
+				assert.NotEmpty(t, tt.location.Name, "Name should not be empty")
+				assert.NotEmpty(t, tt.location.Address, "Address should not be empty")
+				assert.Equal(t, GeoJSONTypePoint, tt.location.Coordinates.Type, "Coordinates type should be Point")
+			} else {
+				isComplete := tt.location.Name != "" && tt.location.Address != "" &&
+					tt.location.Coordinates.Type == GeoJSONTypePoint
+				assert.False(t, isComplete, "Location should not be complete")
+			}
+		})
+	}
+}
+
+func TestDetail_Validation(t *testing.T) {
+	tests := []struct {
+		name        string
+		detail      Detail
+		expectValid bool
+	}{
+		{
+			name: "Valid HTML detail",
+			detail: Detail{
+				Content:     "<p>Test content</p>",
+				ContentType: ContentTypeHTML,
+			},
+			expectValid: true,
+		},
+		{
+			name: "Valid JSON detail",
+			detail: Detail{
+				Content:     `{"key": "value"}`,
+				ContentType: ContentTypeJSON,
+			},
+			expectValid: true,
+		},
+		{
+			name: "Valid Markdown detail",
+			detail: Detail{
+				Content:     "# Test\n\nContent",
+				ContentType: ContentTypeMarkdown,
+			},
+			expectValid: true,
+		},
+		{
+			name: "Invalid content type",
+			detail: Detail{
+				Content:     "Test content",
+				ContentType: "invalid",
+			},
+			expectValid: false,
+		},
+		{
+			name: "Empty content type defaults to HTML",
+			detail: Detail{
+				Content:     "Test content",
+				ContentType: "",
+			},
+			expectValid: false, // Empty content type is invalid
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectValid {
+				assert.True(t, IsValidContentType(tt.detail.ContentType), "Content type should be valid")
+				assert.NotEmpty(t, tt.detail.Content, "Content should not be empty")
+			} else {
+				if tt.detail.ContentType != "" {
+					assert.False(t, IsValidContentType(tt.detail.ContentType), "Content type should be invalid")
+				}
+			}
+		})
+	}
+}
+
+func TestFAQ_Structure(t *testing.T) {
+	faq := FAQ{
+		Question: "What is this?",
+		Answer:   "This is a test FAQ.",
+	}
+
+	assert.NotEmpty(t, faq.Question, "Question should not be empty")
+	assert.NotEmpty(t, faq.Answer, "Answer should not be empty")
+	assert.True(t, len(faq.Question) <= 100, "Question should be within character limit")
+	assert.True(t, len(faq.Answer) <= 300, "Answer should be within character limit")
+}
+
+func TestEventConstants(t *testing.T) {
+	// Test status constants
+	assert.Equal(t, "draft", StatusDraft)
+	assert.Equal(t, "published", StatusPublished)
+	assert.Equal(t, "archived", StatusArchived)
+
+	// Test visibility constants
+	assert.Equal(t, "public", VisibilityPublic)
+	assert.Equal(t, "private", VisibilityPrivate)
+
+	// Test content type constants
+	assert.Equal(t, "html", ContentTypeHTML)
+	assert.Equal(t, "json", ContentTypeJSON)
+	assert.Equal(t, "markdown", ContentTypeMarkdown)
+
+	// Test GeoJSON type constant
+	assert.Equal(t, "Point", GeoJSONTypePoint)
+}
+
+func TestEvent_StatusTransitionMatrix(t *testing.T) {
+	// Complete test matrix for all status transitions
+	transitions := map[string]map[string]bool{
+		StatusDraft: {
+			StatusDraft:     false, // No self-transition
+			StatusPublished: true,  // Draft -> Published
+			StatusArchived:  false, // Draft cannot go directly to Archived
+		},
+		StatusPublished: {
+			StatusDraft:     false, // Published cannot go back to Draft
+			StatusPublished: false, // No self-transition
+			StatusArchived:  true,  // Published -> Archived
+		},
+		StatusArchived: {
+			StatusDraft:     true,  // Archived -> Draft (rollback)
+			StatusPublished: true,  // Archived -> Published (republish)
+			StatusArchived:  false, // No self-transition
+		},
+	}
+
+	for fromStatus, toTransitions := range transitions {
+		for toStatus, expected := range toTransitions {
+			t.Run(fmt.Sprintf("%s_to_%s", fromStatus, toStatus), func(t *testing.T) {
+				event := &Event{Status: fromStatus}
+				result := event.CanTransitionTo(toStatus)
+				assert.Equal(t, expected, result,
+					"Transition from %s to %s should be %v", fromStatus, toStatus, expected)
+			})
+		}
+	}
+}

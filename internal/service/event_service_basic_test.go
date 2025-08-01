@@ -1,0 +1,134 @@
+package service
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"event/internal/models"
+	"event/internal/service/mocks"
+	"event/internal/testutils"
+)
+
+func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
+	// Setup
+	eventRepo := &mocks.MockEventRepository{}
+	sessionRepo := &mocks.MockSessionRepository{}
+	orderService := &mocks.MockOrderService{}
+
+	sessionService := NewSessionService(sessionRepo, eventRepo)
+	eventService := NewEventService(eventRepo, sessionService, orderService)
+
+	ctx := context.Background()
+
+	// Create test request without sessions to avoid complexity
+	brandID := testutils.ValidObjectIDString()
+	userID := testutils.ValidObjectIDString()
+
+	req := &CreateEventRequest{
+		Title:      "Test Event",
+		Summary:    "Test Summary",
+		BrandID:    brandID,
+		UserID:     userID,
+		Visibility: models.VisibilityPrivate,
+		// No sessions
+	}
+
+	// Mock successful event creation
+	createdEvent := testutils.TestEvent()
+	eventRepo.On("Create", ctx, testutils.MatchAnyEvent()).Return(createdEvent, nil)
+
+	// Execute
+	result, err := eventService.CreateEvent(ctx, req)
+
+	// Assert
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, models.StatusDraft, result.Status)
+
+	// Verify mocks
+	eventRepo.AssertExpectations(t)
+}
+
+func TestEventService_GetEvent_Success(t *testing.T) {
+	// Setup
+	eventRepo := &mocks.MockEventRepository{}
+	sessionService := &SessionService{} // Minimal setup for this test
+	orderService := &mocks.MockOrderService{}
+
+	eventService := NewEventService(eventRepo, sessionService, orderService)
+
+	ctx := context.Background()
+	brandID := testutils.ValidObjectIDString()
+	eventID := testutils.ValidObjectIDString()
+
+	event := testutils.TestEvent()
+
+	// Mock existence check
+	eventRepo.On("ExistsByBrandAndID", ctx, brandID, eventID).Return(true, nil)
+	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
+
+	// Execute
+	result, err := eventService.GetEvent(ctx, brandID, eventID)
+
+	// Assert
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, event.Title, result.Title)
+
+	eventRepo.AssertExpectations(t)
+}
+
+func TestEventService_GetEvent_NotFound(t *testing.T) {
+	// Setup
+	eventRepo := &mocks.MockEventRepository{}
+	sessionService := &SessionService{}
+	orderService := &mocks.MockOrderService{}
+
+	eventService := NewEventService(eventRepo, sessionService, orderService)
+
+	ctx := context.Background()
+	brandID := testutils.ValidObjectIDString()
+	eventID := testutils.ValidObjectIDString()
+
+	// Mock existence check returns false
+	eventRepo.On("ExistsByBrandAndID", ctx, brandID, eventID).Return(false, nil)
+
+	// Execute
+	result, err := eventService.GetEvent(ctx, brandID, eventID)
+
+	// Assert
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Equal(t, models.ErrEventNotFound, err)
+
+	eventRepo.AssertExpectations(t)
+}
+
+func TestEventService_CreateEvent_InvalidBrandID(t *testing.T) {
+	// Setup
+	eventRepo := &mocks.MockEventRepository{}
+	sessionRepo := &mocks.MockSessionRepository{}
+	orderService := &mocks.MockOrderService{}
+
+	sessionService := NewSessionService(sessionRepo, eventRepo)
+	eventService := NewEventService(eventRepo, sessionService, orderService)
+
+	ctx := context.Background()
+
+	req := &CreateEventRequest{
+		Title:   "Test Event",
+		BrandID: "invalid_id", // Invalid ObjectID
+		UserID:  testutils.ValidObjectIDString(),
+	}
+
+	// Execute
+	result, err := eventService.CreateEvent(ctx, req)
+
+	// Assert
+	require.Error(t, err)
+	assert.Nil(t, result)
+	testutils.AssertError(t, err, "VALIDATION_ERROR", "invalid brand_id")
+}
