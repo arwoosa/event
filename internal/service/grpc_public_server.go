@@ -110,7 +110,7 @@ func (s *PublicEventServiceServer) SearchEvents(ctx context.Context, req *pb.Sea
 		Events:     eventsPB,
 		Pagination: paginationPB,
 	}
-	
+
 	return s.createSuccessResponse(listResponse)
 }
 
@@ -131,7 +131,7 @@ func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*
 	// Convert to protobuf response
 	eventPB := s.converter.ConvertEventToPB(event, sessions)
 	eventResponse := &pb.EventResponse{Event: eventPB}
-	
+
 	return s.createSuccessResponse(eventResponse)
 }
 
@@ -168,7 +168,7 @@ func (s *PublicEventServiceServer) createSuccessResponse(data interface{}) (*api
 		if !ok {
 			return nil, status.Error(codes.Internal, "data is not a proto message")
 		}
-		
+
 		var err error
 		anyData, err = anypb.New(msg)
 		if err != nil {

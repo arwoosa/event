@@ -30,7 +30,7 @@ func NewOrderServiceClient(config conf.ServiceConfig) OrderServiceClient {
 	}
 
 	client := orderpb.NewOrdersClient(conn)
-	
+
 	return &OrderServiceClientImpl{
 		conn:    conn,
 		client:  client,

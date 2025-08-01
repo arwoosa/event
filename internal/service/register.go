@@ -13,14 +13,13 @@ import (
 // This file registers the services with the Vulpes framework
 // It will be called automatically when the package is imported
 
-
 // RegisterServices registers both gRPC services and Gateway handlers
 func RegisterServices(appConfig *conf.AppConfig) {
 	// Register gRPC services
 	ezgrpc.InjectGrpcService(func(s grpc.ServiceRegistrar) {
 		registerEventServices(s, appConfig)
 	})
-	
+
 	// Register gRPC-Gateway handlers
 	ezgrpc.RegisterHandlerFromEndpoint(pb.RegisterEventServiceHandlerFromEndpoint)
 	ezgrpc.RegisterHandlerFromEndpoint(pb.RegisterPublicEventServiceHandlerFromEndpoint)
@@ -32,11 +31,11 @@ func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 		// For now, use a mock service if config fails
 		// This allows the service to start even without proper config during development
 		mockOrderService := NewMockOrderServiceClient(false, nil)
-		
+
 		// Create minimal mock services - these won't work but allow startup
 		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
 		publicSvc := &PublicService{eventRepo: nil, sessionService: nil}
-		
+
 		// Register with mock services
 		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
 		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
@@ -50,12 +49,12 @@ func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 		mockOrderService := NewMockOrderServiceClient(false, nil)
 		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
 		publicSvc := &PublicService{eventRepo: nil, sessionService: nil}
-		
+
 		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
 		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
 		return
 	}
-	
+
 	// Note: In production, you'd want proper graceful shutdown handling
 	_ = cleanup
 

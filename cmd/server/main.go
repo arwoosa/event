@@ -8,7 +8,7 @@ import (
 	"event/internal/conf"
 	"github.com/arwoosa/vulpes/ezgrpc"
 	vulpeslog "github.com/arwoosa/vulpes/log"
-	
+
 	// Import service package
 	"event/internal/service"
 )

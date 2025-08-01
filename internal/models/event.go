@@ -111,4 +111,3 @@ func (e *Event) IsPublic() bool {
 func (e *Event) IsShareable() bool {
 	return e.Status == StatusPublished
 }
-

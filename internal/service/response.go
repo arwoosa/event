@@ -9,10 +9,10 @@ import (
 
 // Temporary Response type until proto generation works
 type Response struct {
-	Status  string        `json:"status"`
-	Code    int32         `json:"code"`
-	Message *string       `json:"message,omitempty"`
-	Data    *anypb.Any    `json:"data,omitempty"`
+	Status  string     `json:"status"`
+	Code    int32      `json:"code"`
+	Message *string    `json:"message,omitempty"`
+	Data    *anypb.Any `json:"data,omitempty"`
 }
 
 func ResponseError(c codes.Code, err error) (*Response, error) {
