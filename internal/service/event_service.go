@@ -46,21 +46,6 @@ type CreateEventRequest struct {
 	UserID        string
 }
 
-// UpdateEventRequest represents the request to update an event
-type UpdateEventRequest struct {
-	ID            string
-	Title         string
-	Summary       string
-	Status        string
-	Visibility    string
-	CoverImageURL string
-	Location      *LocationRequest
-	Sessions      []*SessionRequest
-	Detail        *DetailRequest
-	FAQ           []*FAQRequest
-	UserID        string
-}
-
 // PatchEventRequest represents the request to partially update an event
 type PatchEventRequest struct {
 	ID            string
@@ -168,39 +153,6 @@ func (s *EventService) GetEventList(ctx context.Context, brandID string, filter 
 	return s.eventRepo.FindByBrandID(ctx, brandID, filter)
 }
 
-// UpdateEvent fully updates an event
-func (s *EventService) UpdateEvent(ctx context.Context, brandID string, req *UpdateEventRequest) (*models.Event, error) {
-	// Get existing event
-	existingEvent, err := s.GetEvent(ctx, brandID, req.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if update is allowed based on status
-	if err := s.validateUpdatePermissions(existingEvent, req.UserID); err != nil {
-		return nil, err
-	}
-
-	// Validate request
-	if err := s.validateUpdateRequest(req); err != nil {
-		return nil, err
-	}
-
-	// Update sessions using SessionService
-	_, err = s.sessionService.UpdateSessionsForEvent(ctx, req.ID, brandID, req.Sessions)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update sessions: %w", err)
-	}
-
-	// Convert request to model (without sessions)
-	event, err := s.convertUpdateRequestToModel(req, existingEvent)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.eventRepo.Update(ctx, req.ID, event)
-}
-
 // PatchEvent partially updates an event
 func (s *EventService) PatchEvent(ctx context.Context, brandID string, req *PatchEventRequest) (*models.Event, error) {
 	// Get existing event
@@ -276,12 +228,6 @@ func (s *EventService) UpdateEventStatus(ctx context.Context, brandID, eventID, 
 // Basic field validation is now handled by proto-gen-validate
 func (s *EventService) validateDraftRequest(req *CreateEventRequest) error {
 	// All basic field validation (title, summary, visibility, etc.) is now handled by PGV
-	// Only business logic validation remains here
-	return nil
-}
-
-func (s *EventService) validateUpdateRequest(req *UpdateEventRequest) error {
-	// All field validation (title, summary, status, visibility, etc.) is now handled by PGV
 	// Only business logic validation remains here
 	return nil
 }
@@ -477,61 +423,6 @@ func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*mo
 		CreatedBy:     userID,
 		UpdatedBy:     userID,
 	}, nil
-}
-
-func (s *EventService) convertUpdateRequestToModel(req *UpdateEventRequest, existing *models.Event) (*models.Event, error) {
-	userID, err := primitive.ObjectIDFromHex(req.UserID)
-	if err != nil {
-		return nil, models.NewValidationError("user_id", "invalid user_id")
-	}
-
-	// Convert location
-	location := models.Location{
-		Name:    req.Location.Name,
-		Address: req.Location.Address,
-		PlaceID: req.Location.PlaceID,
-	}
-	if req.Location.Coordinates != nil {
-		location.Coordinates = models.GeoJSONPoint{
-			Type:        models.GeoJSONTypePoint,
-			Coordinates: req.Location.Coordinates.Coordinates,
-		}
-	}
-
-	// Sessions are now handled by SessionService
-
-	// Convert detail
-	detail := models.Detail{
-		Content:     req.Detail.Content,
-		ContentType: req.Detail.ContentType,
-	}
-	if detail.ContentType == "" {
-		detail.ContentType = models.ContentTypeHTML
-	}
-
-	// Convert FAQ
-	faq := make([]models.FAQ, len(req.FAQ))
-	for i, faqReq := range req.FAQ {
-		faq[i] = models.FAQ{
-			Question: faqReq.Question,
-			Answer:   faqReq.Answer,
-		}
-	}
-
-	// Update the existing event
-	existing.Title = req.Title
-	existing.Summary = req.Summary
-	existing.Status = req.Status
-	existing.Visibility = req.Visibility
-	existing.CoverImageURL = req.CoverImageURL
-	existing.Location = location
-	// Sessions are handled separately by SessionService
-	existing.Detail = detail
-	existing.FAQ = faq
-	existing.UpdatedBy = userID
-	existing.UpdatedAt = time.Now()
-
-	return existing, nil
 }
 
 func (s *EventService) applyPatchToEvent(existing *models.Event, req *PatchEventRequest) *models.Event {

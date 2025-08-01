@@ -23,8 +23,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `make clear_wire` - Remove generated wire files
 
 ### Testing
-- `go test ./...` - Run all tests (currently only in vulpes submodule)
-- Tests are located in `pkg/vulpes/` subdirectories
+- `make test` - Run all tests (includes unit and integration tests)
+- `make test-unit` - Run unit tests for models and service layers (recommended)
+- `make test-models` - Run only model layer tests
+- `make test-service` - Run only service layer tests  
+- `make test-integration` - Run integration tests with MongoDB testcontainers (currently has issues)
+- `make test-coverage` - Generate HTML test coverage report
+- `make test-race` - Run tests with race condition detection
+- `make test-short` - Run quick tests only
+- `go test ./...` - Alternative to run all tests directly
+
+**Current Test Status:**
+- ✅ **Unit Tests**: Models and Service layers have comprehensive coverage (100% passing)
+- ❌ **Integration Tests**: MongoDB serialization issues need investigation
+- 📊 **Coverage**: Core business logic fully tested, gRPC and config layers need work
 
 ### Module Management
 - `make mod` - Update module name and references (used for project setup)
@@ -144,3 +156,6 @@ The service expects these headers from API Gateway:
 - **Submodule dependency**: Vulpes toolkit is included as Git submodule
 - **Proto generation**: Run `make grpc` after modifying .proto files
 - **Wire dependency injection**: Use `make wire` when adding new dependencies
+
+## Development Memories
+- 現在還在開發階段不用考慮向後兼容

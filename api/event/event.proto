@@ -33,14 +33,6 @@ service EventService {
     };
   }
   
-  // Update event (full replacement)
-  rpc UpdateEvent(UpdateEventRequest) returns (api.Response) {
-    option (google.api.http) = {
-      put: "/console/events/{id}"
-      body: "*"
-    };
-  }
-  
   // Patch event (partial update)
   rpc PatchEvent(PatchEventRequest) returns (api.Response) {
     option (google.api.http) = {
@@ -164,18 +156,6 @@ message GetEventListRequest {
   optional string sort_order = 10 [(validate.rules).string = {ignore_empty: true, in: ["asc", "desc"]}]; // asc|desc, default desc
 }
 
-message UpdateEventRequest {
-  string id = 1 [(validate.rules).string.min_len = 1];
-  string title = 2 [(validate.rules).string = {min_len: 1, max_len: 60}];
-  string summary = 3 [(validate.rules).string.max_len = 160];
-  string status = 4 [(validate.rules).string = {ignore_empty: true, in: ["draft", "published", "archived"]}];
-  string visibility = 5 [(validate.rules).string = {ignore_empty: true, in: ["public", "private"]}];
-  string cover_image_url = 6 [(validate.rules).string = {uri: true}];
-  Location location = 7 [(validate.rules).message.required = true];
-  repeated Session sessions = 8 [(validate.rules).repeated.min_items = 1];
-  Detail detail = 9 [(validate.rules).message.required = true];
-  repeated FAQ faq = 10 [(validate.rules).repeated = {min_items: 0, max_items: 20}];
-}
 
 message PatchEventRequest {
   string id = 1 [(validate.rules).string.min_len = 1];

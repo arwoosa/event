@@ -41,8 +41,8 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEven
 
 	// Convert gRPC request to service request
 	serviceReq := &CreateEventRequest{
-		Title:         req.Title,
-		Summary:       req.Summary,
+		Title:   req.Title,
+		Summary: req.Summary,
 		// Status field removed - events are always created as draft
 		Visibility:    req.Visibility,
 		CoverImageURL: req.CoverImageUrl,
@@ -69,7 +69,7 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEven
 	// Convert to protobuf response
 	eventPB := s.converter.ConvertEventToPB(event, sessions)
 	eventResponse := &pb.EventResponse{Event: eventPB}
-	
+
 	return s.createSuccessResponse(eventResponse)
 }
 
@@ -165,7 +165,7 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventL
 		Events:     eventsPB,
 		Pagination: paginationPB,
 	}
-	
+
 	return s.createSuccessResponse(listResponse)
 }
 
@@ -192,49 +192,7 @@ func (s *EventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*api.Re
 	// Convert to protobuf response
 	eventPB := s.converter.ConvertEventToPB(event, sessions)
 	eventResponse := &pb.EventResponse{Event: eventPB}
-	
-	return s.createSuccessResponse(eventResponse)
-}
 
-// UpdateEvent implements the gRPC UpdateEvent method
-func (s *EventServiceServer) UpdateEvent(ctx context.Context, req *pb.UpdateEventRequest) (*api.Response, error) {
-	// Extract user and brand information from context
-	userID, brandID, err := s.extractUserAndBrandFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert gRPC request to service request
-	serviceReq := &UpdateEventRequest{
-		ID:            req.Id,
-		Title:         req.Title,
-		Summary:       req.Summary,
-		Status:        req.Status,
-		Visibility:    req.Visibility,
-		CoverImageURL: req.CoverImageUrl,
-		Location:      s.converter.ConvertLocationFromPB(req.Location),
-		Sessions:      s.converter.ConvertSessionsFromPB(req.Sessions),
-		Detail:        s.converter.ConvertDetailFromPB(req.Detail),
-		FAQ:           s.converter.ConvertFAQFromPB(req.Faq),
-		UserID:        userID,
-	}
-
-	// Update event
-	event, err := s.eventService.UpdateEvent(ctx, brandID, serviceReq)
-	if err != nil {
-		return nil, s.handleServiceError(err)
-	}
-
-	// Get sessions for the updated event
-	sessions, err := s.eventService.sessionService.GetSessionsForEvent(ctx, event.ID.Hex(), brandID)
-	if err != nil {
-		return nil, s.handleServiceError(err)
-	}
-
-	// Convert to protobuf response
-	eventPB := s.converter.ConvertEventToPB(event, sessions)
-	eventResponse := &pb.EventResponse{Event: eventPB}
-	
 	return s.createSuccessResponse(eventResponse)
 }
 
@@ -297,7 +255,7 @@ func (s *EventServiceServer) PatchEvent(ctx context.Context, req *pb.PatchEventR
 	// Convert to protobuf response
 	eventPB := s.converter.ConvertEventToPB(event, sessions)
 	eventResponse := &pb.EventResponse{Event: eventPB}
-	
+
 	return s.createSuccessResponse(eventResponse)
 }
 
@@ -341,7 +299,7 @@ func (s *EventServiceServer) UpdateEventStatus(ctx context.Context, req *pb.Upda
 	// Convert to protobuf response
 	eventPB := s.converter.ConvertEventToPB(event, sessions)
 	eventResponse := &pb.EventResponse{Event: eventPB}
-	
+
 	return s.createSuccessResponse(eventResponse)
 }
 
@@ -400,7 +358,7 @@ func (s *EventServiceServer) createSuccessResponse(data interface{}) (*api.Respo
 		if !ok {
 			return nil, status.Error(codes.Internal, "data is not a proto message")
 		}
-		
+
 		var err error
 		anyData, err = anypb.New(msg)
 		if err != nil {
@@ -414,4 +372,3 @@ func (s *EventServiceServer) createSuccessResponse(data interface{}) (*api.Respo
 		Data:   anyData,
 	}, nil
 }
-

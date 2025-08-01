@@ -206,43 +206,6 @@
           "EventService"
         ]
       },
-      "put": {
-        "summary": "Update event (full replacement)",
-        "operationId": "EventService_UpdateEvent",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/apiResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/EventServiceUpdateEventBody"
-            }
-          }
-        ],
-        "tags": [
-          "EventService"
-        ]
-      },
       "patch": {
         "summary": "Patch event (partial update)",
         "operationId": "EventService_PatchEvent",
@@ -501,46 +464,6 @@
             "$ref": "#/definitions/eventFAQ"
           },
           "title": "Replace all FAQ if provided"
-        }
-      }
-    },
-    "EventServiceUpdateEventBody": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string"
-        },
-        "summary": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string"
-        },
-        "visibility": {
-          "type": "string"
-        },
-        "cover_image_url": {
-          "type": "string"
-        },
-        "location": {
-          "$ref": "#/definitions/eventLocation"
-        },
-        "sessions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/eventSession"
-          }
-        },
-        "detail": {
-          "$ref": "#/definitions/eventDetail"
-        },
-        "faq": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/eventFAQ"
-          }
         }
       }
     },

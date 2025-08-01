@@ -23,7 +23,6 @@ const (
 	EventService_CreateEvent_FullMethodName       = "/event.EventService/CreateEvent"
 	EventService_GetEventList_FullMethodName      = "/event.EventService/GetEventList"
 	EventService_GetEvent_FullMethodName          = "/event.EventService/GetEvent"
-	EventService_UpdateEvent_FullMethodName       = "/event.EventService/UpdateEvent"
 	EventService_PatchEvent_FullMethodName        = "/event.EventService/PatchEvent"
 	EventService_DeleteEvent_FullMethodName       = "/event.EventService/DeleteEvent"
 	EventService_UpdateEventStatus_FullMethodName = "/event.EventService/UpdateEventStatus"
@@ -41,8 +40,6 @@ type EventServiceClient interface {
 	GetEventList(ctx context.Context, in *GetEventListRequest, opts ...grpc.CallOption) (*api.Response, error)
 	// Get a single event by ID
 	GetEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*api.Response, error)
-	// Update event (full replacement)
-	UpdateEvent(ctx context.Context, in *UpdateEventRequest, opts ...grpc.CallOption) (*api.Response, error)
 	// Patch event (partial update)
 	PatchEvent(ctx context.Context, in *PatchEventRequest, opts ...grpc.CallOption) (*api.Response, error)
 	// Delete an event
@@ -83,16 +80,6 @@ func (c *eventServiceClient) GetEvent(ctx context.Context, in *api.ID, opts ...g
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(api.Response)
 	err := c.cc.Invoke(ctx, EventService_GetEvent_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *eventServiceClient) UpdateEvent(ctx context.Context, in *UpdateEventRequest, opts ...grpc.CallOption) (*api.Response, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(api.Response)
-	err := c.cc.Invoke(ctx, EventService_UpdateEvent_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -141,8 +128,6 @@ type EventServiceServer interface {
 	GetEventList(context.Context, *GetEventListRequest) (*api.Response, error)
 	// Get a single event by ID
 	GetEvent(context.Context, *api.ID) (*api.Response, error)
-	// Update event (full replacement)
-	UpdateEvent(context.Context, *UpdateEventRequest) (*api.Response, error)
 	// Patch event (partial update)
 	PatchEvent(context.Context, *PatchEventRequest) (*api.Response, error)
 	// Delete an event
@@ -167,9 +152,6 @@ func (UnimplementedEventServiceServer) GetEventList(context.Context, *GetEventLi
 }
 func (UnimplementedEventServiceServer) GetEvent(context.Context, *api.ID) (*api.Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEvent not implemented")
-}
-func (UnimplementedEventServiceServer) UpdateEvent(context.Context, *UpdateEventRequest) (*api.Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateEvent not implemented")
 }
 func (UnimplementedEventServiceServer) PatchEvent(context.Context, *PatchEventRequest) (*api.Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PatchEvent not implemented")
@@ -255,24 +237,6 @@ func _EventService_GetEvent_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EventService_UpdateEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateEventRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EventServiceServer).UpdateEvent(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: EventService_UpdateEvent_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EventServiceServer).UpdateEvent(ctx, req.(*UpdateEventRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _EventService_PatchEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PatchEventRequest)
 	if err := dec(in); err != nil {
@@ -345,10 +309,6 @@ var EventService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetEvent",
 			Handler:    _EventService_GetEvent_Handler,
-		},
-		{
-			MethodName: "UpdateEvent",
-			Handler:    _EventService_UpdateEvent_Handler,
 		},
 		{
 			MethodName: "PatchEvent",

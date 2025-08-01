@@ -67,63 +67,6 @@ func ConvertTestCreateEventRequest(req *testutils.TestCreateEventRequest) *Creat
 	return serviceReq
 }
 
-// ConvertTestUpdateEventRequest converts testutils update request to service request
-func ConvertTestUpdateEventRequest(req *testutils.TestUpdateEventRequest) *UpdateEventRequest {
-	serviceReq := &UpdateEventRequest{
-		ID:            req.ID,
-		Title:         req.Title,
-		Summary:       req.Summary,
-		Status:        req.Status,
-		Visibility:    req.Visibility,
-		CoverImageURL: req.CoverImageURL,
-		UserID:        req.UserID,
-	}
-
-	if req.Location != nil {
-		serviceReq.Location = &LocationRequest{
-			Name:    req.Location.Name,
-			Address: req.Location.Address,
-			PlaceID: req.Location.PlaceID,
-		}
-		if req.Location.Coordinates != nil {
-			serviceReq.Location.Coordinates = &GeoJSONPointRequest{
-				Type:        req.Location.Coordinates.Type,
-				Coordinates: req.Location.Coordinates.Coordinates,
-			}
-		}
-	}
-
-	if req.Detail != nil {
-		serviceReq.Detail = &DetailRequest{
-			Content:     req.Detail.Content,
-			ContentType: req.Detail.ContentType,
-		}
-	}
-
-	if req.Sessions != nil {
-		serviceReq.Sessions = make([]*SessionRequest, len(req.Sessions))
-		for i, session := range req.Sessions {
-			serviceReq.Sessions[i] = &SessionRequest{
-				ID:        session.ID,
-				StartTime: session.StartTime,
-				EndTime:   session.EndTime,
-			}
-		}
-	}
-
-	if req.FAQ != nil {
-		serviceReq.FAQ = make([]*FAQRequest, len(req.FAQ))
-		for i, faq := range req.FAQ {
-			serviceReq.FAQ[i] = &FAQRequest{
-				Question: faq.Question,
-				Answer:   faq.Answer,
-			}
-		}
-	}
-
-	return serviceReq
-}
-
 // ConvertTestPatchEventRequest converts testutils patch request to service request
 func ConvertTestPatchEventRequest(req *testutils.TestPatchEventRequest) *PatchEventRequest {
 	serviceReq := &PatchEventRequest{

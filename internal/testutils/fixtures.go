@@ -148,20 +148,6 @@ type TestCreateEventRequest struct {
 	UserID        string
 }
 
-type TestUpdateEventRequest struct {
-	ID            string
-	Title         string
-	Summary       string
-	Status        string
-	Visibility    string
-	CoverImageURL string
-	Location      *TestLocationRequest
-	Sessions      []*TestSessionRequest
-	Detail        *TestDetailRequest
-	FAQ           []*TestFAQRequest
-	UserID        string
-}
-
 type TestPatchEventRequest struct {
 	ID       string
 	Title    *string
@@ -210,44 +196,6 @@ func CreateTestCreateEventRequest() *TestCreateEventRequest {
 		},
 		BrandID: primitive.NewObjectID().Hex(),
 		UserID:  primitive.NewObjectID().Hex(),
-	}
-}
-
-// CreateTestUpdateEventRequest creates a test update event request
-func CreateTestUpdateEventRequest(eventID string) *TestUpdateEventRequest {
-	return &TestUpdateEventRequest{
-		ID:            eventID,
-		Title:         "Updated Test Event",
-		Summary:       "Updated test event summary",
-		Status:        models.StatusDraft,
-		Visibility:    models.VisibilityPublic,
-		CoverImageURL: "https://example.com/updated-image.jpg",
-		Location: &TestLocationRequest{
-			Name:    "Updated Test Location",
-			Address: "456 Updated St, Updated City",
-			PlaceID: "updated_place_id",
-			Coordinates: &TestGeoJSONPointRequest{
-				Type:        models.GeoJSONTypePoint,
-				Coordinates: [2]float64{121.5654, 25.0330},
-			},
-		},
-		Sessions: []*TestSessionRequest{
-			{
-				StartTime: time.Now().Add(time.Hour * 48).Format(time.RFC3339),
-				EndTime:   time.Now().Add(time.Hour * 50).Format(time.RFC3339),
-			},
-		},
-		Detail: &TestDetailRequest{
-			Content:     "<p>Updated test event content</p>",
-			ContentType: models.ContentTypeHTML,
-		},
-		FAQ: []*TestFAQRequest{
-			{
-				Question: "What is this updated event about?",
-				Answer:   "This is an updated test event for testing purposes.",
-			},
-		},
-		UserID: primitive.NewObjectID().Hex(),
 	}
 }
 
