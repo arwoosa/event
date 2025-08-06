@@ -24,10 +24,18 @@ func (r *MongoEventRepository) buildUnifiedPipeline(ctx context.Context, baseQue
 
 	pipeline := []bson.M{}
 
-	// Step 1: Match base query conditions
+	// Step 1: Match base query conditions and ensure valid coordinates
 	if len(baseQuery) > 0 {
 		pipeline = append(pipeline, bson.M{"$match": baseQuery})
 	}
+
+	// Step 1.5: Filter events with valid coordinates to prevent BSON unmarshaling errors
+	// This ensures data consistency and prevents runtime errors from malformed geospatial data
+	pipeline = append(pipeline, bson.M{
+		"$match": bson.M{
+			"location.coordinates.coordinates": bson.M{"$exists": true, "$type": "array"},
+		},
+	})
 
 	// Step 2: Lookup sessions from sessions collection
 	pipeline = append(pipeline, bson.M{
