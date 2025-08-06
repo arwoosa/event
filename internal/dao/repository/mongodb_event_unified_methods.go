@@ -161,4 +161,3 @@ func (r *MongoEventRepository) executeUnifiedQuery(ctx context.Context, pipeline
 		Pagination: pagination,
 	}, nil
 }
-

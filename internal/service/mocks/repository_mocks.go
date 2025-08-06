@@ -81,7 +81,6 @@ func (m *MockEventRepository) FindPublicByID(ctx context.Context, id string) (*m
 	return args.Get(0).(*models.Event), args.Error(1)
 }
 
-
 // SearchByTitle implements EventRepository interface
 func (m *MockEventRepository) SearchByTitle(ctx context.Context, query string, filter *repository.EventFilter) (*repository.EventListResult, error) {
 	args := m.Called(ctx, query, filter)

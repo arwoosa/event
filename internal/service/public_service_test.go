@@ -100,7 +100,7 @@ func TestPublicService_SearchEvents_WithLocationFilter(t *testing.T) {
 
 	// Mock unified search with location filter
 	eventRepo.On("FindPublic", ctx, mock.MatchedBy(func(filter *repository.PublicEventFilter) bool {
-		return filter != nil && 
+		return filter != nil &&
 			filter.LocationLat != nil && *filter.LocationLat == lat &&
 			filter.LocationLng != nil && *filter.LocationLng == lng &&
 			filter.LocationRadius != nil && *filter.LocationRadius == radius
