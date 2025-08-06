@@ -97,6 +97,7 @@ type FAQRequest struct {
 // OrderServiceClient interface for external order service
 type OrderServiceClient interface {
 	HasOrders(ctx context.Context, eventID string) (bool, error)
+	HasOrdersForSession(ctx context.Context, sessionID string) (bool, error)
 }
 
 // CreateEvent creates a new event

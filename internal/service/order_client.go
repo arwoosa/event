@@ -79,6 +79,14 @@ func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) 
 	return hasOrders, nil
 }
 
+// HasOrdersForSession checks if a session has any orders using gRPC
+func (c *OrderServiceClientImpl) HasOrdersForSession(ctx context.Context, sessionID string) (bool, error) {
+	// TODO: Implement when order service supports session-level order checking
+	// For now, return false to allow session deletion
+	// In a real implementation, this would call the order service with sessionID
+	return false, nil
+}
+
 // Close closes the gRPC connection
 func (c *OrderServiceClientImpl) Close() error {
 	if c.conn != nil {
@@ -89,15 +97,17 @@ func (c *OrderServiceClientImpl) Close() error {
 
 // MockOrderServiceClient is a mock implementation for testing
 type MockOrderServiceClient struct {
-	hasOrders bool
-	err       error
+	hasOrders        bool
+	hasSessionOrders bool
+	err              error
 }
 
 // NewMockOrderServiceClient creates a new mock order service client
 func NewMockOrderServiceClient(hasOrders bool, err error) OrderServiceClient {
 	return &MockOrderServiceClient{
-		hasOrders: hasOrders,
-		err:       err,
+		hasOrders:        hasOrders,
+		hasSessionOrders: false, // Default to no session orders
+		err:              err,
 	}
 }
 
@@ -107,4 +117,12 @@ func (m *MockOrderServiceClient) HasOrders(ctx context.Context, eventID string) 
 		return false, m.err
 	}
 	return m.hasOrders, nil
+}
+
+// HasOrdersForSession returns the mock result for session orders
+func (m *MockOrderServiceClient) HasOrdersForSession(ctx context.Context, sessionID string) (bool, error) {
+	if m.err != nil {
+		return false, m.err
+	}
+	return m.hasSessionOrders, nil
 }

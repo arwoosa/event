@@ -18,6 +18,12 @@ func (m *MockOrderService) HasOrders(ctx context.Context, eventID string) (bool,
 	return args.Bool(0), args.Error(1)
 }
 
+// HasOrdersForSession implements OrderServiceClient interface
+func (m *MockOrderService) HasOrdersForSession(ctx context.Context, sessionID string) (bool, error) {
+	args := m.Called(ctx, sessionID)
+	return args.Bool(0), args.Error(1)
+}
+
 // Helper methods for common test scenarios
 
 // SetHasOrders sets up the mock to return specific values for HasOrders calls

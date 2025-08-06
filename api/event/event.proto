@@ -55,6 +55,13 @@ service EventService {
       body: "*"
     };
   }
+  
+  // Delete a specific session by ID
+  rpc DeleteSession(DeleteSessionRequest) returns (api.Response) {
+    option (google.api.http) = {
+      delete: "/console/events/{event_id}/sessions/{session_id}"
+    };
+  }
 }
 
 // Public Event Service for front-end users
@@ -173,6 +180,11 @@ message PatchEventRequest {
 message UpdateEventStatusRequest {
   string id = 1 [(validate.rules).string.min_len = 1];
   string status = 2 [(validate.rules).string = {in: ["draft", "published", "archived"]}]; // draft|published|archived
+}
+
+message DeleteSessionRequest {
+  string event_id = 1 [(validate.rules).string.min_len = 1];
+  string session_id = 2 [(validate.rules).string.min_len = 1];
 }
 
 message SearchEventsRequest {

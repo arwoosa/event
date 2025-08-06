@@ -13,18 +13,21 @@ import (
 
 // SessionService implements the business logic for session management
 type SessionService struct {
-	sessionRepo repository.SessionRepository
-	eventRepo   repository.EventRepository
+	sessionRepo  repository.SessionRepository
+	eventRepo    repository.EventRepository
+	orderService OrderServiceClient
 }
 
 // NewSessionService creates a new session service
 func NewSessionService(
 	sessionRepo repository.SessionRepository,
 	eventRepo repository.EventRepository,
+	orderService OrderServiceClient,
 ) *SessionService {
 	return &SessionService{
-		sessionRepo: sessionRepo,
-		eventRepo:   eventRepo,
+		sessionRepo:  sessionRepo,
+		eventRepo:    eventRepo,
+		orderService: orderService,
 	}
 }
 
@@ -264,6 +267,60 @@ func (s *SessionService) DeleteSession(ctx context.Context, sessionID, brandID s
 	}
 	if count <= 1 {
 		return models.NewBusinessError("LAST_SESSION", "cannot delete the last session of an event", models.ErrNoSessions)
+	}
+
+	return s.sessionRepo.Delete(ctx, sessionID)
+}
+
+// DeleteSessionById removes a session by session ID for a specific event
+func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, sessionID, brandID string) error {
+	// Validate event exists and belongs to brand
+	event, err := s.eventRepo.FindByID(ctx, eventID)
+	if err != nil {
+		return err
+	}
+	if event.BrandID.Hex() != brandID {
+		return models.ErrUnauthorized
+	}
+
+	// Get the specific session
+	session, err := s.sessionRepo.FindByID(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+
+	// Verify session belongs to the specified event
+	if session.EventID.Hex() != eventID {
+		return models.NewBusinessError("SESSION_NOT_FOUND", "session does not belong to this event", models.ErrSessionNotFound)
+	}
+
+	// TODO: brandID will be remove in the future
+	// Verify session belongs to the brand
+	if session.BrandID.Hex() != brandID {
+		return models.ErrUnauthorized
+	}
+
+	// Check if this is the last session for the event
+	count, err := s.sessionRepo.CountByEventID(ctx, eventID)
+	if err != nil {
+		return err
+	}
+
+	// Only prevent deletion of last session for published events
+	// Draft and archived events can have their last session deleted
+	if event.Status == models.StatusPublished && count <= 1 {
+		return models.NewBusinessError("LAST_SESSION", "cannot delete the last session of a published event", models.ErrNoSessions)
+	}
+
+	// Check if session has any existing orders
+	if s.orderService != nil {
+		hasOrders, err := s.orderService.HasOrdersForSession(ctx, sessionID)
+		if err != nil {
+			return fmt.Errorf("failed to check orders for session: %w", err)
+		}
+		if hasOrders {
+			return models.NewBusinessError("SESSION_HAS_ORDERS", "cannot delete session with existing orders", nil)
+		}
 	}
 
 	return s.sessionRepo.Delete(ctx, sessionID)

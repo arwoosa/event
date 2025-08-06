@@ -297,6 +297,10 @@ func (s *EventServiceServer) handleServiceError(err error) error {
 			return status.Error(codes.FailedPrecondition, e.Error())
 		case "HAS_ORDERS":
 			return status.Error(codes.FailedPrecondition, e.Error())
+		case "SESSION_HAS_ORDERS":
+			return status.Error(codes.FailedPrecondition, e.Error())
+		case "LAST_SESSION":
+			return status.Error(codes.FailedPrecondition, e.Error())
 		case "INVALID_TRANSITION":
 			return status.Error(codes.FailedPrecondition, e.Error())
 		default:
@@ -304,6 +308,9 @@ func (s *EventServiceServer) handleServiceError(err error) error {
 		}
 	default:
 		if err == models.ErrEventNotFound {
+			return status.Error(codes.NotFound, err.Error())
+		}
+		if err == models.ErrSessionNotFound {
 			return status.Error(codes.NotFound, err.Error())
 		}
 		return status.Error(codes.Internal, err.Error())
@@ -330,4 +337,22 @@ func (s *EventServiceServer) createSuccessResponse(data interface{}) (*api.Respo
 		Code:   1000,
 		Data:   anyData,
 	}, nil
+}
+
+// DeleteSession implements the gRPC DeleteSession method
+func (s *EventServiceServer) DeleteSession(ctx context.Context, req *pb.DeleteSessionRequest) (*api.Response, error) {
+	// Extract user and brand information from context
+	_, brandID, err := s.extractUserAndBrandFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Call session service to delete the session
+	err = s.eventService.sessionService.DeleteSessionById(ctx, req.EventId, req.SessionId, brandID)
+	if err != nil {
+		return nil, s.handleServiceError(err)
+	}
+
+	// Return success response with empty data
+	return s.createSuccessResponse(nil)
 }

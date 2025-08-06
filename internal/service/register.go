@@ -72,7 +72,7 @@ func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 	}
 
 	// Initialize business services
-	sessionSvc := NewSessionService(sessionRepo, eventRepo)
+	sessionSvc := NewSessionService(sessionRepo, eventRepo, orderService)
 	eventSvc := NewEventService(eventRepo, sessionSvc, orderService)
 	publicSvc := NewPublicService(eventRepo, sessionSvc)
 

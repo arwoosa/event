@@ -1992,6 +1992,130 @@ var _UpdateEventStatusRequest_Status_InLookup = map[string]struct{}{
 	"archived":  {},
 }
 
+// Validate checks the field values on DeleteSessionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *DeleteSessionRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeleteSessionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DeleteSessionRequestMultiError, or nil if none found.
+func (m *DeleteSessionRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeleteSessionRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetEventId()) < 1 {
+		err := DeleteSessionRequestValidationError{
+			field:  "EventId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetSessionId()) < 1 {
+		err := DeleteSessionRequestValidationError{
+			field:  "SessionId",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return DeleteSessionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeleteSessionRequestMultiError is an error wrapping multiple validation
+// errors returned by DeleteSessionRequest.ValidateAll() if the designated
+// constraints aren't met.
+type DeleteSessionRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeleteSessionRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeleteSessionRequestMultiError) AllErrors() []error { return m }
+
+// DeleteSessionRequestValidationError is the validation error returned by
+// DeleteSessionRequest.Validate if the designated constraints aren't met.
+type DeleteSessionRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeleteSessionRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeleteSessionRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeleteSessionRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeleteSessionRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeleteSessionRequestValidationError) ErrorName() string {
+	return "DeleteSessionRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e DeleteSessionRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeleteSessionRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeleteSessionRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeleteSessionRequestValidationError{}
+
 // Validate checks the field values on SearchEventsRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
