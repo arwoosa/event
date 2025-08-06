@@ -15,6 +15,7 @@ type Event struct {
 	Visibility    string             `json:"visibility" bson:"visibility"` // public, private
 	CoverImageURL string             `json:"cover_image_url" bson:"cover_image_url"`
 	Location      Location           `json:"location" bson:"location"`
+	Sessions      []Session          `json:"sessions" bson:"sessions,omitempty"` // Populated from aggregation, not stored in events collection
 	Detail        Detail             `json:"detail" bson:"detail"`
 	FAQ           []FAQ              `json:"faq" bson:"faq"`
 	CreatedAt     time.Time          `json:"created_at" bson:"created_at"`

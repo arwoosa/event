@@ -81,14 +81,6 @@ func (m *MockEventRepository) FindPublicByID(ctx context.Context, id string) (*m
 	return args.Get(0).(*models.Event), args.Error(1)
 }
 
-// FindNearby implements EventRepository interface
-func (m *MockEventRepository) FindNearby(ctx context.Context, lat, lng float64, radius int, filter *repository.PublicEventFilter) (*repository.EventListResult, error) {
-	args := m.Called(ctx, lat, lng, radius, filter)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*repository.EventListResult), args.Error(1)
-}
 
 // SearchByTitle implements EventRepository interface
 func (m *MockEventRepository) SearchByTitle(ctx context.Context, query string, filter *repository.EventFilter) (*repository.EventListResult, error) {

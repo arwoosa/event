@@ -94,15 +94,8 @@ func (s *PublicService) SearchEvents(ctx context.Context, req *SearchEventsReque
 		filter.PageToken = nil // Don't use cursor pagination if page is specified
 	}
 
-	// Handle geospatial search
-	if req.LocationLat != nil && req.LocationLng != nil {
-		radius := 1000 // Default 1km
-		if req.LocationRadius != nil {
-			radius = *req.LocationRadius
-		}
-		return s.eventRepo.FindNearby(ctx, *req.LocationLat, *req.LocationLng, radius, filter)
-	}
-
+	// All searches now use the unified FindPublic method
+	// Geospatial parameters are already set in the filter above
 	return s.eventRepo.FindPublic(ctx, filter)
 }
 

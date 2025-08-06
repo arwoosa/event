@@ -55,6 +55,7 @@ type EventListResult struct {
 }
 
 // EventRepository defines the interface for event data access
+// All methods now return events with sessions populated
 type EventRepository interface {
 	// CRUD operations
 	Create(ctx context.Context, event *models.Event) (*models.Event, error)
@@ -62,15 +63,14 @@ type EventRepository interface {
 	Update(ctx context.Context, id string, event *models.Event) (*models.Event, error)
 	Delete(ctx context.Context, id string) error
 
-	// Console API queries
+	// Console API queries (with sessions populated)
 	FindByBrandID(ctx context.Context, brandID string, filter *EventFilter) (*EventListResult, error)
 
-	// Public API queries
+	// Public API queries (with sessions populated)
 	FindPublic(ctx context.Context, filter *PublicEventFilter) (*EventListResult, error)
 	FindPublicByID(ctx context.Context, id string) (*models.Event, error)
 
-	// Specialized queries
-	FindNearby(ctx context.Context, lat, lng float64, radius int, filter *PublicEventFilter) (*EventListResult, error)
+	// Specialized queries (with sessions populated)
 	SearchByTitle(ctx context.Context, query string, filter *EventFilter) (*EventListResult, error)
 	CountByBrandAndStatus(ctx context.Context, brandID, status string) (int64, error)
 

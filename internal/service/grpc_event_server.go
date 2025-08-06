@@ -60,14 +60,8 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEven
 		return nil, s.handleServiceError(err)
 	}
 
-	// Get sessions for the created event
-	sessions, err := s.eventService.sessionService.GetSessionsForEvent(ctx, event.ID.Hex(), brandID)
-	if err != nil {
-		return nil, s.handleServiceError(err)
-	}
-
-	// Convert to protobuf response
-	eventPB := s.converter.ConvertEventToPB(event, sessions)
+	// Convert to protobuf response (sessions are now embedded in event)
+	eventPB := s.converter.ConvertEventToPB(event)
 	eventResponse := &pb.EventResponse{Event: eventPB}
 
 	return s.createSuccessResponse(eventResponse)
@@ -137,27 +131,10 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventL
 		return nil, s.handleServiceError(err)
 	}
 
-	// Get event IDs for batch session fetching
-	eventIDs := make([]string, len(result.Events))
-	for i, event := range result.Events {
-		eventIDs[i] = event.ID.Hex()
-	}
-
-	// Get sessions for all events in batch
-	sessionsByEvent, err := s.eventService.sessionService.GetSessionsForEvents(ctx, eventIDs)
-	if err != nil {
-		return nil, s.handleServiceError(err)
-	}
-
-	// Convert to protobuf response
+	// Convert to protobuf response (sessions are now embedded in events)
 	eventsPB := make([]*pb.Event, len(result.Events))
 	for i, event := range result.Events {
-		eventID := event.ID.Hex()
-		sessions := sessionsByEvent[eventID]
-		if sessions == nil {
-			sessions = []*models.Session{}
-		}
-		eventsPB[i] = s.converter.ConvertEventToPB(event, sessions)
+		eventsPB[i] = s.converter.ConvertEventToPB(event)
 	}
 
 	paginationPB := s.converter.ConvertPaginationToPB(result.Pagination)
@@ -183,14 +160,8 @@ func (s *EventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*api.Re
 		return nil, s.handleServiceError(err)
 	}
 
-	// Get sessions for the event
-	sessions, err := s.eventService.sessionService.GetSessionsForEvent(ctx, req.Id, brandID)
-	if err != nil {
-		return nil, s.handleServiceError(err)
-	}
-
-	// Convert to protobuf response
-	eventPB := s.converter.ConvertEventToPB(event, sessions)
+	// Convert to protobuf response (sessions are now embedded in event)
+	eventPB := s.converter.ConvertEventToPB(event)
 	eventResponse := &pb.EventResponse{Event: eventPB}
 
 	return s.createSuccessResponse(eventResponse)
@@ -246,14 +217,8 @@ func (s *EventServiceServer) PatchEvent(ctx context.Context, req *pb.PatchEventR
 		return nil, s.handleServiceError(err)
 	}
 
-	// Get sessions for the patched event
-	sessions, err := s.eventService.sessionService.GetSessionsForEvent(ctx, event.ID.Hex(), brandID)
-	if err != nil {
-		return nil, s.handleServiceError(err)
-	}
-
-	// Convert to protobuf response
-	eventPB := s.converter.ConvertEventToPB(event, sessions)
+	// Convert to protobuf response (sessions are now embedded in event)
+	eventPB := s.converter.ConvertEventToPB(event)
 	eventResponse := &pb.EventResponse{Event: eventPB}
 
 	return s.createSuccessResponse(eventResponse)
@@ -290,14 +255,8 @@ func (s *EventServiceServer) UpdateEventStatus(ctx context.Context, req *pb.Upda
 		return nil, s.handleServiceError(err)
 	}
 
-	// Get sessions for the updated event
-	sessions, err := s.eventService.sessionService.GetSessionsForEvent(ctx, event.ID.Hex(), brandID)
-	if err != nil {
-		return nil, s.handleServiceError(err)
-	}
-
-	// Convert to protobuf response
-	eventPB := s.converter.ConvertEventToPB(event, sessions)
+	// Convert to protobuf response (sessions are now embedded in event)
+	eventPB := s.converter.ConvertEventToPB(event)
 	eventResponse := &pb.EventResponse{Event: eventPB}
 
 	return s.createSuccessResponse(eventResponse)

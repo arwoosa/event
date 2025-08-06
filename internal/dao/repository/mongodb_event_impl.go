@@ -49,23 +49,41 @@ func (r *MongoEventRepository) Create(ctx context.Context, event *models.Event) 
 	return event, nil
 }
 
-// FindByID finds an event by its ID
+// FindByID finds an event by ID with sessions populated
 func (r *MongoEventRepository) FindByID(ctx context.Context, id string) (*models.Event, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid event ID: %w", err)
 	}
 
-	var event models.Event
-	err = r.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&event)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, models.ErrEventNotFound
-		}
-		return nil, fmt.Errorf("failed to find event: %w", err)
+	pipeline := []bson.M{
+		// Match the specific event
+		{"$match": bson.M{"_id": objectID}},
+		// Lookup sessions
+		{"$lookup": bson.M{
+			"from":         "sessions",
+			"localField":   "_id",
+			"foreignField": "event_id",
+			"as":           "sessions",
+		}},
 	}
 
-	return &event, nil
+	cursor, err := r.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute aggregation: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var events []*models.Event
+	if err = cursor.All(ctx, &events); err != nil {
+		return nil, fmt.Errorf("failed to decode event with sessions: %w", err)
+	}
+
+	if len(events) == 0 {
+		return nil, models.ErrEventNotFound
+	}
+
+	return events[0], nil
 }
 
 // Update updates an existing event
@@ -108,38 +126,33 @@ func (r *MongoEventRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// FindByBrandID finds events by brand ID with filtering
+// FindByBrandID finds events by brand ID with sessions populated and filtering
 func (r *MongoEventRepository) FindByBrandID(ctx context.Context, brandID string, filter *EventFilter) (*EventListResult, error) {
 	brandObjectID, err := primitive.ObjectIDFromHex(brandID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid brand ID: %w", err)
 	}
 
-	query := bson.M{"brand_id": brandObjectID}
+	baseQuery := bson.M{"brand_id": brandObjectID}
 
 	// Apply filters
 	if filter.Status != nil {
-		query["status"] = *filter.Status
+		baseQuery["status"] = *filter.Status
 	}
 	if filter.Visibility != nil {
-		query["visibility"] = *filter.Visibility
-	}
-	// TODO: Session time filtering now requires separate session collection query
-	// This functionality will be implemented in the service layer
-	if filter.SessionStartTimeFrom != nil || filter.SessionStartTimeTo != nil {
-		// For now, we skip session time filtering in event queries
-		// This will be handled by the service layer using SessionService
+		baseQuery["visibility"] = *filter.Visibility
 	}
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
-		query["$text"] = bson.M{"$search": *filter.TitleSearch}
+		baseQuery["$text"] = bson.M{"$search": *filter.TitleSearch}
 	}
 
-	return r.executeQuery(ctx, query, filter.SortBy, filter.SortOrder, filter.Limit, filter.Offset, filter.PageToken)
+	return r.buildUnifiedPipeline(ctx, baseQuery, filter.SessionStartTimeFrom, filter.SessionStartTimeTo,
+		filter.SortBy, filter.SortOrder, filter.Limit, filter.Offset, filter.PageToken)
 }
 
-// FindPublic finds public events
+// FindPublic finds public events with sessions populated and filtering
 func (r *MongoEventRepository) FindPublic(ctx context.Context, filter *PublicEventFilter) (*EventListResult, error) {
-	query := bson.M{
+	baseQuery := bson.M{
 		"status":     models.StatusPublished,
 		"visibility": models.VisibilityPublic,
 	}
@@ -150,69 +163,71 @@ func (r *MongoEventRepository) FindPublic(ctx context.Context, filter *PublicEve
 		if err != nil {
 			return nil, fmt.Errorf("invalid brand ID: %w", err)
 		}
-		query["brand_id"] = brandObjectID
-	}
-	// TODO: Session time filtering now requires separate session collection query
-	// This functionality will be implemented in the service layer
-	if filter.SessionStartTimeFrom != nil || filter.SessionStartTimeTo != nil {
-		// For now, we skip session time filtering in event queries
-		// This will be handled by the service layer using SessionService
+		baseQuery["brand_id"] = brandObjectID
 	}
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
-		query["$text"] = bson.M{"$search": *filter.TitleSearch}
+		baseQuery["$text"] = bson.M{"$search": *filter.TitleSearch}
 	}
 
-	// Handle geospatial queries separately if provided
+	// Handle geospatial queries
 	if filter.LocationLat != nil && filter.LocationLng != nil {
-		return r.findNearbyInternal(ctx, *filter.LocationLat, *filter.LocationLng,
-			getLocationRadius(filter.LocationRadius), query, filter.SortBy, filter.SortOrder,
-			filter.Limit, filter.Offset, filter.PageToken)
+		geoQuery := bson.M{
+			"location.coordinates": bson.M{
+				"$geoWithin": bson.M{
+					"$centerSphere": []interface{}{
+						[]float64{*filter.LocationLng, *filter.LocationLat},
+						float64(getLocationRadius(filter.LocationRadius)) / 6378100.0, // Convert meters to earth radius in radians
+					},
+				},
+			},
+		}
+		for k, v := range geoQuery {
+			baseQuery[k] = v
+		}
 	}
 
-	return r.executeQuery(ctx, query, filter.SortBy, filter.SortOrder, filter.Limit, filter.Offset, filter.PageToken)
+	return r.buildUnifiedPipeline(ctx, baseQuery, filter.SessionStartTimeFrom, filter.SessionStartTimeTo,
+		filter.SortBy, filter.SortOrder, filter.Limit, filter.Offset, filter.PageToken)
 }
 
-// FindPublicByID finds a public event by ID (for sharing)
+// FindPublicByID finds a public event by ID with sessions populated
 func (r *MongoEventRepository) FindPublicByID(ctx context.Context, id string) (*models.Event, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid event ID: %w", err)
 	}
 
-	var event models.Event
-	query := bson.M{
-		"_id":    objectID,
-		"status": models.StatusPublished,
+	pipeline := []bson.M{
+		// Match public event
+		{"$match": bson.M{
+			"_id":    objectID,
+			"status": models.StatusPublished,
+		}},
+		// Lookup sessions
+		{"$lookup": bson.M{
+			"from":         "sessions",
+			"localField":   "_id",
+			"foreignField": "event_id",
+			"as":           "sessions",
+		}},
 	}
 
-	err = r.collection.FindOne(ctx, query).Decode(&event)
+	cursor, err := r.collection.Aggregate(ctx, pipeline)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, models.ErrEventNotFound
-		}
-		return nil, fmt.Errorf("failed to find event: %w", err)
+		return nil, fmt.Errorf("failed to execute aggregation: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var events []*models.Event
+	if err = cursor.All(ctx, &events); err != nil {
+		return nil, fmt.Errorf("failed to decode event with sessions: %w", err)
 	}
 
-	return &event, nil
-}
-
-// FindNearby finds events near a location
-func (r *MongoEventRepository) FindNearby(ctx context.Context, lat, lng float64, radius int, filter *PublicEventFilter) (*EventListResult, error) {
-	query := bson.M{
-		"status":     models.StatusPublished,
-		"visibility": models.VisibilityPublic,
+	if len(events) == 0 {
+		return nil, models.ErrEventNotFound
 	}
 
-	if filter.BrandID != nil {
-		brandObjectID, err := primitive.ObjectIDFromHex(*filter.BrandID)
-		if err != nil {
-			return nil, fmt.Errorf("invalid brand ID: %w", err)
-		}
-		query["brand_id"] = brandObjectID
-	}
-
-	return r.findNearbyInternal(ctx, lat, lng, radius, query, filter.SortBy, filter.SortOrder,
-		filter.Limit, filter.Offset, filter.PageToken)
+	return events[0], nil
 }
 
 // SearchByTitle performs text search on event titles
@@ -354,29 +369,6 @@ func (r *MongoEventRepository) executeQuery(ctx context.Context, query bson.M, s
 		Events:     events,
 		Pagination: pagination,
 	}, nil
-}
-
-func (r *MongoEventRepository) findNearbyInternal(ctx context.Context, lat, lng float64, radius int,
-	baseQuery bson.M, sortBy, sortOrder *string, limit, offset int, pageToken *string) (*EventListResult, error) {
-
-	// Add geospatial query
-	geoQuery := bson.M{
-		"location.coordinates": bson.M{
-			"$geoWithin": bson.M{
-				"$centerSphere": []interface{}{
-					[]float64{lng, lat},
-					float64(radius) / 6378100.0, // Convert meters to radians
-				},
-			},
-		},
-	}
-
-	// Merge with base query
-	for k, v := range geoQuery {
-		baseQuery[k] = v
-	}
-
-	return r.executeQuery(ctx, baseQuery, sortBy, sortOrder, limit, offset, pageToken)
 }
 
 // Cursor represents a pagination cursor

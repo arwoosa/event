@@ -98,8 +98,13 @@ func TestPublicService_SearchEvents_WithLocationFilter(t *testing.T) {
 		},
 	}
 
-	// Mock nearby search
-	eventRepo.On("FindNearby", ctx, lat, lng, radius, matchPublicEventFilter()).Return(expectedResult, nil)
+	// Mock unified search with location filter
+	eventRepo.On("FindPublic", ctx, mock.MatchedBy(func(filter *repository.PublicEventFilter) bool {
+		return filter != nil && 
+			filter.LocationLat != nil && *filter.LocationLat == lat &&
+			filter.LocationLng != nil && *filter.LocationLng == lng &&
+			filter.LocationRadius != nil && *filter.LocationRadius == radius
+	})).Return(expectedResult, nil)
 
 	// Execute
 	result, err := publicService.SearchEvents(ctx, req)
