@@ -23,18 +23,30 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 
 ### 回應格式
 
-所有 API 回應都使用統一的 `api.Response` 格式：
+**重要變更**：成功請求的 API 回應格式已調整：
 
+**成功回應（直接返回資料）：**
 ```json
 {
-  "status": "success|error",
-  "code": 1000,
-  "message": "optional error message",
-  "data": {
-    // 實際資料內容
-  }
+  "id": "event_id",
+  "title": "活動標題",
+  // 其他資料欄位...
 }
 ```
+
+**錯誤回應（保持原格式）：**
+```json
+{
+  "status": "error",
+  "code": 3,
+  "message": "error details"
+}
+```
+
+**說明：**
+- 成功請求移除 `data` 包裝層，直接返回實際資料
+- 前端使用 HTTP Status Code 判斷請求成功/失敗
+- 錯誤處理格式由 EzGRPC 統一管理，保持不變
 
 ### 狀態碼
 
@@ -100,6 +112,8 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
   "sessions": [
     {
       "id": "",  // 空值表示新增場次
+      "name": "場次名稱",  // 新增：可選欄位
+      "capacity": 100,  // 新增：可選欄位，null 表示不限制
       "start_time": "2024-01-01T10:00:00Z",
       "end_time": "2024-01-01T12:00:00Z"
     }
@@ -120,12 +134,8 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 **回應：**
 ```json
 {
-  "status": "success",
-  "code": 1000,
-  "data": {
-    "id": "event_id",
-    "created_at": "2024-01-01T10:00:00Z"
-  }
+  "id": "event_id",
+  "created_at": "2024-01-01T10:00:00Z"
 }
 ```
 
@@ -153,37 +163,35 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 **回應：**
 ```json
 {
-  "status": "success",
-  "code": 1000,
-  "data": {
-    "events": [
-      {
-        "id": "event_id",
-        "title": "活動標題",
-        "summary": "活動摘要",
-        "status": "published",
-        "visibility": "public",
-        "cover_image_url": "https://example.com/image.jpg",
-        "location": {
-          "name": "地點名稱",
-          "address": "詳細地址"
-        },
-        "sessions": [
-          {
-            "id": "session_id",
-            "start_time": "2024-01-01T10:00:00Z",
-            "end_time": "2024-01-01T12:00:00Z"
-          }
-        ],
-        "created_at": "2024-01-01T09:00:00Z",
-        "updated_at": "2024-01-01T09:30:00Z"
-      }
-    ],
-    "pagination": {
-      "next_page_token": "next_cursor",
-      "has_next": true,
-      "total_count": 150
+  "events": [
+    {
+      "id": "event_id",
+      "title": "活動標題",
+      "summary": "活動摘要",
+      "status": "published",
+      "visibility": "public",
+      "cover_image_url": "https://example.com/image.jpg",
+      "location": {
+        "name": "地點名稱",
+        "address": "詳細地址"
+      },
+      "sessions": [
+        {
+          "id": "session_id",
+          "name": "場次名稱",
+          "capacity": 100,
+          "start_time": "2024-01-01T10:00:00Z",
+          "end_time": "2024-01-01T12:00:00Z"
+        }
+      ],
+      "created_at": "2024-01-01T09:00:00Z",
+      "updated_at": "2024-01-01T09:30:00Z"
     }
+  ],
+  "pagination": {
+    "next_page_token": "next_cursor",
+    "has_next": true,
+    "total_count": 150
   }
 }
 ```
@@ -195,46 +203,44 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 **回應：**
 ```json
 {
-  "status": "success",
-  "code": 1000,
-  "data": {
-    "id": "event_id",
-    "title": "活動標題",
-    "summary": "活動摘要",
-    "status": "published",
-    "visibility": "public",
-    "cover_image_url": "https://example.com/image.jpg",
-    "location": {
-      "name": "地點名稱",
-      "address": "詳細地址",
-      "place_id": "Google Places ID",
-      "coordinates": {
-        "type": "Point",
-        "coordinates": [121.5654, 25.0330]
-      }
-    },
-    "sessions": [
-      {
-        "id": "session_id",
-        "start_time": "2024-01-01T10:00:00Z",
-        "end_time": "2024-01-01T12:00:00Z"
-      }
-    ],
-    "detail": {
-      "content": "Rich text content",
-      "content_type": "html"
-    },
-    "faq": [
-      {
-        "question": "問題",
-        "answer": "回答"
-      }
-    ],
-    "created_at": "2024-01-01T09:00:00Z",
-    "created_by": "user_id",
-    "updated_at": "2024-01-01T09:30:00Z",
-    "updated_by": "user_id"
-  }
+  "id": "event_id",
+  "title": "活動標題",
+  "summary": "活動摘要",
+  "status": "published",
+  "visibility": "public",
+  "cover_image_url": "https://example.com/image.jpg",
+  "location": {
+    "name": "地點名稱",
+    "address": "詳細地址",
+    "place_id": "Google Places ID",
+    "coordinates": {
+      "type": "Point",
+      "coordinates": [121.5654, 25.0330]
+    }
+  },
+  "sessions": [
+    {
+      "id": "session_id",
+      "name": "場次名稱",
+      "capacity": 100,
+      "start_time": "2024-01-01T10:00:00Z",
+      "end_time": "2024-01-01T12:00:00Z"
+    }
+  ],
+  "detail": {
+    "content": "Rich text content",
+    "content_type": "html"
+  },
+  "faq": [
+    {
+      "question": "問題",
+      "answer": "回答"
+    }
+  ],
+  "created_at": "2024-01-01T09:00:00Z",
+  "created_by": "user_id",
+  "updated_at": "2024-01-01T09:30:00Z",
+  "updated_by": "user_id"
 }
 ```
 
@@ -255,11 +261,15 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
   "sessions": [
     {
       "id": "existing_session_id",  // 有值表示修改現有場次
+      "name": "更新後的場次名稱",
+      "capacity": 150,
       "start_time": "2024-01-02T10:00:00Z",
       "end_time": "2024-01-02T12:00:00Z"
     },
     {
       "id": "",  // 空值表示新增場次
+      "name": "新場次",
+      "capacity": null,  // null 表示不限制容量
       "start_time": "2024-01-02T14:00:00Z",
       "end_time": "2024-01-02T16:00:00Z"
     }
@@ -267,11 +277,12 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 }
 ```
 
-**Session 陣列更新機制：**
+**Session PATCH 更新機制（重要變更）：**
 - **新增場次**：`id` 為空字串或不提供
 - **修改場次**：`id` 為現有 session 的 ID
-- **刪除場次**：不在陣列中的現有 session 會被刪除
-- **批次操作**：使用 MongoDB BulkWrite 確保操作效率和部分原子性
+- **不再支援刪除**：PATCH API 不再處理場次刪除，改用專門的 DELETE API
+- **批次操作**：使用 MongoDB BulkWrite 確保操作效率
+- **權限檢查**：Published 狀態下的時間修改受限制
 
 ### 6. 刪除 Event
 
@@ -279,14 +290,36 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 
 **回應：**
 ```json
-{
-  "status": "success",
-  "code": 1000,
-  "data": null
-}
+{}
 ```
 
-### 7. 變更 Event 狀態
+**HTTP Status**: 204 No Content
+
+### 7. 刪除 Session
+
+**端點：** `DELETE /console/events/{event_id}/sessions/{session_id}`
+
+**新增的獨立 API**：從 Event PATCH 中分離出來的場次刪除功能
+
+**權限檢查：**
+- **Draft 狀態**：可自由刪除
+- **Published 狀態**：需同時滿足以下條件：
+  - 該 Session 沒有任何訂單（呼叫 OrderService 確認）
+  - 不是最後一個 Session（Event 至少保留一個）
+- **Archived 狀態**：完全禁止刪除
+
+**回應：**
+```json
+{}
+```
+
+**HTTP Status**: 204 No Content
+
+**錯誤情境：**
+- `FailedPrecondition`：Session 有訂單或是最後一個 Session
+- `NotFound`：Session 不存在
+
+### 8. 變更 Event 狀態
 
 **端點：** `PUT /console/events/{id}/status`
 
@@ -297,11 +330,11 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 }
 ```
 
-**業務規則：**
-- 草稿 → 發布：檢查必填欄位
-- 發布 → 下架：無限制
-- 下架 → 發布：檢查必填欄位
-- 下架狀態的修改/刪除：需檢查訂單微服務
+**業務規則（重要更新）：**
+- **單向轉換**：Draft → Published → Archived（不可逆）
+- **草稿 → 發布**：檢查必填欄位完整性
+- **發布 → 下架**：需要呼叫 OrderService 確認所有訂單都是 Cancelled 和 Refunded
+- **編輯限制**：各狀態有不同的編輯權限（詳見編輯權限章節）
 
 ## Public API (前台用戶)
 
@@ -337,11 +370,31 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 
 **回應：** 與 Console API 的單一 Event 格式相同，但簡化欄位
 
+### 3. 檢查 Event 是否為 Published 狀態
+
+**端點：** `GET /events/{id}/is-published`
+
+**用途：** 專門給 OrderService 呼叫，檢查 Event 是否為 Published 狀態
+
+**權限：** 內部服務呼叫，無需 Header 驗證
+
+**回應：**
+```json
+{
+  "is_published": true,
+  "status": "published"
+}
+```
+
+**錯誤情境：**
+- `NotFound`：Event 不存在
+
 ## 資料驗證規則
 
 ### 必填欄位
 - **Event**: title, brand_id, sessions, cover_image_url, detail.content, location, visibility
-- **Session**: start_time, end_time  
+- **Session**: start_time, end_time
+- **Session 可選欄位**: name(場次名稱，可空白), capacity(容量限制，null表示不限制)
 - **Location**: name, address, place_id, coordinates
 - **Detail**: content
 - **FAQ**: question, answer (當 FAQ 存在時，最多 20 個)
@@ -366,10 +419,10 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 ### 常見錯誤碼
 
 - `InvalidArgument` (3): 參數驗證失敗
-- `NotFound` (5): Event 不存在
+- `NotFound` (5): Event/Session 不存在
 - `PermissionDenied` (7): 權限不足（用戶非 Brand 成員或嘗試存取其他 Brand 的資源）
-- `FailedPrecondition` (9): 業務規則驗證失敗
-- `Internal` (13): 內部錯誤
+- `FailedPrecondition` (9): 業務規則驗證失敗（狀態轉換、Session刪除限制等）
+- `Internal` (13): 內部錯誤或外部服務呼叫失敗
 
 ### 錯誤回應格式
 ```json
@@ -379,6 +432,11 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
   "message": "title is required"
 }
 ```
+
+**新增的錯誤類型：**
+- **Session 刪除限制**：`"cannot delete session with orders"` 或 `"cannot delete last session"`
+- **Published 狀態編輯限制**：`"field not editable in published state"`
+- **狀態轉換限制**：`"invalid status transition"` 或 `"cannot archive event with active orders"`
 
 ## 索引策略
 
@@ -402,17 +460,44 @@ db.events.createIndex({"brand_id": 1, "created_at": -1})
 db.events.createIndex({"brand_id": 1, "updated_at": -1})
 ```
 
+## Published 狀態編輯權限詳細規範
+
+### 活動設定權限
+
+**可編輯欄位：**
+- ✅ FAQ 內容
+
+**不可編輯欄位：**
+- ❌ 活動封面 (cover_image_url)
+- ❌ 活動標題 (title)
+- ❌ 活動地點 (location)
+- ❌ 活動簡介 (summary)
+- ❌ 活動內容 (detail.content)
+
+### 場次設定權限
+
+**可操作：**
+- ✅ 新增場次 (所有欄位都可設定)
+- ✅ 有條件刪除場次：
+  - 必須沒有訂單
+  - 且不是最後一個場次
+
+**不可操作：**
+- ❌ 修改現有場次的 start_time, end_time
+- ℹ️ 修改現有場次的 name, capacity 尚在討論中
+
 ## 外部服務整合
 
 ### 訂單微服務
 
-**端點：** `GET /orders/events/{event_id}/exists`
+**Event 狀態轉換檢查：**
+- **端點：** `GET /orders/events/{event_id}/can-archive`
+- **用途：** 檢查是否可以將 Event 轉為 Archived
+- **回應：** `{"can_archive": true}`
 
-**用途：** 檢查 Event 是否有相關訂單
+**Session 訂單檢查：**
+- **端點：** `GET /orders/sessions/{session_id}/has-orders`（假設接口）
+- **用途：** 檢查 Session 是否有訂單
+- **回應：** `{"has_orders": false}`
 
-**回應：**
-```json
-{
-  "has_orders": true
-}
-```
+**注意：** 實際接口格式依 Robin 提供的 Proto 檔案為準

@@ -146,6 +146,8 @@ event/
   },
   "sessions": [{
     "_id": ObjectId,
+    "name": String,             // 新增：場次名稱（可選）
+    "capacity": Number,         // 新增：容量限制（可選，null 表示不限制）
     "start_time": ISODate,
     "end_time": ISODate
   }],
@@ -252,12 +254,21 @@ type EventService interface {
     PatchEvent(ctx context.Context, id string, req *PatchEventRequest) (*Event, error)
     DeleteEvent(ctx context.Context, id string) error
     UpdateEventStatus(ctx context.Context, id string, status string) (*Event, error)
+    
+    // 新增：獨立的 Session 管理
+    DeleteSession(ctx context.Context, eventID string, sessionID string) error
+    
+    // 新增：給 OrderService 使用的 API
+    IsPublished(ctx context.Context, eventID string) (bool, error)
 }
 
 type PublicService interface {
     // Public API
     SearchPublicEvents(ctx context.Context, req *SearchPublicEventsRequest) (*EventListResponse, error)
     GetPublicEvent(ctx context.Context, id string) (*Event, error)
+    
+    // 新增：給 OrderService 使用的內部 API
+    IsPublished(ctx context.Context, id string) (bool, string, error)
 }
 ```
 
@@ -278,6 +289,22 @@ type EventRepository interface {
     // 全文搜尋
     SearchByTitle(ctx context.Context, query string, filter *EventFilter) ([]*Event, error)
 }
+
+type SessionRepository interface {
+    // Session CRUD 操作
+    Create(ctx context.Context, eventID string, session *Session) (*Session, error)
+    Update(ctx context.Context, eventID, sessionID string, session *Session) (*Session, error)
+    Delete(ctx context.Context, eventID, sessionID string) error
+    FindByID(ctx context.Context, eventID, sessionID string) (*Session, error)
+    FindByEventID(ctx context.Context, eventID string) ([]*Session, error)
+    
+    // 新增：批次操作
+    BulkUpdateSessions(ctx context.Context, eventID string, creates, updates []*Session, deleteIDs []string) error
+    
+    // 新增：權限檢查輔助
+    CountByEventID(ctx context.Context, eventID string) (int64, error)
+    IsLastSession(ctx context.Context, eventID, sessionID string) (bool, error)
+}
 ```
 
 ### 4.3 狀態轉換邏輯
@@ -287,31 +314,80 @@ type StateTransition struct {
     orderService OrderServiceClient
 }
 
+// 更新後的狀態轉換邏輯（單向不可逆）
 func (s *StateTransition) CanTransition(ctx context.Context, event *Event, newStatus string) error {
     switch event.Status {
     case "draft":
         if newStatus == "published" {
             return s.validatePublishRequirements(event)
         }
+        // Draft 不能直接轉為 Archived
+        return errors.New("draft can only transition to published")
+        
     case "published":
         if newStatus == "archived" {
-            return nil // 無限制
-        }
-        return errors.New("published event can only be archived")
-    case "archived":
-        if newStatus == "published" {
-            return s.validatePublishRequirements(event)
-        }
-        if newStatus == "draft" {
-            hasOrders, err := s.orderService.HasOrders(ctx, event.ID)
+            // 新增：需要檢查 OrderService
+            canArchive, err := s.orderService.CanArchiveEvent(ctx, event.ID)
             if err != nil {
-                return err
+                return fmt.Errorf("failed to check order status: %w", err)
             }
-            if hasOrders {
-                return errors.New("cannot modify event with existing orders")
+            if !canArchive {
+                return errors.New("cannot archive event with active orders")
+            }
+            return nil
+        }
+        // Published 不能轉回 Draft
+        return errors.New("published event can only be archived")
+        
+    case "archived":
+        // Archived 狀態不能轉換到任何其他狀態
+        return errors.New("archived event cannot change status")
+    }
+    return nil
+}
+
+// 新增：編輯權限檢查
+func (s *StateTransition) CanEditField(event *Event, fieldName string) error {
+    if event.Status == "archived" {
+        return errors.New("archived event cannot be modified")
+    }
+    
+    if event.Status == "published" {
+        restrictedFields := []string{
+            "cover_image_url", "title", "location", "summary", "detail.content",
+        }
+        for _, restricted := range restrictedFields {
+            if fieldName == restricted {
+                return fmt.Errorf("field %s cannot be edited in published state", fieldName)
             }
         }
     }
+    
+    return nil
+}
+
+// 新增：Session 刪除權限檢查
+func (s *StateTransition) CanDeleteSession(ctx context.Context, event *Event, sessionID string) error {
+    if event.Status == "archived" {
+        return errors.New("cannot delete session in archived event")
+    }
+    
+    if event.Status == "published" {
+        // 檢查是否為最後一個 Session
+        if len(event.Sessions) <= 1 {
+            return errors.New("cannot delete last session")
+        }
+        
+        // 檢查 Session 是否有訂單
+        hasOrders, err := s.orderService.HasSessionOrders(ctx, sessionID)
+        if err != nil {
+            return fmt.Errorf("failed to check session orders: %w", err)
+        }
+        if hasOrders {
+            return errors.New("cannot delete session with orders")
+        }
+    }
+    
     return nil
 }
 ```
@@ -559,9 +635,9 @@ type ServiceConfig struct {
 }
 ```
 
-### 6.2 現有配置檔案
+### 6.2 更新後的配置檔案
 
-**使用現有的 config.yaml**：
+**使用現有的 config.yaml**（加入 OrderService 配置）：
 
 ```yaml
 # internal/conf/config.yaml
@@ -588,6 +664,9 @@ external:
   order_service:
     endpoint: "localhost:9090"
     timeout: "10s"
+    # 新增：OrderService 相關配置
+    retry_count: 3
+    circuit_breaker_threshold: 5
   media_service:
     endpoint: "localhost:9091"
     timeout: "30s"
@@ -1017,19 +1096,214 @@ func TestValidation(t *testing.T) {
 - 🚀 自動化性能測試
 - 🔍 契約測試(Pact)整合
 
-## 13. 未來擴展規劃
+## 13. OrderService 整合架構
 
-### 13.1 效能優化
+### 13.1 服務接口設計
+
+```go
+type OrderServiceClient interface {
+    // 狀態轉換檢查
+    CanArchiveEvent(ctx context.Context, eventID string) (bool, error)
+    
+    // Session 訂單檢查
+    HasSessionOrders(ctx context.Context, sessionID string) (bool, error)
+    
+    // Event 訂單檢查（備用）
+    HasEventOrders(ctx context.Context, eventID string) (bool, error)
+}
+```
+
+### 13.2 gRPC Client 實作
+
+```go
+type grpcOrderClient struct {
+    client pb.OrderServiceClient
+    timeout time.Duration
+}
+
+func NewOrderServiceClient(conn *grpc.ClientConn, timeout time.Duration) OrderServiceClient {
+    return &grpcOrderClient{
+        client: pb.NewOrderServiceClient(conn),
+        timeout: timeout,
+    }
+}
+
+func (c *grpcOrderClient) CanArchiveEvent(ctx context.Context, eventID string) (bool, error) {
+    ctx, cancel := context.WithTimeout(ctx, c.timeout)
+    defer cancel()
+    
+    req := &pb.CanArchiveEventRequest{EventId: eventID}
+    resp, err := c.client.CanArchiveEvent(ctx, req)
+    if err != nil {
+        return false, fmt.Errorf("order service call failed: %w", err)
+    }
+    
+    return resp.CanArchive, nil
+}
+```
+
+### 13.3 熔斷器模式
+
+```go
+type CircuitBreakerOrderClient struct {
+    client OrderServiceClient
+    breaker *gobreaker.CircuitBreaker
+}
+
+func NewCircuitBreakerOrderClient(client OrderServiceClient, threshold uint32) *CircuitBreakerOrderClient {
+    settings := gobreaker.Settings{
+        Name:        "OrderService",
+        MaxRequests: threshold,
+        Timeout:     time.Minute,
+        ReadyToTrip: func(counts gobreaker.Counts) bool {
+            return counts.ConsecutiveFailures > threshold
+        },
+    }
+    
+    return &CircuitBreakerOrderClient{
+        client:  client,
+        breaker: gobreaker.NewCircuitBreaker(settings),
+    }
+}
+
+func (c *CircuitBreakerOrderClient) CanArchiveEvent(ctx context.Context, eventID string) (bool, error) {
+    result, err := c.breaker.Execute(func() (interface{}, error) {
+        return c.client.CanArchiveEvent(ctx, eventID)
+    })
+    
+    if err != nil {
+        return false, err
+    }
+    
+    return result.(bool), nil
+}
+```
+
+### 13.4 錯誤處理策略
+
+```go
+func (s *EventService) handleOrderServiceError(err error) error {
+    if errors.Is(err, context.DeadlineExceeded) {
+        log.Error("OrderService timeout", zap.Error(err))
+        return status.Error(codes.Unavailable, "order service temporarily unavailable")
+    }
+    
+    if status.Code(err) == codes.NotFound {
+        // Event 不存在於 OrderService，假設沒有訂單
+        return nil
+    }
+    
+    log.Error("OrderService error", zap.Error(err))
+    return status.Error(codes.Internal, "failed to check order status")
+}
+```
+
+### 13.5 測試策略
+
+```go
+type MockOrderServiceClient struct {
+    canArchiveResponse bool
+    hasOrdersResponse  bool
+    shouldError        bool
+}
+
+func (m *MockOrderServiceClient) CanArchiveEvent(ctx context.Context, eventID string) (bool, error) {
+    if m.shouldError {
+        return false, errors.New("mock error")
+    }
+    return m.canArchiveResponse, nil
+}
+```
+
+## 14. Proto 檔案調整
+
+### 14.1 回應格式調整
+
+**修改前（統一包裝）：**
+```protobuf
+message CreateEventResponse {
+  api.Response response = 1;
+}
+```
+
+**修改後（直接返回）：**
+```protobuf
+message CreateEventResponse {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+}
+
+message GetEventResponse {
+  Event event = 1;
+}
+
+message GetEventListResponse {
+  repeated Event events = 1;
+  PaginationInfo pagination = 2;
+}
+```
+
+### 14.2 Session 資料結構調整
+
+```protobuf
+message Session {
+  string id = 1;
+  string name = 2;                    // 新增：場次名稱
+  google.protobuf.Int32Value capacity = 3;  // 新增：容量限制（null 表示不限制）
+  google.protobuf.Timestamp start_time = 4;
+  google.protobuf.Timestamp end_time = 5;
+}
+```
+
+### 14.3 新增 API 定義
+
+```protobuf
+service EventService {
+  // ... 現有 API
+  
+  // 新增：刪除 Session
+  rpc DeleteSession(DeleteSessionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/console/events/{event_id}/sessions/{session_id}"
+    };
+  }
+}
+
+service PublicEventService {
+  // ... 現有 API
+  
+  // 新增：給 OrderService 使用
+  rpc IsPublished(api.ID) returns (IsPublishedResponse) {
+    option (google.api.http) = {
+      get: "/events/{id}/is-published"
+    };
+  }
+}
+
+message DeleteSessionRequest {
+  string event_id = 1;
+  string session_id = 2;
+}
+
+message IsPublishedResponse {
+  bool is_published = 1;
+  string status = 2;
+}
+```
+
+## 15. 未來擴展規劃
+
+### 15.1 效能優化
 - 引入 Redis 快取層
 - 讀寫分離（MongoDB 副本集）
 - 搜尋引擎整合（Elasticsearch）
 
-### 13.2 功能擴展
+### 15.2 功能擴展
 - 事件驅動架構（消息佇列）
 - 多語言支援
 - 批次操作 API
 
-### 13.3 可觀測性
+### 15.3 可觀測性
 - OpenTelemetry 整合
 - 分散式追蹤
 - 業務指標監控

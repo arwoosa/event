@@ -36,15 +36,36 @@
 - 預設值：`private`
 - 管理權限：Brand 成員可修改（**備註：需考量用戶在 Brand 中的細分權限**）
 
-**狀態轉換規則：**
-- **草稿狀態**：可修改、刪除、轉為發布狀態
-- **發布狀態**：不可修改、不可刪除，只能轉為下架狀態（無論是否有訂單）
-- **下架狀態**：
-  - 無訂單：可修改、可刪除、可轉回發布狀態
-  - 有訂單：不可修改、不可刪除，可轉回發布狀態
+**狀態轉換規則（重要更新）：**
+- **單向流程**：`Draft → Published → Archived`（不可逆轉）
+- **草稿狀態（Draft）**：可自由修改、刪除、轉為發布狀態
+- **發布狀態（Published）**：
+  - 活動設定有限制編輯（詳見編輯權限章節）
+  - 不可刪除整個 Event
+  - 只能轉為下架狀態
+- **下架狀態（Archived）**：
+  - 完全不可修改任何內容
+  - 不可刪除
+  - 不可變更狀態（包含無法回到 Published）
+  - 建議：使用者需複製成新的 Draft 來修改
+
+**Published 狀態編輯權限詳細規範：**
+
+*活動設定權限：*
+- ❌ **不可編輯**：活動封面、活動標題、活動地點、活動簡介、活動內容
+- ✅ **可編輯**：FAQ
+
+*場次設定權限：*
+- ❌ **不可編輯**：現有場次的時間資訊
+- ✅ **可操作**：新增場次
+- ✅ **有條件刪除場次**：
+  - 條件1：該場次沒有任何訂單（需呼叫 OrderService 確認）
+  - 條件2：不是最後一個場次（Event 至少需保留一個 Session）
+  - 兩個條件必須同時滿足
 
 **訂單檢查機制：**
-- 調用訂單微服務 API 來檢查是否有訂單（回傳 bool 值）
+- **狀態轉換檢查**：`Published → Archived` 需呼叫 OrderService 確認所有訂單都是 Cancelled 和 Refunded
+- **場次刪除檢查**：呼叫 OrderService 檢查特定 Session 是否有訂單
 - 訂單定義邏輯由訂單微服務負責處理
 - 暫時無快取機制（**建議：未來可考慮快取以提升性能**）
 
@@ -54,12 +75,26 @@
 - 一個 Event 可以有多個 Session
 - 每個 Event 至少需要一個 Session
 - Session 透過 Event 管理，不獨立存在
+- **重要變更**：Session 不再儲存 brand_id，透過 Event 繼承權限範圍
+
+**Session 資料結構更新：**
+- **新增欄位**：
+  - `name`：場次名稱（可選，可空白）
+  - `capacity`：容量限制（可選，可不限制）
+- **移除欄位**：
+  - `brand_id`：改由 Event 統一管理
 
 **Session 時間驗證規則：**
 - 同一 Event 的 Session 時間不可重疊
 - 重疊定義：start_time 和 end_time 的組合必須唯一
 - StartTime 必須小於 EndTime
 - 無時長限制（最小/最大時長）
+
+**Session CRUD 邏輯重構：**
+- **新增場次**：透過 Event PATCH API 或獨立新增 API
+- **更新場次**：透過 Event PATCH API（時間、名稱、容量）
+- **刪除場次**：獨立的 DELETE API，不再透過 PATCH 處理
+- **權限檢查**：Published 狀態下的刪除需要 OrderService 確認
 
 ### 4. API 端點設計
 
@@ -85,10 +120,11 @@
   - 支援 Session 時間範圍篩選
 - GET /events/{id}：分享連結查詢（只能查看 published 狀態，不限 visibility）
 
-**Session 管理設計：**
-- 透過 Event API 管理 Session（PATCH /events/{id}）
-- Session 不提供獨立的 CRUD API
-- Session 與 Event 一起更新，確保資料一致性
+**Session 管理設計（重要更新）：**
+- **新增/更新場次**：透過 Event PATCH API（PATCH /console/events/{id}）
+- **刪除場次**：獨立 DELETE API（DELETE /console/events/{event_id}/sessions/{session_id}）
+- **權限檢查**：Published 狀態需透過 OrderService 檢查訂單狀態
+- Session 與 Event 保持資料一致性
 
 **不實作功能：**
 - 批次操作（建立/更新/刪除/狀態變更）
@@ -96,11 +132,16 @@
 - Event 統計資訊
 - Event 預覽功能
 
+**新增 API 端點：**
+- **IsPublished API**：專門給 OrderService 呼叫，檢查 Event 是否為 Published 狀態
+- **獨立 Session 刪除 API**：處理場次刪除邏輯與權限檢查
+
 ### 5. 資料驗證規則
 
 **必填欄位驗證：**
 - Event 必填欄位：title, brand_id, sessions（至少一個）, cover_image_url, detail.content, location, visibility
-- Session 必填欄位：start_time, end_time
+- **Session 必填欄位**：start_time, end_time
+- **Session 可選欄位**：name（場次名稱，可空白）, capacity（容量限制，可空值表示不限制）
 - Location 必填欄位：name, address, place_id, coordinates（支援 Google Maps 整合和地理位置搜尋）
 - Detail 必填欄位：content（不可空白）
 - FAQ：為可選欄位，但若新增則 question, answer 都必填（最多 20 個）
