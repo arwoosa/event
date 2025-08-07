@@ -51,7 +51,6 @@ type PatchEventRequest struct {
 	ID            string
 	Title         *string
 	Summary       *string
-	Status        *string
 	Visibility    *string
 	CoverImageURL *string
 	Location      *LocationRequest
@@ -164,9 +163,16 @@ func (s *EventService) PatchEvent(ctx context.Context, brandID string, req *Patc
 		return nil, err
 	}
 
-	// Check if update is allowed based on status
-	if err := s.validateUpdatePermissions(existingEvent, req.UserID); err != nil {
+	// Archived events cannot be updated
+	if err := existingEvent.IsValidStatusForUpdate(); err != nil {
 		return nil, err
+	}
+
+	// Validate field-level restrictions for published events
+	if existingEvent.Status == models.StatusPublished {
+		if err := s.validatePublishedEventChanges(existingEvent, req); err != nil {
+			return nil, err
+		}
 	}
 
 	// Update sessions if provided
@@ -235,23 +241,54 @@ func (s *EventService) validateDraftRequest(req *CreateEventRequest) error {
 	return nil
 }
 
-func (s *EventService) validateUpdatePermissions(event *models.Event, userID string) error {
-	// If event is published, it cannot be modified
-	if event.Status == models.StatusPublished {
-		return models.NewBusinessError("PUBLISHED_IMMUTABLE", "published events cannot be modified", nil)
+// validatePublishedEventChanges validates field-level restrictions for published events
+func (s *EventService) validatePublishedEventChanges(existing *models.Event, req *PatchEventRequest) error {
+	// For published events, only allow editing of specific safe fields:
+	// - FAQ (additional Q&A)
+	//
+	// TBD: Info needed
+	// - Visibility
+	// Restricted fields for published events:
+	// - Title
+	// - Summary
+	// - CoverImageURL
+	// - Detail content
+	// - Location
+	// - Sessions - handled by sessionService.UpdateSessionsForEvent
+	// - Status transitions (handled by separate UpdateEventStatus method)
+
+	restrictedFields := []string{}
+
+	// Check for restricted field changes
+	if req.Title != nil && *req.Title != existing.Title {
+		restrictedFields = append(restrictedFields, "title")
+	}
+	if req.Summary != nil && *req.Summary != existing.Summary {
+		restrictedFields = append(restrictedFields, "summary")
+	}
+	if req.CoverImageURL != nil && *req.CoverImageURL != existing.CoverImageURL {
+		restrictedFields = append(restrictedFields, "cover_image_url")
+	}
+	if req.Detail != nil && req.Detail.Content != existing.Detail.Content && req.Detail.ContentType != existing.Detail.ContentType {
+		restrictedFields = append(restrictedFields, "detail")
+	}
+	if req.Location != nil {
+		restrictedFields = append(restrictedFields, "location")
+	}
+	// if req.Visibility != nil && *req.Visibility != existing.Visibility {
+	// 	restrictedFields = append(restrictedFields, "visibility")
+	// }
+
+	if len(restrictedFields) > 0 {
+		return models.NewBusinessError(
+			"PUBLISHED_FIELD_RESTRICTED",
+			fmt.Sprintf("cannot modify restricted fields for published events: %v", restrictedFields),
+			nil,
+		)
 	}
 
-	// If event is archived, check for orders
-	if event.Status == models.StatusArchived {
-		hasOrders, err := s.orderService.HasOrders(context.Background(), event.ID.Hex())
-		if err != nil {
-			return fmt.Errorf("failed to check orders: %w", err)
-		}
-		if hasOrders {
-			return models.NewBusinessError("HAS_ORDERS", "cannot modify event with existing orders", models.ErrHasOrders)
-		}
-	}
-
+	// Allow changes to:
+	// - FAQ (req.FAQ)
 	return nil
 }
 

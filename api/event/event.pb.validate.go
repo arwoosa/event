@@ -1644,25 +1644,6 @@ func (m *PatchEventRequest) validate(all bool) error {
 
 	}
 
-	if m.Status != nil {
-
-		if m.GetStatus() != "" {
-
-			if _, ok := _PatchEventRequest_Status_InLookup[m.GetStatus()]; !ok {
-				err := PatchEventRequestValidationError{
-					field:  "Status",
-					reason: "value must be in list [draft published archived]",
-				}
-				if !all {
-					return err
-				}
-				errors = append(errors, err)
-			}
-
-		}
-
-	}
-
 	if m.Visibility != nil {
 
 		if m.GetVisibility() != "" {
@@ -1856,12 +1837,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PatchEventRequestValidationError{}
-
-var _PatchEventRequest_Status_InLookup = map[string]struct{}{
-	"draft":     {},
-	"published": {},
-	"archived":  {},
-}
 
 var _PatchEventRequest_Visibility_InLookup = map[string]struct{}{
 	"public":  {},

@@ -1,8 +1,9 @@
 package models
 
 import (
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Event represents the main event entity
@@ -91,16 +92,33 @@ func IsValidContentType(contentType string) bool {
 }
 
 // CanTransitionTo checks if the event can transition to the new status
+// Implements unidirectional state flow: Draft → Published → Archived
 func (e *Event) CanTransitionTo(newStatus string) bool {
+	// Same status transitions are allowed (no-op)
+	if e.Status == newStatus {
+		return true
+	}
+
 	switch e.Status {
 	case StatusDraft:
+		// Draft can go to Published (unidirectional flow)
 		return newStatus == StatusPublished
 	case StatusPublished:
+		// Published can only go to Archived (unidirectional flow)
 		return newStatus == StatusArchived
 	case StatusArchived:
-		return newStatus == StatusPublished || newStatus == StatusDraft
+		// Archived is final state - no transitions allowed (unidirectional flow)
+		return false
 	}
 	return false
+}
+
+func (e *Event) IsValidStatusForUpdate() error {
+	// Archived events cannot be updated
+	if e.Status == StatusArchived {
+		return NewBusinessError("ARCHIVED_IMMUTABLE", "archived events cannot be updated", nil)
+	}
+	return nil
 }
 
 // IsPublic checks if the event is published and public (visible in search)

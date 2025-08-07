@@ -80,20 +80,20 @@ func TestEvent_CanTransitionTo(t *testing.T) {
 		expected    bool
 		description string
 	}{
-		// Draft transitions
+		// Draft transitions - can go to Published or directly to Archived
 		{"Draft to Published", StatusDraft, StatusPublished, true, "Draft can be published"},
-		{"Draft to Archived", StatusDraft, StatusArchived, false, "Draft cannot be directly archived"},
-		{"Draft to Draft", StatusDraft, StatusDraft, false, "No self-transition"},
+		{"Draft to Archived", StatusDraft, StatusArchived, false, "Draft cannot be directly archived (unidirectional flow)"},
+		{"Draft to Draft", StatusDraft, StatusDraft, true, "Same status transition allowed (no-op)"},
 
-		// Published transitions
+		// Published transitions - can only go to Archived (unidirectional)
 		{"Published to Archived", StatusPublished, StatusArchived, true, "Published can be archived"},
-		{"Published to Draft", StatusPublished, StatusDraft, false, "Published cannot go back to draft"},
-		{"Published to Published", StatusPublished, StatusPublished, false, "No self-transition"},
+		{"Published to Draft", StatusPublished, StatusDraft, false, "Published cannot go back to draft (unidirectional)"},
+		{"Published to Published", StatusPublished, StatusPublished, true, "Same status transition allowed (no-op)"},
 
-		// Archived transitions
-		{"Archived to Published", StatusArchived, StatusPublished, true, "Archived can be republished"},
-		{"Archived to Draft", StatusArchived, StatusDraft, true, "Archived can be back to draft"},
-		{"Archived to Archived", StatusArchived, StatusArchived, false, "No self-transition"},
+		// Archived transitions - final state, no further transitions (unidirectional)
+		{"Archived to Published", StatusArchived, StatusPublished, false, "Archived is final state (unidirectional)"},
+		{"Archived to Draft", StatusArchived, StatusDraft, false, "Archived is final state (unidirectional)"},
+		{"Archived to Archived", StatusArchived, StatusArchived, true, "Same status transition allowed (no-op)"},
 
 		// Invalid transitions
 		{"Invalid from status", "invalid", StatusPublished, false, "Invalid from status"},
@@ -374,22 +374,22 @@ func TestEventConstants(t *testing.T) {
 }
 
 func TestEvent_StatusTransitionMatrix(t *testing.T) {
-	// Complete test matrix for all status transitions
+	// Complete test matrix for all status transitions (unidirectional flow)
 	transitions := map[string]map[string]bool{
 		StatusDraft: {
-			StatusDraft:     false, // No self-transition
+			StatusDraft:     true,  // Same status allowed (no-op)
 			StatusPublished: true,  // Draft -> Published
-			StatusArchived:  false, // Draft cannot go directly to Archived
+			StatusArchived:  false, // Draft -> Archived (not allowed)
 		},
 		StatusPublished: {
-			StatusDraft:     false, // Published cannot go back to Draft
-			StatusPublished: false, // No self-transition
+			StatusDraft:     false, // Published cannot go back to Draft (unidirectional)
+			StatusPublished: true,  // Same status allowed (no-op)
 			StatusArchived:  true,  // Published -> Archived
 		},
 		StatusArchived: {
-			StatusDraft:     true,  // Archived -> Draft (rollback)
-			StatusPublished: true,  // Archived -> Published (republish)
-			StatusArchived:  false, // No self-transition
+			StatusDraft:     false, // Archived is final state (unidirectional)
+			StatusPublished: false, // Archived is final state (unidirectional)
+			StatusArchived:  true,  // Same status allowed (no-op)
 		},
 	}
 

@@ -712,13 +712,12 @@ type PatchEventRequest struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Title         *string                `protobuf:"bytes,2,opt,name=title,proto3,oneof" json:"title,omitempty"`
 	Summary       *string                `protobuf:"bytes,3,opt,name=summary,proto3,oneof" json:"summary,omitempty"`
-	Status        *string                `protobuf:"bytes,4,opt,name=status,proto3,oneof" json:"status,omitempty"`
-	Visibility    *string                `protobuf:"bytes,5,opt,name=visibility,proto3,oneof" json:"visibility,omitempty"`
-	CoverImageUrl *string                `protobuf:"bytes,6,opt,name=cover_image_url,json=coverImageUrl,proto3,oneof" json:"cover_image_url,omitempty"`
-	Location      *Location              `protobuf:"bytes,7,opt,name=location,proto3,oneof" json:"location,omitempty"`
-	Sessions      []*Session             `protobuf:"bytes,8,rep,name=sessions,proto3" json:"sessions,omitempty"` // Replace all sessions if provided
-	Detail        *Detail                `protobuf:"bytes,9,opt,name=detail,proto3,oneof" json:"detail,omitempty"`
-	Faq           []*FAQ                 `protobuf:"bytes,10,rep,name=faq,proto3" json:"faq,omitempty"` // Replace all FAQ if provided
+	Visibility    *string                `protobuf:"bytes,4,opt,name=visibility,proto3,oneof" json:"visibility,omitempty"`
+	CoverImageUrl *string                `protobuf:"bytes,5,opt,name=cover_image_url,json=coverImageUrl,proto3,oneof" json:"cover_image_url,omitempty"`
+	Location      *Location              `protobuf:"bytes,6,opt,name=location,proto3,oneof" json:"location,omitempty"`
+	Sessions      []*Session             `protobuf:"bytes,7,rep,name=sessions,proto3" json:"sessions,omitempty"` // Replace all sessions if provided
+	Detail        *Detail                `protobuf:"bytes,8,opt,name=detail,proto3,oneof" json:"detail,omitempty"`
+	Faq           []*FAQ                 `protobuf:"bytes,9,rep,name=faq,proto3" json:"faq,omitempty"` // Replace all FAQ if provided
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -770,13 +769,6 @@ func (x *PatchEventRequest) GetTitle() string {
 func (x *PatchEventRequest) GetSummary() string {
 	if x != nil && x.Summary != nil {
 		return *x.Summary
-	}
-	return ""
-}
-
-func (x *PatchEventRequest) GetStatus() string {
-	if x != nil && x.Status != nil {
-		return *x.Status
 	}
 	return ""
 }
@@ -1403,27 +1395,24 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\r_title_searchB\n" +
 	"\n" +
 	"\b_sort_byB\r\n" +
-	"\v_sort_order\"\xce\x04\n" +
+	"\v_sort_order\"\x80\x04\n" +
 	"\x11PatchEventRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12'\n" +
 	"\x05title\x18\x02 \x01(\tB\f\xfaB\tr\a\x10\x01\x18<\xd0\x01\x01H\x00R\x05title\x88\x01\x01\x12*\n" +
-	"\asummary\x18\x03 \x01(\tB\v\xfaB\br\x06\x18\xa0\x01\xd0\x01\x01H\x01R\asummary\x88\x01\x01\x12A\n" +
-	"\x06status\x18\x04 \x01(\tB$\xfaB!r\x1fR\x05draftR\tpublishedR\barchived\xd0\x01\x01H\x02R\x06status\x88\x01\x01\x12>\n" +
+	"\asummary\x18\x03 \x01(\tB\v\xfaB\br\x06\x18\xa0\x01\xd0\x01\x01H\x01R\asummary\x88\x01\x01\x12>\n" +
 	"\n" +
-	"visibility\x18\x05 \x01(\tB\x19\xfaB\x16r\x14R\x06publicR\aprivate\xd0\x01\x01H\x03R\n" +
+	"visibility\x18\x04 \x01(\tB\x19\xfaB\x16r\x14R\x06publicR\aprivate\xd0\x01\x01H\x02R\n" +
 	"visibility\x88\x01\x01\x128\n" +
-	"\x0fcover_image_url\x18\x06 \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\x88\x01\x01H\x04R\rcoverImageUrl\x88\x01\x01\x120\n" +
-	"\blocation\x18\a \x01(\v2\x0f.event.LocationH\x05R\blocation\x88\x01\x01\x12*\n" +
-	"\bsessions\x18\b \x03(\v2\x0e.event.SessionR\bsessions\x12*\n" +
-	"\x06detail\x18\t \x01(\v2\r.event.DetailH\x06R\x06detail\x88\x01\x01\x12(\n" +
-	"\x03faq\x18\n" +
-	" \x03(\v2\n" +
+	"\x0fcover_image_url\x18\x05 \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\x88\x01\x01H\x03R\rcoverImageUrl\x88\x01\x01\x120\n" +
+	"\blocation\x18\x06 \x01(\v2\x0f.event.LocationH\x04R\blocation\x88\x01\x01\x12*\n" +
+	"\bsessions\x18\a \x03(\v2\x0e.event.SessionR\bsessions\x12*\n" +
+	"\x06detail\x18\b \x01(\v2\r.event.DetailH\x05R\x06detail\x88\x01\x01\x12(\n" +
+	"\x03faq\x18\t \x03(\v2\n" +
 	".event.FAQB\n" +
 	"\xfaB\a\x92\x01\x04\b\x00\x10\x14R\x03faqB\b\n" +
 	"\x06_titleB\n" +
 	"\n" +
-	"\b_summaryB\t\n" +
-	"\a_statusB\r\n" +
+	"\b_summaryB\r\n" +
 	"\v_visibilityB\x12\n" +
 	"\x10_cover_image_urlB\v\n" +
 	"\t_locationB\t\n" +

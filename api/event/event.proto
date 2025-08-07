@@ -173,13 +173,12 @@ message PatchEventRequest {
   string id = 1 [(validate.rules).string.min_len = 1];
   optional string title = 2 [(validate.rules).string = {ignore_empty: true, min_len: 1, max_len: 60}];
   optional string summary = 3 [(validate.rules).string = {ignore_empty: true, max_len: 160}];
-  optional string status = 4 [(validate.rules).string = {ignore_empty: true, in: ["draft", "published", "archived"]}];
-  optional string visibility = 5 [(validate.rules).string = {ignore_empty: true, in: ["public", "private"]}];
-  optional string cover_image_url = 6 [(validate.rules).string = {ignore_empty: true, uri: true}];
-  optional Location location = 7;
-  repeated Session sessions = 8; // Replace all sessions if provided
-  optional Detail detail = 9;
-  repeated FAQ faq = 10 [(validate.rules).repeated = {min_items: 0, max_items: 20}]; // Replace all FAQ if provided
+  optional string visibility = 4 [(validate.rules).string = {ignore_empty: true, in: ["public", "private"]}];
+  optional string cover_image_url = 5 [(validate.rules).string = {ignore_empty: true, uri: true}];
+  optional Location location = 6;
+  repeated Session sessions = 7; // Replace all sessions if provided
+  optional Detail detail = 8;
+  repeated FAQ faq = 9 [(validate.rules).repeated = {min_items: 0, max_items: 20}]; // Replace all FAQ if provided
 }
 
 message UpdateEventStatusRequest {

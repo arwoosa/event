@@ -473,9 +473,6 @@
         "summary": {
           "type": "string"
         },
-        "status": {
-          "type": "string"
-        },
         "visibility": {
           "type": "string"
         },

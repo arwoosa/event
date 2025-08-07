@@ -89,7 +89,7 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, br
 	}
 
 	// Check if event can be modified (basic event-level check)
-	if err := s.validateEventModification(event); err != nil {
+	if err := event.IsValidStatusForUpdate(); err != nil {
 		return nil, err
 	}
 
@@ -412,14 +412,6 @@ func (s *SessionService) convertSessionRequestToModel(sessionReq *SessionRequest
 	}
 
 	return session, nil
-}
-
-func (s *SessionService) validateEventModification(event *models.Event) error {
-	// Published events cannot be modified
-	if event.Status == models.StatusPublished {
-		return models.NewBusinessError("PUBLISHED_IMMUTABLE", "published events cannot be modified", nil)
-	}
-	return nil
 }
 
 func (s *SessionService) validateSessionUpdate(ctx context.Context, updatedSession *models.Session) error {
