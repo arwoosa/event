@@ -13,9 +13,8 @@ import (
 type Session struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	EventID   primitive.ObjectID `json:"event_id" bson:"event_id"`
-	// BrandID removed - brand isolation handled through Event
-	Name      string             `json:"name" bson:"name"`           // Session name (optional)
-	Capacity  *int               `json:"capacity" bson:"capacity"`   // Capacity limit (optional, nil means unlimited)
+	Name      string             `json:"name" bson:"name"`         // Session name (optional)
+	Capacity  *int               `json:"capacity" bson:"capacity"` // Capacity limit (optional, nil means unlimited)
 	StartTime time.Time          `json:"start_time" bson:"start_time"`
 	EndTime   time.Time          `json:"end_time" bson:"end_time"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`

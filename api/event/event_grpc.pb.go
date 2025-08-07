@@ -384,7 +384,7 @@ type PublicEventServiceClient interface {
 	SearchEvents(ctx context.Context, in *SearchEventsRequest, opts ...grpc.CallOption) (*EventListResponse, error)
 	// Get a public event by ID (for sharing links)
 	GetEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*Event, error)
-	// Check if event is published (for OrderService)
+	// Check if event is published (for OrderService - internal gRPC only)
 	IsPublished(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*IsPublishedResponse, error)
 }
 
@@ -436,7 +436,7 @@ type PublicEventServiceServer interface {
 	SearchEvents(context.Context, *SearchEventsRequest) (*EventListResponse, error)
 	// Get a public event by ID (for sharing links)
 	GetEvent(context.Context, *api.ID) (*Event, error)
-	// Check if event is published (for OrderService)
+	// Check if event is published (for OrderService - internal gRPC only)
 	IsPublished(context.Context, *api.ID) (*IsPublishedResponse, error)
 	mustEmbedUnimplementedPublicEventServiceServer()
 }

@@ -202,8 +202,12 @@ func (s *SessionService) GetSession(ctx context.Context, sessionID, brandID stri
 		return nil, err
 	}
 
-	// Verify session belongs to brand
-	if session.BrandID.Hex() != brandID {
+	// Verify session belongs to brand through parent event
+	event, err := s.eventRepo.FindByID(ctx, session.EventID.Hex())
+	if err != nil {
+		return nil, err
+	}
+	if event.BrandID.Hex() != brandID {
 		return nil, models.ErrUnauthorized
 	}
 
@@ -294,9 +298,12 @@ func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, session
 		return models.NewBusinessError("SESSION_NOT_FOUND", "session does not belong to this event", models.ErrSessionNotFound)
 	}
 
-	// TODO: brandID will be remove in the future
-	// Verify session belongs to the brand
-	if session.BrandID.Hex() != brandID {
+	// Verify session belongs to the brand through parent event
+	event, eventErr := s.eventRepo.FindByID(ctx, session.EventID.Hex())
+	if eventErr != nil {
+		return eventErr
+	}
+	if event.BrandID.Hex() != brandID {
 		return models.ErrUnauthorized
 	}
 
@@ -371,9 +378,6 @@ func (s *SessionService) convertSessionRequestToModel(sessionReq *SessionRequest
 		return nil, models.NewValidationError("event_id", "invalid event_id")
 	}
 
-	// brandID parameter is kept for API compatibility but not used in Session model
-	// Brand isolation is now handled through the parent Event entity
-
 	startTime, err := time.Parse(time.RFC3339, sessionReq.StartTime)
 	if err != nil {
 		return nil, models.NewValidationError("start_time", "invalid start_time format, must be RFC3339")
@@ -390,9 +394,8 @@ func (s *SessionService) convertSessionRequestToModel(sessionReq *SessionRequest
 
 	session := &models.Session{
 		EventID:   eventObjectID,
-		// BrandID removed - brand isolation handled through Event
-		Name:      sessionReq.Name,      // New field
-		Capacity:  sessionReq.Capacity,  // New field (pointer, can be nil)
+		Name:      sessionReq.Name,
+		Capacity:  sessionReq.Capacity,
 		StartTime: startTime,
 		EndTime:   endTime,
 	}

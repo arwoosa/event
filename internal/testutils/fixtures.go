@@ -1,6 +1,7 @@
 package testutils
 
 import (
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -64,10 +65,12 @@ func TestArchivedEvent() *models.Event {
 // TestSession creates a test session with default values
 func TestSession() *models.Session {
 	now := time.Now()
+	capacity := 50 // Default capacity for testing
 	return &models.Session{
 		ID:        primitive.NewObjectID(),
 		EventID:   primitive.NewObjectID(),
-		BrandID:   primitive.NewObjectID(),
+		Name:      "Test Session",          // New field
+		Capacity:  &capacity,               // New field (pointer to int)
 		StartTime: now.Add(time.Hour * 24), // Tomorrow
 		EndTime:   now.Add(time.Hour * 26), // Tomorrow + 2 hours
 		CreatedAt: now,
@@ -91,11 +94,13 @@ func TestSessionsForEvent(eventID primitive.ObjectID, count int) []*models.Sessi
 	for i := 0; i < count; i++ {
 		startTime := baseTime.Add(time.Duration(i*3) * time.Hour) // 3 hours apart
 		endTime := startTime.Add(time.Hour * 2)                   // 2 hours duration
+		capacity := 30 + (i * 10)                                 // Different capacities for testing
 
 		sessions[i] = &models.Session{
 			ID:        primitive.NewObjectID(),
 			EventID:   eventID,
-			BrandID:   primitive.NewObjectID(),
+			Name:      fmt.Sprintf("Session %d", i+1), // New field
+			Capacity:  &capacity,                      // New field
 			StartTime: startTime,
 			EndTime:   endTime,
 			CreatedAt: time.Now(),
@@ -121,6 +126,8 @@ type TestGeoJSONPointRequest struct {
 
 type TestSessionRequest struct {
 	ID        string
+	Name      string
+	Capacity  *int
 	StartTime string
 	EndTime   string
 }

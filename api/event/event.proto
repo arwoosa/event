@@ -80,12 +80,8 @@ service PublicEventService {
     };
   }
   
-  // Check if event is published (for OrderService)
-  rpc IsPublished(api.ID) returns (IsPublishedResponse) {
-    option (google.api.http) = {
-      get: "/events/{id}/is-published"
-    };
-  }
+  // Check if event is published (for OrderService - internal gRPC only)
+  rpc IsPublished(api.ID) returns (IsPublishedResponse);
 }
 
 // Core Event message
@@ -242,5 +238,4 @@ message Pagination {
 // Response for IsPublished API
 message IsPublishedResponse {
   bool is_published = 1;
-  string status = 2;  // Current status of the event
 }

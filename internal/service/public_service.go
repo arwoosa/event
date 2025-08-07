@@ -103,3 +103,16 @@ func (s *PublicService) SearchEvents(ctx context.Context, req *SearchEventsReque
 func (s *PublicService) GetEvent(ctx context.Context, eventID string) (*models.Event, error) {
 	return s.eventRepo.FindPublicByID(ctx, eventID)
 }
+
+// IsPublished checks if an event is published (for OrderService)
+func (s *PublicService) IsPublished(ctx context.Context, eventID string) (bool, error) {
+	// Find event by ID without brand filtering (for internal service use)
+	event, err := s.eventRepo.FindByID(ctx, eventID)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if event is published
+	isPublished := event.Status == models.StatusPublished
+	return isPublished, nil
+}

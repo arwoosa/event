@@ -192,12 +192,16 @@ func TestSessionService_GetSession_Success(t *testing.T) {
 	sessionID := testutils.ValidObjectIDString()
 	brandID := testutils.ValidObjectIDString()
 
-	// Create session with matching brand
+	// Create session and matching event
 	session := testutils.TestSession()
-	session.BrandID, _ = primitive.ObjectIDFromHex(brandID)
+	event := testutils.TestEvent()
+	event.ID = session.EventID
+	event.BrandID, _ = primitive.ObjectIDFromHex(brandID) // Set matching brand
 
 	// Mock session retrieval
 	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
+	// Mock event retrieval for brand validation (new requirement)
+	eventRepo.On("FindByID", ctx, session.EventID.Hex()).Return(event, nil)
 
 	// Execute
 	result, err := sessionService.GetSession(ctx, sessionID, brandID)
@@ -208,6 +212,7 @@ func TestSessionService_GetSession_Success(t *testing.T) {
 	assert.Equal(t, session.ID, result.ID)
 
 	sessionRepo.AssertExpectations(t)
+	eventRepo.AssertExpectations(t)
 }
 
 func TestSessionService_GetSession_UnauthorizedBrand(t *testing.T) {
@@ -220,14 +225,18 @@ func TestSessionService_GetSession_UnauthorizedBrand(t *testing.T) {
 	ctx := context.Background()
 	sessionID := testutils.ValidObjectIDString()
 	brandID := testutils.ValidObjectIDString()
-	wrongBrandID := testutils.ValidObjectIDString()
+	differentBrandID := testutils.ValidObjectIDString()
 
-	// Create session with different brand
+	// Create session and event with different brand
 	session := testutils.TestSession()
-	session.BrandID, _ = primitive.ObjectIDFromHex(wrongBrandID) // Different brand
+	event := testutils.TestEvent()
+	event.ID = session.EventID
+	event.BrandID, _ = primitive.ObjectIDFromHex(differentBrandID) // Different brand
 
 	// Mock session retrieval
 	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
+	// Mock event retrieval for brand validation
+	eventRepo.On("FindByID", ctx, session.EventID.Hex()).Return(event, nil)
 
 	// Execute
 	result, err := sessionService.GetSession(ctx, sessionID, brandID)
@@ -238,6 +247,7 @@ func TestSessionService_GetSession_UnauthorizedBrand(t *testing.T) {
 	assert.Equal(t, models.ErrUnauthorized, err)
 
 	sessionRepo.AssertExpectations(t)
+	eventRepo.AssertExpectations(t)
 }
 
 func TestSessionService_DeleteSession_Success(t *testing.T) {
@@ -251,18 +261,20 @@ func TestSessionService_DeleteSession_Success(t *testing.T) {
 	sessionID := testutils.ValidObjectIDString()
 	brandID := testutils.ValidObjectIDString()
 
-	// Create session
+	// Create session and event with matching brand
 	session := testutils.TestSession()
-	session.BrandID, _ = primitive.ObjectIDFromHex(brandID)
-
-	// Create event (draft, so modifiable)
 	event := testutils.TestEvent()
-	event.Status = models.StatusDraft
+	event.ID = session.EventID
+	event.Status = models.StatusDraft                     // Draft, so modifiable
+	event.BrandID, _ = primitive.ObjectIDFromHex(brandID) // Set matching brand
 
-	// Mock session retrieval
+	// Mock session retrieval (called by GetSession)
 	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
 
-	// Mock event retrieval for validation
+	// Mock event retrieval for brand validation (called by GetSession)
+	eventRepo.On("FindByID", ctx, session.EventID.Hex()).Return(event, nil)
+
+	// Mock event retrieval for modification validation (called by DeleteSession)
 	eventRepo.On("FindByID", ctx, session.EventID.Hex()).Return(event, nil)
 
 	// Mock session count check (more than 1, so can delete)
@@ -292,18 +304,20 @@ func TestSessionService_DeleteSession_LastSession(t *testing.T) {
 	sessionID := testutils.ValidObjectIDString()
 	brandID := testutils.ValidObjectIDString()
 
-	// Create session
+	// Create session and event with matching brand
 	session := testutils.TestSession()
-	session.BrandID, _ = primitive.ObjectIDFromHex(brandID)
-
-	// Create event (draft, so modifiable)
 	event := testutils.TestEvent()
-	event.Status = models.StatusDraft
+	event.ID = session.EventID
+	event.Status = models.StatusDraft                     // Draft, so modifiable
+	event.BrandID, _ = primitive.ObjectIDFromHex(brandID) // Set matching brand
 
-	// Mock session retrieval
+	// Mock session retrieval (called by GetSession)
 	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
 
-	// Mock event retrieval for validation
+	// Mock event retrieval for brand validation (called by GetSession)
+	eventRepo.On("FindByID", ctx, session.EventID.Hex()).Return(event, nil)
+
+	// Mock event retrieval for modification validation (called by DeleteSession)
 	eventRepo.On("FindByID", ctx, session.EventID.Hex()).Return(event, nil)
 
 	// Mock session count check (only 1 session, so cannot delete)

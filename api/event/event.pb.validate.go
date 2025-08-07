@@ -2789,8 +2789,6 @@ func (m *IsPublishedResponse) validate(all bool) error {
 
 	// no validation rules for IsPublished
 
-	// no validation rules for Status
-
 	if len(errors) > 0 {
 		return IsPublishedResponseMultiError(errors)
 	}

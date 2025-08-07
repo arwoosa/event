@@ -5,8 +5,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 
 	"event/api"
 	pb "event/api/event"
@@ -29,7 +27,7 @@ func NewPublicEventServiceServer(publicService *PublicService) *PublicEventServi
 }
 
 // SearchEvents implements the gRPC SearchEvents method
-func (s *PublicEventServiceServer) SearchEvents(ctx context.Context, req *pb.SearchEventsRequest) (*api.Response, error) {
+func (s *PublicEventServiceServer) SearchEvents(ctx context.Context, req *pb.SearchEventsRequest) (*pb.EventListResponse, error) {
 	// Convert gRPC request to service request
 	serviceReq := &SearchEventsRequest{}
 
@@ -89,27 +87,36 @@ func (s *PublicEventServiceServer) SearchEvents(ctx context.Context, req *pb.Sea
 	}
 
 	paginationPB := s.converter.ConvertPaginationToPB(result.Pagination)
-	listResponse := &pb.EventListResponse{
+
+	return &pb.EventListResponse{
 		Events:     eventsPB,
 		Pagination: paginationPB,
-	}
-
-	return s.createSuccessResponse(listResponse)
+	}, nil
 }
 
 // GetEvent implements the gRPC GetEvent method for public access
-func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*api.Response, error) {
+func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*pb.Event, error) {
 	// Get event
 	event, err := s.publicService.GetEvent(ctx, req.Id)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
 
-	// Convert to protobuf response (sessions are now embedded in event)
-	eventPB := s.converter.ConvertEventToPB(event)
-	eventResponse := &pb.EventResponse{Event: eventPB}
+	return s.converter.ConvertEventToPB(event), nil
+}
 
-	return s.createSuccessResponse(eventResponse)
+// IsPublished implements the gRPC IsPublished method for OrderService
+func (s *PublicEventServiceServer) IsPublished(ctx context.Context, req *api.ID) (*pb.IsPublishedResponse, error) {
+	// Check if event is published
+	isPublished, err := s.publicService.IsPublished(ctx, req.Id)
+	if err != nil {
+		return nil, s.handleServiceError(err)
+	}
+
+	// Return simple boolean response
+	return &pb.IsPublishedResponse{
+		IsPublished: isPublished,
+	}, nil
 }
 
 // Helper methods
@@ -136,26 +143,4 @@ func (s *PublicEventServiceServer) handleServiceError(err error) error {
 		}
 		return status.Error(codes.Internal, err.Error())
 	}
-}
-
-func (s *PublicEventServiceServer) createSuccessResponse(data interface{}) (*api.Response, error) {
-	var anyData *anypb.Any
-	if data != nil {
-		msg, ok := data.(proto.Message)
-		if !ok {
-			return nil, status.Error(codes.Internal, "data is not a proto message")
-		}
-
-		var err error
-		anyData, err = anypb.New(msg)
-		if err != nil {
-			return nil, status.Error(codes.Internal, "failed to create response data")
-		}
-	}
-
-	return &api.Response{
-		Status: "success",
-		Code:   1000,
-		Data:   anyData,
-	}, nil
 }

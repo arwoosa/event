@@ -1264,7 +1264,6 @@ func (x *Pagination) GetTotalPages() int32 {
 type IsPublishedResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	IsPublished   bool                   `protobuf:"varint,1,opt,name=is_published,json=isPublished,proto3" json:"is_published,omitempty"`
-	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"` // Current status of the event
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1304,13 +1303,6 @@ func (x *IsPublishedResponse) GetIsPublished() bool {
 		return x.IsPublished
 	}
 	return false
-}
-
-func (x *IsPublishedResponse) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
 }
 
 var File_api_event_event_proto protoreflect.FileDescriptor
@@ -1501,10 +1493,9 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\t_has_prevB\x0e\n" +
 	"\f_total_countB\x0f\n" +
 	"\r_current_pageB\x0e\n" +
-	"\f_total_pages\"P\n" +
+	"\f_total_pages\"8\n" +
 	"\x13IsPublishedResponse\x12!\n" +
-	"\fis_published\x18\x01 \x01(\bR\visPublished\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status2\xa1\x05\n" +
+	"\fis_published\x18\x01 \x01(\bR\visPublished2\xa1\x05\n" +
 	"\fEventService\x12`\n" +
 	"\vCreateEvent\x12\x19.event.CreateEventRequest\x1a\x1a.event.CreateEventResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/console/events\x12]\n" +
 	"\fGetEventList\x12\x1a.event.GetEventListRequest\x1a\x18.event.EventListResponse\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/console/events\x12?\n" +
@@ -1513,11 +1504,11 @@ const file_api_event_event_proto_rawDesc = "" +
 	"PatchEvent\x12\x18.event.PatchEventRequest\x1a\f.event.Event\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*2\x14/console/events/{id}\x12L\n" +
 	"\vDeleteEvent\x12\a.api.ID\x1a\x16.google.protobuf.Empty\"\x1c\x82\xd3\xe4\x93\x02\x16*\x14/console/events/{id}\x12j\n" +
 	"\x11UpdateEventStatus\x12\x1f.event.UpdateEventStatusRequest\x1a\f.event.Event\"&\x82\xd3\xe4\x93\x02 :\x01*\x1a\x1b/console/events/{id}/status\x12~\n" +
-	"\rDeleteSession\x12\x1b.event.DeleteSessionRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x022*0/console/events/{event_id}/sessions/{session_id}2\xfb\x01\n" +
+	"\rDeleteSession\x12\x1b.event.DeleteSessionRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x022*0/console/events/{event_id}/sessions/{session_id}2\xd8\x01\n" +
 	"\x12PublicEventService\x12U\n" +
 	"\fSearchEvents\x12\x1a.event.SearchEventsRequest\x1a\x18.event.EventListResponse\"\x0f\x82\xd3\xe4\x93\x02\t\x12\a/events\x127\n" +
-	"\bGetEvent\x12\a.api.ID\x1a\f.event.Event\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/events/{id}\x12U\n" +
-	"\vIsPublished\x12\a.api.ID\x1a\x1a.event.IsPublishedResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/events/{id}/is-publishedB\x11Z\x0fevent/api/eventb\x06proto3"
+	"\bGetEvent\x12\a.api.ID\x1a\f.event.Event\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/events/{id}\x122\n" +
+	"\vIsPublished\x12\a.api.ID\x1a\x1a.event.IsPublishedResponseB\x11Z\x0fevent/api/eventb\x06proto3"
 
 var (
 	file_api_event_event_proto_rawDescOnce sync.Once

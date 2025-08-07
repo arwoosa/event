@@ -461,37 +461,6 @@
           "PublicEventService"
         ]
       }
-    },
-    "/events/{id}/is-published": {
-      "get": {
-        "summary": "Check if event is published (for OrderService)",
-        "operationId": "PublicEventService_IsPublished",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/eventIsPublishedResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "PublicEventService"
-        ]
-      }
     }
   },
   "definitions": {
@@ -720,10 +689,6 @@
       "properties": {
         "is_published": {
           "type": "boolean"
-        },
-        "status": {
-          "type": "string",
-          "title": "Current status of the event"
         }
       },
       "title": "Response for IsPublished API"

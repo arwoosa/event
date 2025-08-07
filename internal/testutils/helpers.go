@@ -78,7 +78,6 @@ func AssertSessionEqual(t *testing.T, expected, actual *models.Session, ignoreTi
 	require.NotNil(t, actual, "Actual session is nil")
 
 	assert.Equal(t, expected.EventID, actual.EventID, "EventID mismatch")
-	assert.Equal(t, expected.BrandID, actual.BrandID, "BrandID mismatch")
 	assert.Equal(t, expected.StartTime.Unix(), actual.StartTime.Unix(), "StartTime mismatch")
 	assert.Equal(t, expected.EndTime.Unix(), actual.EndTime.Unix(), "EndTime mismatch")
 

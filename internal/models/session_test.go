@@ -84,7 +84,6 @@ func TestSession_IsDuplicateOf(t *testing.T) {
 
 func TestSession_IsValid(t *testing.T) {
 	validEventID := primitive.NewObjectID()
-	validBrandID := primitive.NewObjectID()
 	validStartTime := time.Now().Add(time.Hour)
 	validEndTime := validStartTime.Add(time.Hour)
 
@@ -98,7 +97,6 @@ func TestSession_IsValid(t *testing.T) {
 			name: "Valid session",
 			session: &Session{
 				EventID:   validEventID,
-				BrandID:   validBrandID,
 				StartTime: validStartTime,
 				EndTime:   validEndTime,
 			},
@@ -107,7 +105,6 @@ func TestSession_IsValid(t *testing.T) {
 		{
 			name: "Missing event ID",
 			session: &Session{
-				BrandID:   validBrandID,
 				StartTime: validStartTime,
 				EndTime:   validEndTime,
 			},
@@ -115,20 +112,19 @@ func TestSession_IsValid(t *testing.T) {
 			errorMsg:    "event_id is required",
 		},
 		{
-			name: "Missing brand ID",
+			name: "Missing start time",
 			session: &Session{
-				EventID:   validEventID,
-				StartTime: validStartTime,
-				EndTime:   validEndTime,
+				EventID: validEventID,
+				// StartTime is zero value
+				EndTime: validEndTime,
 			},
 			expectError: true,
-			errorMsg:    "brand_id is required",
+			errorMsg:    "start_time is required",
 		},
 		{
 			name: "Missing start time",
 			session: &Session{
 				EventID: validEventID,
-				BrandID: validBrandID,
 				EndTime: validEndTime,
 			},
 			expectError: true,
@@ -138,7 +134,6 @@ func TestSession_IsValid(t *testing.T) {
 			name: "Missing end time",
 			session: &Session{
 				EventID:   validEventID,
-				BrandID:   validBrandID,
 				StartTime: validStartTime,
 			},
 			expectError: true,
@@ -148,7 +143,6 @@ func TestSession_IsValid(t *testing.T) {
 			name: "Start time equals end time",
 			session: &Session{
 				EventID:   validEventID,
-				BrandID:   validBrandID,
 				StartTime: validStartTime,
 				EndTime:   validStartTime, // Same as start time
 			},
@@ -159,7 +153,6 @@ func TestSession_IsValid(t *testing.T) {
 			name: "Start time after end time",
 			session: &Session{
 				EventID:   validEventID,
-				BrandID:   validBrandID,
 				StartTime: validEndTime,   // After end time
 				EndTime:   validStartTime, // Before start time
 			},
@@ -227,13 +220,11 @@ func TestSession_Duration(t *testing.T) {
 func TestValidateSessions(t *testing.T) {
 	baseTime := time.Now()
 	validEventID := primitive.NewObjectID()
-	validBrandID := primitive.NewObjectID()
 
 	createValidSession := func(startOffset, endOffset time.Duration) *Session {
 		return &Session{
 			ID:        primitive.NewObjectID(),
 			EventID:   validEventID,
-			BrandID:   validBrandID,
 			StartTime: baseTime.Add(startOffset),
 			EndTime:   baseTime.Add(endOffset),
 		}
@@ -283,7 +274,6 @@ func TestValidateSessions(t *testing.T) {
 				{
 					ID:        primitive.NewObjectID(),
 					EventID:   validEventID,
-					BrandID:   validBrandID,
 					StartTime: baseTime.Add(time.Hour * 3),
 					EndTime:   baseTime.Add(time.Hour * 2), // End before start
 				},
@@ -451,7 +441,6 @@ func TestSession_ValidateTimeSequence(t *testing.T) {
 
 	session := &Session{
 		EventID:   primitive.NewObjectID(),
-		BrandID:   primitive.NewObjectID(),
 		StartTime: baseTime.Add(time.Hour),
 		EndTime:   baseTime.Add(time.Hour * 2),
 	}
@@ -471,7 +460,6 @@ func TestSession_ValidateTimeSequence(t *testing.T) {
 func TestValidateSessions_PerformanceWithLargeSets(t *testing.T) {
 	// Test with larger session sets to ensure O(n) performance
 	eventID := primitive.NewObjectID()
-	brandID := primitive.NewObjectID()
 	baseTime := time.Now()
 
 	// Create 100 unique sessions
@@ -480,7 +468,6 @@ func TestValidateSessions_PerformanceWithLargeSets(t *testing.T) {
 		sessions[i] = &Session{
 			ID:        primitive.NewObjectID(),
 			EventID:   eventID,
-			BrandID:   brandID,
 			StartTime: baseTime.Add(time.Duration(i*2) * time.Hour),
 			EndTime:   baseTime.Add(time.Duration(i*2+1) * time.Hour),
 		}
@@ -494,7 +481,6 @@ func TestValidateSessions_PerformanceWithLargeSets(t *testing.T) {
 	sessions = append(sessions, &Session{
 		ID:        primitive.NewObjectID(),
 		EventID:   eventID,
-		BrandID:   brandID,
 		StartTime: baseTime, // Same as first session
 		EndTime:   baseTime.Add(time.Hour),
 	})
@@ -503,4 +489,139 @@ func TestValidateSessions_PerformanceWithLargeSets(t *testing.T) {
 	err = ValidateSessions(sessions)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "have identical start and end times")
+}
+
+// Test cases for new Session fields: Name and Capacity
+func TestSession_NewFields(t *testing.T) {
+	eventID := primitive.NewObjectID()
+	baseTime := time.Now()
+
+	tests := []struct {
+		name        string
+		session     *Session
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "Session with name only",
+			session: &Session{
+				EventID:   eventID,
+				Name:      "Morning Workshop",
+				StartTime: baseTime.Add(time.Hour),
+				EndTime:   baseTime.Add(time.Hour * 2),
+			},
+			expectError: false,
+		},
+		{
+			name: "Session with capacity only",
+			session: &Session{
+				EventID:   eventID,
+				Capacity:  &[]int{50}[0],
+				StartTime: baseTime.Add(time.Hour),
+				EndTime:   baseTime.Add(time.Hour * 2),
+			},
+			expectError: false,
+		},
+		{
+			name: "Session with both name and capacity",
+			session: &Session{
+				EventID:   eventID,
+				Name:      "Afternoon Session",
+				Capacity:  &[]int{100}[0],
+				StartTime: baseTime.Add(time.Hour * 3),
+				EndTime:   baseTime.Add(time.Hour * 4),
+			},
+			expectError: false,
+		},
+		{
+			name: "Session with zero capacity",
+			session: &Session{
+				EventID:   eventID,
+				Name:      "Zero Capacity Session",
+				Capacity:  &[]int{0}[0],
+				StartTime: baseTime.Add(time.Hour),
+				EndTime:   baseTime.Add(time.Hour * 2),
+			},
+			expectError: false,
+		},
+		{
+			name: "Session with negative capacity",
+			session: &Session{
+				EventID:   eventID,
+				Name:      "Invalid Session",
+				Capacity:  &[]int{-1}[0],
+				StartTime: baseTime.Add(time.Hour),
+				EndTime:   baseTime.Add(time.Hour * 2),
+			},
+			expectError: true,
+			errorMsg:    "capacity must be non-negative",
+		},
+		{
+			name: "Session with nil capacity (unlimited)",
+			session: &Session{
+				EventID:   eventID,
+				Name:      "Unlimited Session",
+				Capacity:  nil, // nil means unlimited
+				StartTime: baseTime.Add(time.Hour),
+				EndTime:   baseTime.Add(time.Hour * 2),
+			},
+			expectError: false,
+		},
+		{
+			name: "Session with empty name",
+			session: &Session{
+				EventID:   eventID,
+				Name:      "", // Empty name should be allowed
+				StartTime: baseTime.Add(time.Hour),
+				EndTime:   baseTime.Add(time.Hour * 2),
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.session.IsValid()
+
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestSession_FieldAccessors(t *testing.T) {
+	eventID := primitive.NewObjectID()
+	baseTime := time.Now()
+	capacity := 75
+
+	session := &Session{
+		EventID:   eventID,
+		Name:      "Test Session",
+		Capacity:  &capacity,
+		StartTime: baseTime.Add(time.Hour),
+		EndTime:   baseTime.Add(time.Hour * 2),
+	}
+
+	// Test field values
+	assert.Equal(t, "Test Session", session.Name)
+	assert.NotNil(t, session.Capacity)
+	assert.Equal(t, 75, *session.Capacity)
+	assert.Equal(t, eventID, session.EventID)
+
+	// Test unlimited capacity (nil pointer)
+	unlimitedSession := &Session{
+		EventID:   eventID,
+		Name:      "Unlimited Session",
+		Capacity:  nil,
+		StartTime: baseTime.Add(time.Hour),
+		EndTime:   baseTime.Add(time.Hour * 2),
+	}
+
+	assert.Nil(t, unlimitedSession.Capacity)
+	err := unlimitedSession.IsValid()
+	assert.NoError(t, err)
 }
