@@ -12,7 +12,7 @@ option go_package = "event/api/event";
 // Console Event Service for brand management
 service EventService {
   // Create a new event
-  rpc CreateEvent(CreateEventRequest) returns (api.Response) {
+  rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse) {
     option (google.api.http) = {
       post: "/console/events"
       body: "*"
@@ -20,21 +20,21 @@ service EventService {
   }
   
   // Get list of events with filtering and pagination
-  rpc GetEventList(GetEventListRequest) returns (api.Response) {
+  rpc GetEventList(GetEventListRequest) returns (EventListResponse) {
     option (google.api.http) = {
       get: "/console/events"
     };
   }
   
   // Get a single event by ID
-  rpc GetEvent(api.ID) returns (api.Response) {
+  rpc GetEvent(api.ID) returns (Event) {
     option (google.api.http) = {
       get: "/console/events/{id}"
     };
   }
   
   // Patch event (partial update)
-  rpc PatchEvent(PatchEventRequest) returns (api.Response) {
+  rpc PatchEvent(PatchEventRequest) returns (Event) {
     option (google.api.http) = {
       patch: "/console/events/{id}"
       body: "*"
@@ -42,14 +42,14 @@ service EventService {
   }
   
   // Delete an event
-  rpc DeleteEvent(api.ID) returns (api.Response) {
+  rpc DeleteEvent(api.ID) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/console/events/{id}"
     };
   }
   
   // Update event status
-  rpc UpdateEventStatus(UpdateEventStatusRequest) returns (api.Response) {
+  rpc UpdateEventStatus(UpdateEventStatusRequest) returns (Event) {
     option (google.api.http) = {
       put: "/console/events/{id}/status"
       body: "*"
@@ -57,7 +57,7 @@ service EventService {
   }
   
   // Delete a specific session by ID
-  rpc DeleteSession(DeleteSessionRequest) returns (api.Response) {
+  rpc DeleteSession(DeleteSessionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/console/events/{event_id}/sessions/{session_id}"
     };
@@ -67,16 +67,23 @@ service EventService {
 // Public Event Service for front-end users
 service PublicEventService {
   // Search public events
-  rpc SearchEvents(SearchEventsRequest) returns (api.Response) {
+  rpc SearchEvents(SearchEventsRequest) returns (EventListResponse) {
     option (google.api.http) = {
       get: "/events"
     };
   }
   
   // Get a public event by ID (for sharing links)
-  rpc GetEvent(api.ID) returns (api.Response) {
+  rpc GetEvent(api.ID) returns (Event) {
     option (google.api.http) = {
       get: "/events/{id}"
+    };
+  }
+  
+  // Check if event is published (for OrderService)
+  rpc IsPublished(api.ID) returns (IsPublishedResponse) {
+    option (google.api.http) = {
+      get: "/events/{id}/is-published"
     };
   }
 }
@@ -116,8 +123,10 @@ message GeoJSONPoint {
 // Session for time-based event scheduling
 message Session {
   string id = 1;
-  string start_time = 2; // RFC3339 format
-  string end_time = 3;   // RFC3339 format
+  string name = 2;                                      // Session name (optional)
+  optional int32 capacity = 3;                          // Capacity limit (optional, null means unlimited)
+  string start_time = 4; // RFC3339 format
+  string end_time = 5;   // RFC3339 format
 }
 
 // Event detail content
@@ -210,8 +219,9 @@ message SearchEventsRequest {
 }
 
 // Response messages
-message EventResponse {
-  Event event = 1;
+message CreateEventResponse {
+  string id = 1;
+  string created_at = 2;
 }
 
 message EventListResponse {
@@ -227,4 +237,10 @@ message Pagination {
   optional int32 total_count = 5;
   optional int32 current_page = 6;     // for page-based
   optional int32 total_pages = 7;      // for page-based
+}
+
+// Response for IsPublished API
+message IsPublishedResponse {
+  bool is_published = 1;
+  string status = 2;  // Current status of the event
 }

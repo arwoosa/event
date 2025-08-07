@@ -9,10 +9,13 @@ import (
 )
 
 // Session represents an event session as a separate collection
+// Brand isolation is now handled through the parent Event entity
 type Session struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	EventID   primitive.ObjectID `json:"event_id" bson:"event_id"`
-	BrandID   primitive.ObjectID `json:"brand_id" bson:"brand_id"` // For brand isolation
+	// BrandID removed - brand isolation handled through Event
+	Name      string             `json:"name" bson:"name"`           // Session name (optional)
+	Capacity  *int               `json:"capacity" bson:"capacity"`   // Capacity limit (optional, nil means unlimited)
 	StartTime time.Time          `json:"start_time" bson:"start_time"`
 	EndTime   time.Time          `json:"end_time" bson:"end_time"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
@@ -25,13 +28,12 @@ func (s *Session) IsDuplicateOf(other *Session) bool {
 }
 
 // IsValid validates session time constraints
+// Brand validation is no longer required as sessions inherit brand from event
 func (s *Session) IsValid() error {
 	if s.EventID.IsZero() {
 		return errors.New("event_id is required")
 	}
-	if s.BrandID.IsZero() {
-		return errors.New("brand_id is required")
-	}
+	// BrandID validation removed - brand isolation handled through Event
 	if s.StartTime.IsZero() {
 		return errors.New("start_time is required")
 	}
@@ -40,6 +42,10 @@ func (s *Session) IsValid() error {
 	}
 	if !s.StartTime.Before(s.EndTime) {
 		return errors.New("start_time must be before end_time")
+	}
+	// Validate capacity if provided
+	if s.Capacity != nil && *s.Capacity < 0 {
+		return errors.New("capacity must be non-negative")
 	}
 	return nil
 }

@@ -597,9 +597,15 @@ func (m *Session) validate(all bool) error {
 
 	// no validation rules for Id
 
+	// no validation rules for Name
+
 	// no validation rules for StartTime
 
 	// no validation rules for EndTime
+
+	if m.Capacity != nil {
+		// no validation rules for Capacity
+	}
 
 	if len(errors) > 0 {
 		return SessionMultiError(errors)
@@ -2361,71 +2367,46 @@ var _SearchEventsRequest_SortOrder_InLookup = map[string]struct{}{
 	"desc": {},
 }
 
-// Validate checks the field values on EventResponse with the rules defined in
-// the proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *EventResponse) Validate() error {
+// Validate checks the field values on CreateEventResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CreateEventResponse) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on EventResponse with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in EventResponseMultiError, or
-// nil if none found.
-func (m *EventResponse) ValidateAll() error {
+// ValidateAll checks the field values on CreateEventResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CreateEventResponseMultiError, or nil if none found.
+func (m *CreateEventResponse) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *EventResponse) validate(all bool) error {
+func (m *CreateEventResponse) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	if all {
-		switch v := interface{}(m.GetEvent()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, EventResponseValidationError{
-					field:  "Event",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, EventResponseValidationError{
-					field:  "Event",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetEvent()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return EventResponseValidationError{
-				field:  "Event",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
+	// no validation rules for Id
+
+	// no validation rules for CreatedAt
 
 	if len(errors) > 0 {
-		return EventResponseMultiError(errors)
+		return CreateEventResponseMultiError(errors)
 	}
 
 	return nil
 }
 
-// EventResponseMultiError is an error wrapping multiple validation errors
-// returned by EventResponse.ValidateAll() if the designated constraints
-// aren't met.
-type EventResponseMultiError []error
+// CreateEventResponseMultiError is an error wrapping multiple validation
+// errors returned by CreateEventResponse.ValidateAll() if the designated
+// constraints aren't met.
+type CreateEventResponseMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m EventResponseMultiError) Error() string {
+func (m CreateEventResponseMultiError) Error() string {
 	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2434,11 +2415,11 @@ func (m EventResponseMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m EventResponseMultiError) AllErrors() []error { return m }
+func (m CreateEventResponseMultiError) AllErrors() []error { return m }
 
-// EventResponseValidationError is the validation error returned by
-// EventResponse.Validate if the designated constraints aren't met.
-type EventResponseValidationError struct {
+// CreateEventResponseValidationError is the validation error returned by
+// CreateEventResponse.Validate if the designated constraints aren't met.
+type CreateEventResponseValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2446,22 +2427,24 @@ type EventResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e EventResponseValidationError) Field() string { return e.field }
+func (e CreateEventResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e EventResponseValidationError) Reason() string { return e.reason }
+func (e CreateEventResponseValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e EventResponseValidationError) Cause() error { return e.cause }
+func (e CreateEventResponseValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e EventResponseValidationError) Key() bool { return e.key }
+func (e CreateEventResponseValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e EventResponseValidationError) ErrorName() string { return "EventResponseValidationError" }
+func (e CreateEventResponseValidationError) ErrorName() string {
+	return "CreateEventResponseValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e EventResponseValidationError) Error() string {
+func (e CreateEventResponseValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2473,14 +2456,14 @@ func (e EventResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sEventResponse.%s: %s%s",
+		"invalid %sCreateEventResponse.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = EventResponseValidationError{}
+var _ error = CreateEventResponseValidationError{}
 
 var _ interface {
 	Field() string
@@ -2488,7 +2471,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = EventResponseValidationError{}
+} = CreateEventResponseValidationError{}
 
 // Validate checks the field values on EventListResponse with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -2781,3 +2764,109 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = PaginationValidationError{}
+
+// Validate checks the field values on IsPublishedResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *IsPublishedResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on IsPublishedResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// IsPublishedResponseMultiError, or nil if none found.
+func (m *IsPublishedResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *IsPublishedResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for IsPublished
+
+	// no validation rules for Status
+
+	if len(errors) > 0 {
+		return IsPublishedResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// IsPublishedResponseMultiError is an error wrapping multiple validation
+// errors returned by IsPublishedResponse.ValidateAll() if the designated
+// constraints aren't met.
+type IsPublishedResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m IsPublishedResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m IsPublishedResponseMultiError) AllErrors() []error { return m }
+
+// IsPublishedResponseValidationError is the validation error returned by
+// IsPublishedResponse.Validate if the designated constraints aren't met.
+type IsPublishedResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e IsPublishedResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e IsPublishedResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e IsPublishedResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e IsPublishedResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e IsPublishedResponseValidationError) ErrorName() string {
+	return "IsPublishedResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e IsPublishedResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sIsPublishedResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = IsPublishedResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = IsPublishedResponseValidationError{}

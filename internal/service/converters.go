@@ -59,11 +59,18 @@ func (c *ProtobufConverter) ConvertSessionsToPB(sessions []models.Session) []*pb
 
 	sessionsPB := make([]*pb.Session, len(sessions))
 	for i, session := range sessions {
-		sessionsPB[i] = &pb.Session{
+		sessionPB := &pb.Session{
 			Id:        session.ID.Hex(),
+			Name:      session.Name,
 			StartTime: session.StartTime.Format(time.RFC3339),
 			EndTime:   session.EndTime.Format(time.RFC3339),
 		}
+		// Convert capacity - handle nil pointer
+		if session.Capacity != nil {
+			capacity := int32(*session.Capacity)
+			sessionPB.Capacity = &capacity
+		}
+		sessionsPB[i] = sessionPB
 	}
 	return sessionsPB
 }
@@ -141,10 +148,18 @@ func (c *ProtobufConverter) ConvertLocationFromPB(location *pb.Location) *Locati
 func (c *ProtobufConverter) ConvertSessionsFromPB(sessions []*pb.Session) []*SessionRequest {
 	sessionReqs := make([]*SessionRequest, len(sessions))
 	for i, session := range sessions {
-		sessionReqs[i] = &SessionRequest{
+		sessionReq := &SessionRequest{
+			ID:        session.Id,
+			Name:      session.Name,
 			StartTime: session.StartTime,
 			EndTime:   session.EndTime,
 		}
+		// Convert capacity - handle nil pointer
+		if session.Capacity != nil {
+			capacity := int(*session.Capacity)
+			sessionReq.Capacity = &capacity
+		}
+		sessionReqs[i] = sessionReq
 	}
 	return sessionReqs
 }

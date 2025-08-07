@@ -12,6 +12,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -36,19 +37,19 @@ const (
 // Console Event Service for brand management
 type EventServiceClient interface {
 	// Create a new event
-	CreateEvent(ctx context.Context, in *CreateEventRequest, opts ...grpc.CallOption) (*api.Response, error)
+	CreateEvent(ctx context.Context, in *CreateEventRequest, opts ...grpc.CallOption) (*CreateEventResponse, error)
 	// Get list of events with filtering and pagination
-	GetEventList(ctx context.Context, in *GetEventListRequest, opts ...grpc.CallOption) (*api.Response, error)
+	GetEventList(ctx context.Context, in *GetEventListRequest, opts ...grpc.CallOption) (*EventListResponse, error)
 	// Get a single event by ID
-	GetEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*api.Response, error)
+	GetEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*Event, error)
 	// Patch event (partial update)
-	PatchEvent(ctx context.Context, in *PatchEventRequest, opts ...grpc.CallOption) (*api.Response, error)
+	PatchEvent(ctx context.Context, in *PatchEventRequest, opts ...grpc.CallOption) (*Event, error)
 	// Delete an event
-	DeleteEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*api.Response, error)
+	DeleteEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Update event status
-	UpdateEventStatus(ctx context.Context, in *UpdateEventStatusRequest, opts ...grpc.CallOption) (*api.Response, error)
+	UpdateEventStatus(ctx context.Context, in *UpdateEventStatusRequest, opts ...grpc.CallOption) (*Event, error)
 	// Delete a specific session by ID
-	DeleteSession(ctx context.Context, in *DeleteSessionRequest, opts ...grpc.CallOption) (*api.Response, error)
+	DeleteSession(ctx context.Context, in *DeleteSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type eventServiceClient struct {
@@ -59,9 +60,9 @@ func NewEventServiceClient(cc grpc.ClientConnInterface) EventServiceClient {
 	return &eventServiceClient{cc}
 }
 
-func (c *eventServiceClient) CreateEvent(ctx context.Context, in *CreateEventRequest, opts ...grpc.CallOption) (*api.Response, error) {
+func (c *eventServiceClient) CreateEvent(ctx context.Context, in *CreateEventRequest, opts ...grpc.CallOption) (*CreateEventResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(api.Response)
+	out := new(CreateEventResponse)
 	err := c.cc.Invoke(ctx, EventService_CreateEvent_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -69,9 +70,9 @@ func (c *eventServiceClient) CreateEvent(ctx context.Context, in *CreateEventReq
 	return out, nil
 }
 
-func (c *eventServiceClient) GetEventList(ctx context.Context, in *GetEventListRequest, opts ...grpc.CallOption) (*api.Response, error) {
+func (c *eventServiceClient) GetEventList(ctx context.Context, in *GetEventListRequest, opts ...grpc.CallOption) (*EventListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(api.Response)
+	out := new(EventListResponse)
 	err := c.cc.Invoke(ctx, EventService_GetEventList_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -79,9 +80,9 @@ func (c *eventServiceClient) GetEventList(ctx context.Context, in *GetEventListR
 	return out, nil
 }
 
-func (c *eventServiceClient) GetEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*api.Response, error) {
+func (c *eventServiceClient) GetEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*Event, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(api.Response)
+	out := new(Event)
 	err := c.cc.Invoke(ctx, EventService_GetEvent_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -89,9 +90,9 @@ func (c *eventServiceClient) GetEvent(ctx context.Context, in *api.ID, opts ...g
 	return out, nil
 }
 
-func (c *eventServiceClient) PatchEvent(ctx context.Context, in *PatchEventRequest, opts ...grpc.CallOption) (*api.Response, error) {
+func (c *eventServiceClient) PatchEvent(ctx context.Context, in *PatchEventRequest, opts ...grpc.CallOption) (*Event, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(api.Response)
+	out := new(Event)
 	err := c.cc.Invoke(ctx, EventService_PatchEvent_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -99,9 +100,9 @@ func (c *eventServiceClient) PatchEvent(ctx context.Context, in *PatchEventReque
 	return out, nil
 }
 
-func (c *eventServiceClient) DeleteEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*api.Response, error) {
+func (c *eventServiceClient) DeleteEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(api.Response)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, EventService_DeleteEvent_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -109,9 +110,9 @@ func (c *eventServiceClient) DeleteEvent(ctx context.Context, in *api.ID, opts .
 	return out, nil
 }
 
-func (c *eventServiceClient) UpdateEventStatus(ctx context.Context, in *UpdateEventStatusRequest, opts ...grpc.CallOption) (*api.Response, error) {
+func (c *eventServiceClient) UpdateEventStatus(ctx context.Context, in *UpdateEventStatusRequest, opts ...grpc.CallOption) (*Event, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(api.Response)
+	out := new(Event)
 	err := c.cc.Invoke(ctx, EventService_UpdateEventStatus_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -119,9 +120,9 @@ func (c *eventServiceClient) UpdateEventStatus(ctx context.Context, in *UpdateEv
 	return out, nil
 }
 
-func (c *eventServiceClient) DeleteSession(ctx context.Context, in *DeleteSessionRequest, opts ...grpc.CallOption) (*api.Response, error) {
+func (c *eventServiceClient) DeleteSession(ctx context.Context, in *DeleteSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(api.Response)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, EventService_DeleteSession_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -136,19 +137,19 @@ func (c *eventServiceClient) DeleteSession(ctx context.Context, in *DeleteSessio
 // Console Event Service for brand management
 type EventServiceServer interface {
 	// Create a new event
-	CreateEvent(context.Context, *CreateEventRequest) (*api.Response, error)
+	CreateEvent(context.Context, *CreateEventRequest) (*CreateEventResponse, error)
 	// Get list of events with filtering and pagination
-	GetEventList(context.Context, *GetEventListRequest) (*api.Response, error)
+	GetEventList(context.Context, *GetEventListRequest) (*EventListResponse, error)
 	// Get a single event by ID
-	GetEvent(context.Context, *api.ID) (*api.Response, error)
+	GetEvent(context.Context, *api.ID) (*Event, error)
 	// Patch event (partial update)
-	PatchEvent(context.Context, *PatchEventRequest) (*api.Response, error)
+	PatchEvent(context.Context, *PatchEventRequest) (*Event, error)
 	// Delete an event
-	DeleteEvent(context.Context, *api.ID) (*api.Response, error)
+	DeleteEvent(context.Context, *api.ID) (*emptypb.Empty, error)
 	// Update event status
-	UpdateEventStatus(context.Context, *UpdateEventStatusRequest) (*api.Response, error)
+	UpdateEventStatus(context.Context, *UpdateEventStatusRequest) (*Event, error)
 	// Delete a specific session by ID
-	DeleteSession(context.Context, *DeleteSessionRequest) (*api.Response, error)
+	DeleteSession(context.Context, *DeleteSessionRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedEventServiceServer()
 }
 
@@ -159,25 +160,25 @@ type EventServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedEventServiceServer struct{}
 
-func (UnimplementedEventServiceServer) CreateEvent(context.Context, *CreateEventRequest) (*api.Response, error) {
+func (UnimplementedEventServiceServer) CreateEvent(context.Context, *CreateEventRequest) (*CreateEventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateEvent not implemented")
 }
-func (UnimplementedEventServiceServer) GetEventList(context.Context, *GetEventListRequest) (*api.Response, error) {
+func (UnimplementedEventServiceServer) GetEventList(context.Context, *GetEventListRequest) (*EventListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEventList not implemented")
 }
-func (UnimplementedEventServiceServer) GetEvent(context.Context, *api.ID) (*api.Response, error) {
+func (UnimplementedEventServiceServer) GetEvent(context.Context, *api.ID) (*Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEvent not implemented")
 }
-func (UnimplementedEventServiceServer) PatchEvent(context.Context, *PatchEventRequest) (*api.Response, error) {
+func (UnimplementedEventServiceServer) PatchEvent(context.Context, *PatchEventRequest) (*Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PatchEvent not implemented")
 }
-func (UnimplementedEventServiceServer) DeleteEvent(context.Context, *api.ID) (*api.Response, error) {
+func (UnimplementedEventServiceServer) DeleteEvent(context.Context, *api.ID) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteEvent not implemented")
 }
-func (UnimplementedEventServiceServer) UpdateEventStatus(context.Context, *UpdateEventStatusRequest) (*api.Response, error) {
+func (UnimplementedEventServiceServer) UpdateEventStatus(context.Context, *UpdateEventStatusRequest) (*Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateEventStatus not implemented")
 }
-func (UnimplementedEventServiceServer) DeleteSession(context.Context, *DeleteSessionRequest) (*api.Response, error) {
+func (UnimplementedEventServiceServer) DeleteSession(context.Context, *DeleteSessionRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSession not implemented")
 }
 func (UnimplementedEventServiceServer) mustEmbedUnimplementedEventServiceServer() {}
@@ -370,6 +371,7 @@ var EventService_ServiceDesc = grpc.ServiceDesc{
 const (
 	PublicEventService_SearchEvents_FullMethodName = "/event.PublicEventService/SearchEvents"
 	PublicEventService_GetEvent_FullMethodName     = "/event.PublicEventService/GetEvent"
+	PublicEventService_IsPublished_FullMethodName  = "/event.PublicEventService/IsPublished"
 )
 
 // PublicEventServiceClient is the client API for PublicEventService service.
@@ -379,9 +381,11 @@ const (
 // Public Event Service for front-end users
 type PublicEventServiceClient interface {
 	// Search public events
-	SearchEvents(ctx context.Context, in *SearchEventsRequest, opts ...grpc.CallOption) (*api.Response, error)
+	SearchEvents(ctx context.Context, in *SearchEventsRequest, opts ...grpc.CallOption) (*EventListResponse, error)
 	// Get a public event by ID (for sharing links)
-	GetEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*api.Response, error)
+	GetEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*Event, error)
+	// Check if event is published (for OrderService)
+	IsPublished(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*IsPublishedResponse, error)
 }
 
 type publicEventServiceClient struct {
@@ -392,9 +396,9 @@ func NewPublicEventServiceClient(cc grpc.ClientConnInterface) PublicEventService
 	return &publicEventServiceClient{cc}
 }
 
-func (c *publicEventServiceClient) SearchEvents(ctx context.Context, in *SearchEventsRequest, opts ...grpc.CallOption) (*api.Response, error) {
+func (c *publicEventServiceClient) SearchEvents(ctx context.Context, in *SearchEventsRequest, opts ...grpc.CallOption) (*EventListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(api.Response)
+	out := new(EventListResponse)
 	err := c.cc.Invoke(ctx, PublicEventService_SearchEvents_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -402,10 +406,20 @@ func (c *publicEventServiceClient) SearchEvents(ctx context.Context, in *SearchE
 	return out, nil
 }
 
-func (c *publicEventServiceClient) GetEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*api.Response, error) {
+func (c *publicEventServiceClient) GetEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*Event, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(api.Response)
+	out := new(Event)
 	err := c.cc.Invoke(ctx, PublicEventService_GetEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *publicEventServiceClient) IsPublished(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*IsPublishedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IsPublishedResponse)
+	err := c.cc.Invoke(ctx, PublicEventService_IsPublished_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -419,9 +433,11 @@ func (c *publicEventServiceClient) GetEvent(ctx context.Context, in *api.ID, opt
 // Public Event Service for front-end users
 type PublicEventServiceServer interface {
 	// Search public events
-	SearchEvents(context.Context, *SearchEventsRequest) (*api.Response, error)
+	SearchEvents(context.Context, *SearchEventsRequest) (*EventListResponse, error)
 	// Get a public event by ID (for sharing links)
-	GetEvent(context.Context, *api.ID) (*api.Response, error)
+	GetEvent(context.Context, *api.ID) (*Event, error)
+	// Check if event is published (for OrderService)
+	IsPublished(context.Context, *api.ID) (*IsPublishedResponse, error)
 	mustEmbedUnimplementedPublicEventServiceServer()
 }
 
@@ -432,11 +448,14 @@ type PublicEventServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPublicEventServiceServer struct{}
 
-func (UnimplementedPublicEventServiceServer) SearchEvents(context.Context, *SearchEventsRequest) (*api.Response, error) {
+func (UnimplementedPublicEventServiceServer) SearchEvents(context.Context, *SearchEventsRequest) (*EventListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchEvents not implemented")
 }
-func (UnimplementedPublicEventServiceServer) GetEvent(context.Context, *api.ID) (*api.Response, error) {
+func (UnimplementedPublicEventServiceServer) GetEvent(context.Context, *api.ID) (*Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEvent not implemented")
+}
+func (UnimplementedPublicEventServiceServer) IsPublished(context.Context, *api.ID) (*IsPublishedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsPublished not implemented")
 }
 func (UnimplementedPublicEventServiceServer) mustEmbedUnimplementedPublicEventServiceServer() {}
 func (UnimplementedPublicEventServiceServer) testEmbeddedByValue()                            {}
@@ -495,6 +514,24 @@ func _PublicEventService_GetEvent_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PublicEventService_IsPublished_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(api.ID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PublicEventServiceServer).IsPublished(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PublicEventService_IsPublished_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PublicEventServiceServer).IsPublished(ctx, req.(*api.ID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PublicEventService_ServiceDesc is the grpc.ServiceDesc for PublicEventService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -509,6 +546,10 @@ var PublicEventService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetEvent",
 			Handler:    _PublicEventService_GetEvent_Handler,
+		},
+		{
+			MethodName: "IsPublished",
+			Handler:    _PublicEventService_IsPublished_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

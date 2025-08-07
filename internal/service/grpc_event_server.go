@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"event/api"
 	pb "event/api/event"
@@ -32,7 +33,7 @@ func NewEventServiceServer(eventService *EventService) *EventServiceServer {
 }
 
 // CreateEvent implements the gRPC CreateEvent method
-func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEventRequest) (*api.Response, error) {
+func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEventRequest) (*pb.CreateEventResponse, error) {
 	// Extract user and brand information from context
 	userID, brandID, err := s.extractUserAndBrandFromContext(ctx)
 	if err != nil {
@@ -60,15 +61,15 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEven
 		return nil, s.handleServiceError(err)
 	}
 
-	// Convert to protobuf response (sessions are now embedded in event)
-	eventPB := s.converter.ConvertEventToPB(event)
-	eventResponse := &pb.EventResponse{Event: eventPB}
-
-	return s.createSuccessResponse(eventResponse)
+	// Return direct response without api.Response wrapper
+	return &pb.CreateEventResponse{
+		Id:        event.ID.Hex(),
+		CreatedAt: event.CreatedAt.Format(time.RFC3339),
+	}, nil
 }
 
 // GetEventList implements the gRPC GetEventList method
-func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventListRequest) (*api.Response, error) {
+func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventListRequest) (*pb.EventListResponse, error) {
 	// Extract brand information from context
 	_, brandID, err := s.extractUserAndBrandFromContext(ctx)
 	if err != nil {
@@ -138,16 +139,16 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventL
 	}
 
 	paginationPB := s.converter.ConvertPaginationToPB(result.Pagination)
-	listResponse := &pb.EventListResponse{
+	
+	// Return direct response without api.Response wrapper
+	return &pb.EventListResponse{
 		Events:     eventsPB,
 		Pagination: paginationPB,
-	}
-
-	return s.createSuccessResponse(listResponse)
+	}, nil
 }
 
 // GetEvent implements the gRPC GetEvent method
-func (s *EventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*api.Response, error) {
+func (s *EventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*pb.Event, error) {
 	// Extract brand information from context
 	_, brandID, err := s.extractUserAndBrandFromContext(ctx)
 	if err != nil {
@@ -160,15 +161,12 @@ func (s *EventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*api.Re
 		return nil, s.handleServiceError(err)
 	}
 
-	// Convert to protobuf response (sessions are now embedded in event)
-	eventPB := s.converter.ConvertEventToPB(event)
-	eventResponse := &pb.EventResponse{Event: eventPB}
-
-	return s.createSuccessResponse(eventResponse)
+	// Return direct event without api.Response wrapper
+	return s.converter.ConvertEventToPB(event), nil
 }
 
 // PatchEvent implements the gRPC PatchEvent method
-func (s *EventServiceServer) PatchEvent(ctx context.Context, req *pb.PatchEventRequest) (*api.Response, error) {
+func (s *EventServiceServer) PatchEvent(ctx context.Context, req *pb.PatchEventRequest) (*pb.Event, error) {
 	// Extract user and brand information from context
 	userID, brandID, err := s.extractUserAndBrandFromContext(ctx)
 	if err != nil {
@@ -217,15 +215,12 @@ func (s *EventServiceServer) PatchEvent(ctx context.Context, req *pb.PatchEventR
 		return nil, s.handleServiceError(err)
 	}
 
-	// Convert to protobuf response (sessions are now embedded in event)
-	eventPB := s.converter.ConvertEventToPB(event)
-	eventResponse := &pb.EventResponse{Event: eventPB}
-
-	return s.createSuccessResponse(eventResponse)
+	// Return direct event without api.Response wrapper
+	return s.converter.ConvertEventToPB(event), nil
 }
 
 // DeleteEvent implements the gRPC DeleteEvent method
-func (s *EventServiceServer) DeleteEvent(ctx context.Context, req *api.ID) (*api.Response, error) {
+func (s *EventServiceServer) DeleteEvent(ctx context.Context, req *api.ID) (*emptypb.Empty, error) {
 	// Extract user and brand information from context
 	userID, brandID, err := s.extractUserAndBrandFromContext(ctx)
 	if err != nil {
@@ -238,7 +233,8 @@ func (s *EventServiceServer) DeleteEvent(ctx context.Context, req *api.ID) (*api
 		return nil, s.handleServiceError(err)
 	}
 
-	return s.createSuccessResponse(nil)
+	// Return empty response for successful deletion
+	return &emptypb.Empty{}, nil
 }
 
 // UpdateEventStatus implements the gRPC UpdateEventStatus method

@@ -12,7 +12,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/emptypb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -307,8 +307,10 @@ func (x *GeoJSONPoint) GetCoordinates() []float64 {
 type Session struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	StartTime     string                 `protobuf:"bytes,2,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"` // RFC3339 format
-	EndTime       string                 `protobuf:"bytes,3,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`       // RFC3339 format
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                            // Session name (optional)
+	Capacity      *int32                 `protobuf:"varint,3,opt,name=capacity,proto3,oneof" json:"capacity,omitempty"`             // Capacity limit (optional, null means unlimited)
+	StartTime     string                 `protobuf:"bytes,4,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"` // RFC3339 format
+	EndTime       string                 `protobuf:"bytes,5,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`       // RFC3339 format
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -348,6 +350,20 @@ func (x *Session) GetId() string {
 		return x.Id
 	}
 	return ""
+}
+
+func (x *Session) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Session) GetCapacity() int32 {
+	if x != nil && x.Capacity != nil {
+		return *x.Capacity
+	}
+	return 0
 }
 
 func (x *Session) GetStartTime() string {
@@ -1048,27 +1064,28 @@ func (x *SearchEventsRequest) GetSortOrder() string {
 }
 
 // Response messages
-type EventResponse struct {
+type CreateEventResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Event         *Event                 `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,2,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EventResponse) Reset() {
-	*x = EventResponse{}
+func (x *CreateEventResponse) Reset() {
+	*x = CreateEventResponse{}
 	mi := &file_api_event_event_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EventResponse) String() string {
+func (x *CreateEventResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EventResponse) ProtoMessage() {}
+func (*CreateEventResponse) ProtoMessage() {}
 
-func (x *EventResponse) ProtoReflect() protoreflect.Message {
+func (x *CreateEventResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_api_event_event_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1080,16 +1097,23 @@ func (x *EventResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EventResponse.ProtoReflect.Descriptor instead.
-func (*EventResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateEventResponse.ProtoReflect.Descriptor instead.
+func (*CreateEventResponse) Descriptor() ([]byte, []int) {
 	return file_api_event_event_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *EventResponse) GetEvent() *Event {
+func (x *CreateEventResponse) GetId() string {
 	if x != nil {
-		return x.Event
+		return x.Id
 	}
-	return nil
+	return ""
+}
+
+func (x *CreateEventResponse) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
 }
 
 type EventListResponse struct {
@@ -1236,6 +1260,59 @@ func (x *Pagination) GetTotalPages() int32 {
 	return 0
 }
 
+// Response for IsPublished API
+type IsPublishedResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	IsPublished   bool                   `protobuf:"varint,1,opt,name=is_published,json=isPublished,proto3" json:"is_published,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"` // Current status of the event
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IsPublishedResponse) Reset() {
+	*x = IsPublishedResponse{}
+	mi := &file_api_event_event_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IsPublishedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IsPublishedResponse) ProtoMessage() {}
+
+func (x *IsPublishedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_event_event_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IsPublishedResponse.ProtoReflect.Descriptor instead.
+func (*IsPublishedResponse) Descriptor() ([]byte, []int) {
+	return file_api_event_event_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *IsPublishedResponse) GetIsPublished() bool {
+	if x != nil {
+		return x.IsPublished
+	}
+	return false
+}
+
+func (x *IsPublishedResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
 var File_api_event_event_proto protoreflect.FileDescriptor
 
 const file_api_event_event_proto_rawDesc = "" +
@@ -1274,12 +1351,15 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\x04type\x18\x01 \x01(\tB\f\xfaB\tr\a\n" +
 	"\x05PointR\x04type\x12,\n" +
 	"\vcoordinates\x18\x02 \x03(\x01B\n" +
-	"\xfaB\a\x92\x01\x04\b\x02\x10\x02R\vcoordinates\"S\n" +
+	"\xfaB\a\x92\x01\x04\b\x02\x10\x02R\vcoordinates\"\x95\x01\n" +
 	"\aSession\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
+	"\bcapacity\x18\x03 \x01(\x05H\x00R\bcapacity\x88\x01\x01\x12\x1d\n" +
 	"\n" +
-	"start_time\x18\x02 \x01(\tR\tstartTime\x12\x19\n" +
-	"\bend_time\x18\x03 \x01(\tR\aendTime\"q\n" +
+	"start_time\x18\x04 \x01(\tR\tstartTime\x12\x19\n" +
+	"\bend_time\x18\x05 \x01(\tR\aendTimeB\v\n" +
+	"\t_capacity\"q\n" +
 	"\x06Detail\x12#\n" +
 	"\acontent\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x18\x80\x80\x04R\acontent\x12B\n" +
 	"\fcontent_type\x18\x02 \x01(\tB\x1f\xfaB\x1cr\x1aR\x04htmlR\bmarkdownR\x05plain\xd0\x01\x01R\vcontentType\"P\n" +
@@ -1394,9 +1474,11 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\x10_location_radiusB\n" +
 	"\n" +
 	"\b_sort_byB\r\n" +
-	"\v_sort_order\"3\n" +
-	"\rEventResponse\x12\"\n" +
-	"\x05event\x18\x01 \x01(\v2\f.event.EventR\x05event\"l\n" +
+	"\v_sort_order\"D\n" +
+	"\x13CreateEventResponse\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x02 \x01(\tR\tcreatedAt\"l\n" +
 	"\x11EventListResponse\x12$\n" +
 	"\x06events\x18\x01 \x03(\v2\f.event.EventR\x06events\x121\n" +
 	"\n" +
@@ -1419,19 +1501,23 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\t_has_prevB\x0e\n" +
 	"\f_total_countB\x0f\n" +
 	"\r_current_pageB\x0e\n" +
-	"\f_total_pages2\xfa\x04\n" +
-	"\fEventService\x12S\n" +
-	"\vCreateEvent\x12\x19.event.CreateEventRequest\x1a\r.api.Response\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/console/events\x12R\n" +
-	"\fGetEventList\x12\x1a.event.GetEventListRequest\x1a\r.api.Response\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/console/events\x12@\n" +
-	"\bGetEvent\x12\a.api.ID\x1a\r.api.Response\"\x1c\x82\xd3\xe4\x93\x02\x16\x12\x14/console/events/{id}\x12V\n" +
+	"\f_total_pages\"P\n" +
+	"\x13IsPublishedResponse\x12!\n" +
+	"\fis_published\x18\x01 \x01(\bR\visPublished\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status2\xa1\x05\n" +
+	"\fEventService\x12`\n" +
+	"\vCreateEvent\x12\x19.event.CreateEventRequest\x1a\x1a.event.CreateEventResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/console/events\x12]\n" +
+	"\fGetEventList\x12\x1a.event.GetEventListRequest\x1a\x18.event.EventListResponse\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/console/events\x12?\n" +
+	"\bGetEvent\x12\a.api.ID\x1a\f.event.Event\"\x1c\x82\xd3\xe4\x93\x02\x16\x12\x14/console/events/{id}\x12U\n" +
 	"\n" +
-	"PatchEvent\x12\x18.event.PatchEventRequest\x1a\r.api.Response\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*2\x14/console/events/{id}\x12C\n" +
-	"\vDeleteEvent\x12\a.api.ID\x1a\r.api.Response\"\x1c\x82\xd3\xe4\x93\x02\x16*\x14/console/events/{id}\x12k\n" +
-	"\x11UpdateEventStatus\x12\x1f.event.UpdateEventStatusRequest\x1a\r.api.Response\"&\x82\xd3\xe4\x93\x02 :\x01*\x1a\x1b/console/events/{id}/status\x12u\n" +
-	"\rDeleteSession\x12\x1b.event.DeleteSessionRequest\x1a\r.api.Response\"8\x82\xd3\xe4\x93\x022*0/console/events/{event_id}/sessions/{session_id}2\x9a\x01\n" +
-	"\x12PublicEventService\x12J\n" +
-	"\fSearchEvents\x12\x1a.event.SearchEventsRequest\x1a\r.api.Response\"\x0f\x82\xd3\xe4\x93\x02\t\x12\a/events\x128\n" +
-	"\bGetEvent\x12\a.api.ID\x1a\r.api.Response\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/events/{id}B\x11Z\x0fevent/api/eventb\x06proto3"
+	"PatchEvent\x12\x18.event.PatchEventRequest\x1a\f.event.Event\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*2\x14/console/events/{id}\x12L\n" +
+	"\vDeleteEvent\x12\a.api.ID\x1a\x16.google.protobuf.Empty\"\x1c\x82\xd3\xe4\x93\x02\x16*\x14/console/events/{id}\x12j\n" +
+	"\x11UpdateEventStatus\x12\x1f.event.UpdateEventStatusRequest\x1a\f.event.Event\"&\x82\xd3\xe4\x93\x02 :\x01*\x1a\x1b/console/events/{id}/status\x12~\n" +
+	"\rDeleteSession\x12\x1b.event.DeleteSessionRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x022*0/console/events/{event_id}/sessions/{session_id}2\xfb\x01\n" +
+	"\x12PublicEventService\x12U\n" +
+	"\fSearchEvents\x12\x1a.event.SearchEventsRequest\x1a\x18.event.EventListResponse\"\x0f\x82\xd3\xe4\x93\x02\t\x12\a/events\x127\n" +
+	"\bGetEvent\x12\a.api.ID\x1a\f.event.Event\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/events/{id}\x12U\n" +
+	"\vIsPublished\x12\a.api.ID\x1a\x1a.event.IsPublishedResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/events/{id}/is-publishedB\x11Z\x0fevent/api/eventb\x06proto3"
 
 var (
 	file_api_event_event_proto_rawDescOnce sync.Once
@@ -1445,7 +1531,7 @@ func file_api_event_event_proto_rawDescGZIP() []byte {
 	return file_api_event_event_proto_rawDescData
 }
 
-var file_api_event_event_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_api_event_event_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_api_event_event_proto_goTypes = []any{
 	(*Event)(nil),                    // 0: event.Event
 	(*Location)(nil),                 // 1: event.Location
@@ -1459,11 +1545,12 @@ var file_api_event_event_proto_goTypes = []any{
 	(*UpdateEventStatusRequest)(nil), // 9: event.UpdateEventStatusRequest
 	(*DeleteSessionRequest)(nil),     // 10: event.DeleteSessionRequest
 	(*SearchEventsRequest)(nil),      // 11: event.SearchEventsRequest
-	(*EventResponse)(nil),            // 12: event.EventResponse
+	(*CreateEventResponse)(nil),      // 12: event.CreateEventResponse
 	(*EventListResponse)(nil),        // 13: event.EventListResponse
 	(*Pagination)(nil),               // 14: event.Pagination
-	(*api.ID)(nil),                   // 15: api.ID
-	(*api.Response)(nil),             // 16: api.Response
+	(*IsPublishedResponse)(nil),      // 15: event.IsPublishedResponse
+	(*api.ID)(nil),                   // 16: api.ID
+	(*emptypb.Empty)(nil),            // 17: google.protobuf.Empty
 }
 var file_api_event_event_proto_depIdxs = []int32{
 	1,  // 0: event.Event.location:type_name -> event.Location
@@ -1479,32 +1566,33 @@ var file_api_event_event_proto_depIdxs = []int32{
 	3,  // 10: event.PatchEventRequest.sessions:type_name -> event.Session
 	4,  // 11: event.PatchEventRequest.detail:type_name -> event.Detail
 	5,  // 12: event.PatchEventRequest.faq:type_name -> event.FAQ
-	0,  // 13: event.EventResponse.event:type_name -> event.Event
-	0,  // 14: event.EventListResponse.events:type_name -> event.Event
-	14, // 15: event.EventListResponse.pagination:type_name -> event.Pagination
-	6,  // 16: event.EventService.CreateEvent:input_type -> event.CreateEventRequest
-	7,  // 17: event.EventService.GetEventList:input_type -> event.GetEventListRequest
-	15, // 18: event.EventService.GetEvent:input_type -> api.ID
-	8,  // 19: event.EventService.PatchEvent:input_type -> event.PatchEventRequest
-	15, // 20: event.EventService.DeleteEvent:input_type -> api.ID
-	9,  // 21: event.EventService.UpdateEventStatus:input_type -> event.UpdateEventStatusRequest
-	10, // 22: event.EventService.DeleteSession:input_type -> event.DeleteSessionRequest
-	11, // 23: event.PublicEventService.SearchEvents:input_type -> event.SearchEventsRequest
-	15, // 24: event.PublicEventService.GetEvent:input_type -> api.ID
-	16, // 25: event.EventService.CreateEvent:output_type -> api.Response
-	16, // 26: event.EventService.GetEventList:output_type -> api.Response
-	16, // 27: event.EventService.GetEvent:output_type -> api.Response
-	16, // 28: event.EventService.PatchEvent:output_type -> api.Response
-	16, // 29: event.EventService.DeleteEvent:output_type -> api.Response
-	16, // 30: event.EventService.UpdateEventStatus:output_type -> api.Response
-	16, // 31: event.EventService.DeleteSession:output_type -> api.Response
-	16, // 32: event.PublicEventService.SearchEvents:output_type -> api.Response
-	16, // 33: event.PublicEventService.GetEvent:output_type -> api.Response
-	25, // [25:34] is the sub-list for method output_type
-	16, // [16:25] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	0,  // 13: event.EventListResponse.events:type_name -> event.Event
+	14, // 14: event.EventListResponse.pagination:type_name -> event.Pagination
+	6,  // 15: event.EventService.CreateEvent:input_type -> event.CreateEventRequest
+	7,  // 16: event.EventService.GetEventList:input_type -> event.GetEventListRequest
+	16, // 17: event.EventService.GetEvent:input_type -> api.ID
+	8,  // 18: event.EventService.PatchEvent:input_type -> event.PatchEventRequest
+	16, // 19: event.EventService.DeleteEvent:input_type -> api.ID
+	9,  // 20: event.EventService.UpdateEventStatus:input_type -> event.UpdateEventStatusRequest
+	10, // 21: event.EventService.DeleteSession:input_type -> event.DeleteSessionRequest
+	11, // 22: event.PublicEventService.SearchEvents:input_type -> event.SearchEventsRequest
+	16, // 23: event.PublicEventService.GetEvent:input_type -> api.ID
+	16, // 24: event.PublicEventService.IsPublished:input_type -> api.ID
+	12, // 25: event.EventService.CreateEvent:output_type -> event.CreateEventResponse
+	13, // 26: event.EventService.GetEventList:output_type -> event.EventListResponse
+	0,  // 27: event.EventService.GetEvent:output_type -> event.Event
+	0,  // 28: event.EventService.PatchEvent:output_type -> event.Event
+	17, // 29: event.EventService.DeleteEvent:output_type -> google.protobuf.Empty
+	0,  // 30: event.EventService.UpdateEventStatus:output_type -> event.Event
+	17, // 31: event.EventService.DeleteSession:output_type -> google.protobuf.Empty
+	13, // 32: event.PublicEventService.SearchEvents:output_type -> event.EventListResponse
+	0,  // 33: event.PublicEventService.GetEvent:output_type -> event.Event
+	15, // 34: event.PublicEventService.IsPublished:output_type -> event.IsPublishedResponse
+	25, // [25:35] is the sub-list for method output_type
+	15, // [15:25] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_api_event_event_proto_init() }
@@ -1512,6 +1600,7 @@ func file_api_event_event_proto_init() {
 	if File_api_event_event_proto != nil {
 		return
 	}
+	file_api_event_event_proto_msgTypes[3].OneofWrappers = []any{}
 	file_api_event_event_proto_msgTypes[6].OneofWrappers = []any{}
 	file_api_event_event_proto_msgTypes[7].OneofWrappers = []any{}
 	file_api_event_event_proto_msgTypes[8].OneofWrappers = []any{}
@@ -1523,7 +1612,7 @@ func file_api_event_event_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_event_event_proto_rawDesc), len(file_api_event_event_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

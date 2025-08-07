@@ -27,7 +27,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiResponse"
+              "$ref": "#/definitions/eventEventListResponse"
             }
           },
           "default": {
@@ -122,7 +122,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiResponse"
+              "$ref": "#/definitions/eventCreateEventResponse"
             }
           },
           "default": {
@@ -155,7 +155,8 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiResponse"
+              "type": "object",
+              "properties": {}
             }
           },
           "default": {
@@ -192,7 +193,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiResponse"
+              "$ref": "#/definitions/eventEvent"
             }
           },
           "default": {
@@ -221,7 +222,8 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiResponse"
+              "type": "object",
+              "properties": {}
             }
           },
           "default": {
@@ -250,7 +252,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiResponse"
+              "$ref": "#/definitions/eventEvent"
             }
           },
           "default": {
@@ -289,7 +291,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiResponse"
+              "$ref": "#/definitions/eventEvent"
             }
           },
           "default": {
@@ -328,7 +330,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiResponse"
+              "$ref": "#/definitions/eventEventListResponse"
             }
           },
           "default": {
@@ -437,7 +439,38 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiResponse"
+              "$ref": "#/definitions/eventEvent"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PublicEventService"
+        ]
+      }
+    },
+    "/events/{id}/is-published": {
+      "get": {
+        "summary": "Check if event is published (for OrderService)",
+        "operationId": "PublicEventService_IsPublished",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/eventIsPublishedResponse"
             }
           },
           "default": {
@@ -513,24 +546,6 @@
         }
       }
     },
-    "apiResponse": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "type": "string"
-        },
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        },
-        "data": {
-          "$ref": "#/definitions/protobufAny"
-        }
-      }
-    },
     "eventCreateEventRequest": {
       "type": "object",
       "properties": {
@@ -570,6 +585,18 @@
       },
       "title": "Request messages"
     },
+    "eventCreateEventResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        }
+      },
+      "title": "Response messages"
+    },
     "eventDetail": {
       "type": "object",
       "properties": {
@@ -582,6 +609,82 @@
         }
       },
       "title": "Event detail content"
+    },
+    "eventEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "brand_id": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "title": "draft, published, archived"
+        },
+        "visibility": {
+          "type": "string",
+          "title": "public, private"
+        },
+        "cover_image_url": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/eventLocation"
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/eventSession"
+          }
+        },
+        "detail": {
+          "$ref": "#/definitions/eventDetail"
+        },
+        "faq": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/eventFAQ"
+          }
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string"
+        },
+        "updated_by": {
+          "type": "string"
+        }
+      },
+      "title": "Core Event message"
+    },
+    "eventEventListResponse": {
+      "type": "object",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/eventEvent"
+          }
+        },
+        "pagination": {
+          "$ref": "#/definitions/eventPagination"
+        }
+      }
     },
     "eventFAQ": {
       "type": "object",
@@ -612,6 +715,19 @@
         }
       }
     },
+    "eventIsPublishedResponse": {
+      "type": "object",
+      "properties": {
+        "is_published": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "title": "Current status of the event"
+        }
+      },
+      "title": "Response for IsPublished API"
+    },
     "eventLocation": {
       "type": "object",
       "properties": {
@@ -630,11 +746,53 @@
       },
       "title": "Location with GeoJSON Point structure"
     },
+    "eventPagination": {
+      "type": "object",
+      "properties": {
+        "next_page_token": {
+          "type": "string",
+          "title": "for cursor-based"
+        },
+        "prev_page_token": {
+          "type": "string",
+          "title": "for cursor-based"
+        },
+        "has_next": {
+          "type": "boolean"
+        },
+        "has_prev": {
+          "type": "boolean"
+        },
+        "total_count": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "current_page": {
+          "type": "integer",
+          "format": "int32",
+          "title": "for page-based"
+        },
+        "total_pages": {
+          "type": "integer",
+          "format": "int32",
+          "title": "for page-based"
+        }
+      }
+    },
     "eventSession": {
       "type": "object",
       "properties": {
         "id": {
           "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "title": "Session name (optional)"
+        },
+        "capacity": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Capacity limit (optional, null means unlimited)"
         },
         "start_time": {
           "type": "string",

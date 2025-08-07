@@ -371,10 +371,8 @@ func (s *SessionService) convertSessionRequestToModel(sessionReq *SessionRequest
 		return nil, models.NewValidationError("event_id", "invalid event_id")
 	}
 
-	brandObjectID, err := primitive.ObjectIDFromHex(brandID)
-	if err != nil {
-		return nil, models.NewValidationError("brand_id", "invalid brand_id")
-	}
+	// brandID parameter is kept for API compatibility but not used in Session model
+	// Brand isolation is now handled through the parent Event entity
 
 	startTime, err := time.Parse(time.RFC3339, sessionReq.StartTime)
 	if err != nil {
@@ -392,7 +390,9 @@ func (s *SessionService) convertSessionRequestToModel(sessionReq *SessionRequest
 
 	session := &models.Session{
 		EventID:   eventObjectID,
-		BrandID:   brandObjectID,
+		// BrandID removed - brand isolation handled through Event
+		Name:      sessionReq.Name,      // New field
+		Capacity:  sessionReq.Capacity,  // New field (pointer, can be nil)
 		StartTime: startTime,
 		EndTime:   endTime,
 	}
