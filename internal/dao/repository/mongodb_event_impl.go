@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"event/internal/models"
 )
@@ -230,21 +229,6 @@ func (r *MongoEventRepository) FindPublicByID(ctx context.Context, id string) (*
 	return events[0], nil
 }
 
-// SearchByTitle performs text search on event titles
-func (r *MongoEventRepository) SearchByTitle(ctx context.Context, query string, filter *EventFilter) (*EventListResult, error) {
-	searchQuery := bson.M{"$text": bson.M{"$search": query}}
-
-	if filter.BrandID != nil {
-		brandObjectID, err := primitive.ObjectIDFromHex(*filter.BrandID)
-		if err != nil {
-			return nil, fmt.Errorf("invalid brand ID: %w", err)
-		}
-		searchQuery["brand_id"] = brandObjectID
-	}
-
-	return r.executeQuery(ctx, searchQuery, filter.SortBy, filter.SortOrder, filter.Limit, filter.Offset, filter.PageToken)
-}
-
 // CountByBrandAndStatus counts events by brand and status
 func (r *MongoEventRepository) CountByBrandAndStatus(ctx context.Context, brandID, status string) (int64, error) {
 	brandObjectID, err := primitive.ObjectIDFromHex(brandID)
@@ -305,72 +289,6 @@ func (r *MongoEventRepository) ExistsByBrandAndID(ctx context.Context, brandID, 
 
 // Helper methods
 
-func (r *MongoEventRepository) executeQuery(ctx context.Context, query bson.M, sortBy, sortOrder *string,
-	limit, offset int, pageToken *string) (*EventListResult, error) {
-
-	opts := options.Find()
-
-	// Handle sorting
-	if sortBy != nil && sortOrder != nil {
-		sortDirection := 1
-		if *sortOrder == "desc" {
-			sortDirection = -1
-		}
-		opts.SetSort(bson.D{{Key: *sortBy, Value: sortDirection}})
-	} else {
-		// Default sort by created_at desc
-		opts.SetSort(bson.D{{Key: "created_at", Value: -1}})
-	}
-
-	// Handle pagination
-	if pageToken != nil && *pageToken != "" {
-		cursor, err := r.decodeCursor(*pageToken)
-		if err == nil && cursor.LastID != "" {
-			lastObjectID, err := primitive.ObjectIDFromHex(cursor.LastID)
-			if err == nil {
-				query["_id"] = bson.M{"$gt": lastObjectID}
-			}
-		}
-	} else if offset > 0 {
-		opts.SetSkip(int64(offset))
-	}
-
-	if limit > 0 {
-		opts.SetLimit(int64(limit))
-	}
-
-	cursor, err := r.collection.Find(ctx, query, opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
-	}
-	defer cursor.Close(ctx)
-
-	var events []*models.Event
-	if err = cursor.All(ctx, &events); err != nil {
-		return nil, fmt.Errorf("failed to decode events: %w", err)
-	}
-
-	// Build pagination info
-	pagination := &Pagination{
-		HasNext: len(events) == limit,
-		HasPrev: offset > 0 || (pageToken != nil && *pageToken != ""),
-	}
-
-	if len(events) > 0 && pagination.HasNext {
-		lastEvent := events[len(events)-1]
-		nextToken := r.encodeCursor(&Cursor{
-			LastID:    lastEvent.ID.Hex(),
-			Timestamp: lastEvent.CreatedAt,
-		})
-		pagination.NextPageToken = &nextToken
-	}
-
-	return &EventListResult{
-		Events:     events,
-		Pagination: pagination,
-	}, nil
-}
-
 // Cursor represents a pagination cursor
 type Cursor struct {
 	LastID    string    `json:"last_id"`
@@ -378,19 +296,30 @@ type Cursor struct {
 }
 
 func (r *MongoEventRepository) encodeCursor(cursor *Cursor) string {
-	data, _ := json.Marshal(cursor)
+	data, err := json.Marshal(cursor)
+	if err != nil {
+		// This should never happen with well-formed Cursor struct, but handle gracefully
+		return ""
+	}
 	return base64.URLEncoding.EncodeToString(data)
 }
 
 func (r *MongoEventRepository) decodeCursor(token string) (*Cursor, error) {
 	data, err := base64.URLEncoding.DecodeString(token)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid cursor token: %w", err)
 	}
 
 	var cursor Cursor
 	if err := json.Unmarshal(data, &cursor); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("malformed cursor: %w", err)
+	}
+
+	// Validate ObjectID format
+	if cursor.LastID != "" {
+		if _, err := primitive.ObjectIDFromHex(cursor.LastID); err != nil {
+			return nil, fmt.Errorf("invalid cursor ID: %w", err)
+		}
 	}
 
 	return &cursor, nil
@@ -400,5 +329,5 @@ func getLocationRadius(radius *int) int {
 	if radius != nil {
 		return *radius
 	}
-	return 1000 // Default 1km
+	return DefaultLocationRadius
 }

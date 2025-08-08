@@ -24,18 +24,47 @@ func (r *MongoEventRepository) buildUnifiedPipeline(ctx context.Context, baseQue
 
 	pipeline := []bson.M{}
 
-	// Step 1: Match base query conditions and ensure valid coordinates
-	if len(baseQuery) > 0 {
-		pipeline = append(pipeline, bson.M{"$match": baseQuery})
+	// Determine sort direction (default is desc for created_at)
+	isDescending := true
+	if sortOrder != nil && *sortOrder == "asc" {
+		isDescending = false
 	}
 
-	// Step 1.5: Filter events with valid coordinates to prevent BSON unmarshaling errors
-	// This ensures data consistency and prevents runtime errors from malformed geospatial data
-	pipeline = append(pipeline, bson.M{
-		"$match": bson.M{
-			"location.coordinates.coordinates": bson.M{"$exists": true, "$type": "array"},
-		},
-	})
+	// Step 1: Match base query conditions and cursor pagination
+	matchConditions := bson.M{}
+
+	// Add base query conditions
+	for key, value := range baseQuery {
+		matchConditions[key] = value
+	}
+
+	// Add cursor pagination condition if provided
+	if pageToken != nil && *pageToken != "" {
+		cursor, err := r.decodeCursor(*pageToken)
+		if err != nil {
+			return nil, fmt.Errorf("cursor validation failed: %w", err)
+		}
+		if cursor.LastID != "" {
+			lastObjectID, err := primitive.ObjectIDFromHex(cursor.LastID)
+			if err != nil {
+				return nil, fmt.Errorf("invalid cursor ID: %w", err)
+			}
+			// For descending sort, use $lt (less than) - get records after this cursor
+			// For ascending sort, use $gt (greater than) - get records after this cursor
+			if isDescending {
+				matchConditions["_id"] = bson.M{"$lt": lastObjectID}
+			} else {
+				matchConditions["_id"] = bson.M{"$gt": lastObjectID}
+			}
+		}
+	}
+
+	// Add coordinate validity filter
+	matchConditions["location.coordinates.coordinates"] = bson.M{"$exists": true, "$type": "array"}
+
+	if len(matchConditions) > 0 {
+		pipeline = append(pipeline, bson.M{"$match": matchConditions})
+	}
 
 	// Step 2: Lookup sessions from sessions collection
 	pipeline = append(pipeline, bson.M{
@@ -89,37 +118,36 @@ func (r *MongoEventRepository) buildUnifiedPipeline(ctx context.Context, baseQue
 		})
 	}
 
-	// Step 4: Handle pagination with cursor or offset
-	if pageToken != nil && *pageToken != "" {
-		cursor, err := r.decodeCursor(*pageToken)
-		if err == nil && cursor.LastID != "" {
-			lastObjectID, err := primitive.ObjectIDFromHex(cursor.LastID)
-			if err == nil {
-				pipeline = append(pipeline, bson.M{
-					"$match": bson.M{"_id": bson.M{"$gt": lastObjectID}},
-				})
-			}
-		}
-	} else if offset > 0 {
+	// Step 4: Handle offset pagination (cursor is already handled in Step 1)
+	if offset > 0 {
 		pipeline = append(pipeline, bson.M{"$skip": offset})
 	}
 
 	// Step 5: Handle sorting
 	sortStage := bson.M{}
-	if sortBy != nil && sortOrder != nil {
-		sortDirection := 1
-		if *sortOrder == "desc" {
-			sortDirection = -1
-		}
-		sortStage[*sortBy] = sortDirection
-	} else {
-		sortStage["created_at"] = -1
+	sortField := "created_at" // 預設排序欄位
+	sortDirection := -1       // 預設降序
+
+	if sortBy != nil && *sortBy != "" {
+		sortField = *sortBy
 	}
+
+	if sortOrder != nil && *sortOrder == "asc" {
+		sortDirection = 1
+	}
+
+	sortStage[sortField] = sortDirection
 	pipeline = append(pipeline, bson.M{"$sort": sortStage})
 
-	// Step 6: Limit results
+	// Step 6: Limit results (use limit+1 for cursor-based pagination to check if there are more results)
 	if limit > 0 {
-		pipeline = append(pipeline, bson.M{"$limit": limit})
+		actualLimit := limit
+		isCursorPagination := pageToken != nil && *pageToken != ""
+		if isCursorPagination {
+			// For cursor-based pagination, fetch limit+1 to determine if there are more results
+			actualLimit = limit + 1
+		}
+		pipeline = append(pipeline, bson.M{"$limit": actualLimit})
 	}
 
 	return r.executeUnifiedQuery(ctx, pipeline, limit, offset, pageToken)
@@ -142,9 +170,28 @@ func (r *MongoEventRepository) executeUnifiedQuery(ctx context.Context, pipeline
 	}
 
 	// Build pagination info
+	hasNext := false
+	isCursorPagination := pageToken != nil && *pageToken != ""
+	if isCursorPagination {
+		// For cursor-based pagination, check if we got limit+1 results
+		hasNext = len(events) > limit
+		if hasNext {
+			// Remove the extra result used for pagination check
+			events = events[:limit]
+		}
+	} else {
+		// For offset-based pagination, assume there might be more (traditional behavior)
+		hasNext = len(events) == limit
+	}
+
 	pagination := &Pagination{
-		HasNext: len(events) == limit,
-		HasPrev: offset > 0 || (pageToken != nil && *pageToken != ""),
+		HasNext: hasNext,
+		HasPrev: offset > 0, // For offset pagination
+	}
+
+	// For cursor pagination, any valid cursor means we're not on first page
+	if pageToken != nil && *pageToken != "" {
+		pagination.HasPrev = true
 	}
 
 	if len(events) > 0 && pagination.HasNext {

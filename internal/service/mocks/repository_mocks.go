@@ -81,15 +81,6 @@ func (m *MockEventRepository) FindPublicByID(ctx context.Context, id string) (*m
 	return args.Get(0).(*models.Event), args.Error(1)
 }
 
-// SearchByTitle implements EventRepository interface
-func (m *MockEventRepository) SearchByTitle(ctx context.Context, query string, filter *repository.EventFilter) (*repository.EventListResult, error) {
-	args := m.Called(ctx, query, filter)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*repository.EventListResult), args.Error(1)
-}
-
 // CountByBrandAndStatus implements EventRepository interface
 func (m *MockEventRepository) CountByBrandAndStatus(ctx context.Context, brandID, status string) (int64, error) {
 	args := m.Called(ctx, brandID, status)

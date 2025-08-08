@@ -112,9 +112,10 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventL
 	}
 
 	// Handle pagination
+	filter.Limit = repository.DefaultPageSize
 	if req.PageSize != nil {
 		pageSize := int(*req.PageSize)
-		if pageSize > 0 && pageSize <= 100 {
+		if pageSize > 0 && pageSize <= repository.MaxPageSize {
 			filter.Limit = pageSize
 		}
 	}

@@ -71,7 +71,6 @@ type EventRepository interface {
 	FindPublicByID(ctx context.Context, id string) (*models.Event, error)
 
 	// Specialized queries (with sessions populated)
-	SearchByTitle(ctx context.Context, query string, filter *EventFilter) (*EventListResult, error)
 	CountByBrandAndStatus(ctx context.Context, brandID, status string) (int64, error)
 
 	// Existence checks

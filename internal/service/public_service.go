@@ -84,8 +84,9 @@ func (s *PublicService) SearchEvents(ctx context.Context, req *SearchEventsReque
 	}
 
 	// Handle pagination
+	filter.Limit = repository.DefaultPageSize
 	if req.PageSize != nil {
-		if *req.PageSize > 0 && *req.PageSize <= 100 {
+		if *req.PageSize > 0 && *req.PageSize <= repository.MaxPageSize {
 			filter.Limit = int(*req.PageSize)
 		}
 	}
