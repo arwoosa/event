@@ -314,36 +314,38 @@ type StateTransition struct {
     orderService OrderServiceClient
 }
 
-// 更新後的狀態轉換邏輯（單向不可逆）
-func (s *StateTransition) CanTransition(ctx context.Context, event *Event, newStatus string) error {
-    switch event.Status {
-    case "draft":
-        if newStatus == "published" {
-            return s.validatePublishRequirements(event)
-        }
-        // Draft 不能直接轉為 Archived
-        return errors.New("draft can only transition to published")
-        
+// 實現的單向狀態轉換邏輯（不可逆）
+func (s *EventService) validateStatusTransition(ctx context.Context, event *Event, newStatus string) error {
+    // 單向狀態流程：draft → published → archived
+    
+    switch newStatus {
     case "published":
-        if newStatus == "archived" {
-            // 新增：需要檢查 OrderService
-            canArchive, err := s.orderService.CanArchiveEvent(ctx, event.ID)
-            if err != nil {
-                return fmt.Errorf("failed to check order status: %w", err)
-            }
-            if !canArchive {
-                return errors.New("cannot archive event with active orders")
-            }
-            return nil
+        if event.Status != "draft" {
+            return errors.New("only draft events can be published")
         }
-        // Published 不能轉回 Draft
-        return errors.New("published event can only be archived")
+        return s.validatePublishRequirements(ctx, event)
         
     case "archived":
-        // Archived 狀態不能轉換到任何其他狀態
-        return errors.New("archived event cannot change status")
+        if event.Status != "published" {
+            return errors.New("only published events can be archived")
+        }
+        // 檢查是否有活躍訂單
+        hasOrders, err := s.orderService.HasOrders(ctx, event.ID.Hex())
+        if err != nil {
+            return fmt.Errorf("failed to check orders: %w", err)
+        }
+        if hasOrders {
+            return models.NewBusinessError("HAS_ORDERS", "cannot change status of event with existing orders", models.ErrHasOrders)
+        }
+        return nil
+        
+    case "draft":
+        // Draft 狀態不允許從其他狀態轉換而來（移除雙向轉換）
+        return errors.New("cannot transition to draft status")
+        
+    default:
+        return errors.New("invalid status")
     }
-    return nil
 }
 
 // 新增：編輯權限檢查
@@ -388,6 +390,20 @@ func (s *StateTransition) CanDeleteSession(ctx context.Context, event *Event, se
         }
     }
     
+    return nil
+}
+
+// 新增：事件刪除權限檢查
+func (e *Event) IsValidStatusForDelete() error {
+    switch e.Status {
+    case "draft":
+        // 草稿狀態的事件可以無條件刪除
+        return nil
+    case "published":
+        return models.NewBusinessError("PUBLISHED_IMMUTABLE", "published events cannot be deleted", nil)
+    case "archived":
+        return models.NewBusinessError("ARCHIVED_IMMUTABLE", "archived events cannot be deleted", nil)
+    }
     return nil
 }
 ```

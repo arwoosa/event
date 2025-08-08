@@ -239,8 +239,7 @@ func TestValidateSessions(t *testing.T) {
 		{
 			name:        "Empty sessions",
 			sessions:    []*Session{},
-			expectError: true,
-			errorMsg:    "at least one session is required",
+			expectError: false,
 		},
 		{
 			name: "Single valid session",

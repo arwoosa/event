@@ -433,10 +433,30 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 }
 ```
 
-**新增的錯誤類型：**
-- **Session 刪除限制**：`"cannot delete session with orders"` 或 `"cannot delete last session"`
-- **Published 狀態編輯限制**：`"field not editable in published state"`
-- **狀態轉換限制**：`"invalid status transition"` 或 `"cannot archive event with active orders"`
+## 事件狀態管理規範
+
+### 狀態轉換流程
+
+**單向狀態轉換（重要變更）：**
+```
+draft → published → archived
+```
+
+**狀態轉換規則：**
+- ✅ `draft` → `published`：需滿足發佈前檢查(必要欄位等等)
+- ✅ `published` → `archived`：需檢查是否有活躍訂單(與OrderService詢問狀態，需為canceled, refund)
+- ❌ `published` → `draft`：不再允許（單向流程）
+- ❌ `archived` → `published`：不再允許（單向流程）
+- ❌ `archived` → `draft`：不再允許（單向流程）
+
+### 事件/場次變更條件
+
+- `draft`
+  - 事件場次皆可修改、可刪除
+- `published`
+  - 不可刪除、僅能修改(FAQ, Visibility)、新增場次、不能修改場次
+- `archived`
+  - 不可修改、不可刪除
 
 ## 索引策略
 
@@ -465,7 +485,8 @@ db.events.createIndex({"brand_id": 1, "updated_at": -1})
 ### 活動設定權限
 
 **可編輯欄位：**
-- ✅ FAQ 內容
+- ✅ FAQ 內容 (可新增/修改問答)
+- ✅ 可見性 (visibility) - public/private 切換
 
 **不可編輯欄位：**
 - ❌ 活動封面 (cover_image_url)
@@ -473,18 +494,21 @@ db.events.createIndex({"brand_id": 1, "updated_at": -1})
 - ❌ 活動地點 (location)
 - ❌ 活動簡介 (summary)
 - ❌ 活動內容 (detail.content)
+- ❌ 活動狀態 (status) - 須使用專門 API
 
 ### 場次設定權限
 
-**可操作：**
+**可操作（Draft）：**
 - ✅ 新增場次 (所有欄位都可設定)
-- ✅ 有條件刪除場次：
-  - 必須沒有訂單
-  - 且不是最後一個場次
+- ✅ 刪除場次
+- ✅ 修改場次名稱 (name)  
+- ✅ 修改場次容量 (capacity)
 
-**不可操作：**
-- ❌ 修改現有場次的 start_time, end_time
-- ℹ️ 修改現有場次的 name, capacity 尚在討論中
+**不可操作（Publised）：**
+- ❌ 修改現有場次 (任何欄位)
+- ❌ 刪除現有場次
+- ✅ 新增場次
+
 
 ## 外部服務整合
 

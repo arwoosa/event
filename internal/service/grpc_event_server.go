@@ -180,9 +180,6 @@ func (s *EventServiceServer) PatchEvent(ctx context.Context, req *pb.PatchEventR
 	if req.Summary != nil && *req.Summary != "" {
 		serviceReq.Summary = req.Summary
 	}
-	if req.Status != nil && *req.Status != "" {
-		serviceReq.Status = req.Status
-	}
 	if req.Visibility != nil && *req.Visibility != "" {
 		serviceReq.Visibility = req.Visibility
 	}

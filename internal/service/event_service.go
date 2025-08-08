@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	vulpeslog "github.com/arwoosa/vulpes/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"event/internal/dao/repository"
@@ -125,7 +126,12 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 		_, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.BrandID, req.Sessions)
 		if err != nil {
 			// If session creation fails, we should delete the event to maintain consistency
-			s.eventRepo.Delete(ctx, createdEvent.ID.Hex())
+			if deleteErr := s.eventRepo.Delete(ctx, createdEvent.ID.Hex()); deleteErr != nil {
+				// Log the rollback error but return the original session creation error
+				vulpeslog.Error("Failed to rollback event creation",
+					vulpeslog.String("eventID", createdEvent.ID.Hex()),
+					vulpeslog.Err(deleteErr))
+			}
 			return nil, fmt.Errorf("failed to create sessions: %w", err)
 		}
 	}
@@ -163,21 +169,19 @@ func (s *EventService) PatchEvent(ctx context.Context, brandID string, req *Patc
 		return nil, err
 	}
 
-	// Archived events cannot be updated
-	if err := existingEvent.IsValidStatusForUpdate(); err != nil {
+	if err := s.validateEventChanges(existingEvent, req); err != nil {
 		return nil, err
-	}
-
-	// Validate field-level restrictions for published events
-	if existingEvent.Status == models.StatusPublished {
-		if err := s.validatePublishedEventChanges(existingEvent, req); err != nil {
-			return nil, err
-		}
 	}
 
 	// Update sessions if provided
 	if len(req.Sessions) > 0 {
-		_, err = s.sessionService.UpdateSessionsForEvent(ctx, req.ID, brandID, req.Sessions)
+		// Convert []Session to []*Session for compatibility
+		existingSessionPtrs := make([]*models.Session, len(existingEvent.Sessions))
+		for i := range existingEvent.Sessions {
+			existingSessionPtrs[i] = &existingEvent.Sessions[i]
+		}
+
+		_, err = s.sessionService.UpdateSessionsForEvent(ctx, req.ID, brandID, req.Sessions, existingEvent, existingSessionPtrs)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update sessions: %w", err)
 		}
@@ -198,7 +202,7 @@ func (s *EventService) DeleteEvent(ctx context.Context, brandID, eventID, userID
 	}
 
 	// Check if deletion is allowed
-	if err := s.validateDeletePermissions(existingEvent); err != nil {
+	if err := existingEvent.IsValidStatusForDelete(); err != nil {
 		return err
 	}
 
@@ -241,20 +245,27 @@ func (s *EventService) validateDraftRequest(req *CreateEventRequest) error {
 	return nil
 }
 
-// validatePublishedEventChanges validates field-level restrictions for published events
-func (s *EventService) validatePublishedEventChanges(existing *models.Event, req *PatchEventRequest) error {
+// validateEventChanges validates field-level restrictions for published events
+func (s *EventService) validateEventChanges(existing *models.Event, req *PatchEventRequest) error {
+	// Archived events cannot be updated
+	if err := existing.IsValidStatusForUpdate(); err != nil {
+		return err
+	}
+	if existing.Status == models.StatusDraft {
+		return nil // No restrictions for draft events
+	}
+
 	// For published events, only allow editing of specific safe fields:
 	// - FAQ (additional Q&A)
-	//
-	// TBD: Info needed
 	// - Visibility
+
 	// Restricted fields for published events:
 	// - Title
 	// - Summary
 	// - CoverImageURL
 	// - Detail content
 	// - Location
-	// - Sessions - handled by sessionService.UpdateSessionsForEvent
+	// - Sessions
 	// - Status transitions (handled by separate UpdateEventStatus method)
 
 	restrictedFields := []string{}
@@ -269,15 +280,22 @@ func (s *EventService) validatePublishedEventChanges(existing *models.Event, req
 	if req.CoverImageURL != nil && *req.CoverImageURL != existing.CoverImageURL {
 		restrictedFields = append(restrictedFields, "cover_image_url")
 	}
-	if req.Detail != nil && req.Detail.Content != existing.Detail.Content && req.Detail.ContentType != existing.Detail.ContentType {
+	if req.Detail != nil && (req.Detail.Content != existing.Detail.Content || req.Detail.ContentType != existing.Detail.ContentType) {
 		restrictedFields = append(restrictedFields, "detail")
 	}
 	if req.Location != nil {
 		restrictedFields = append(restrictedFields, "location")
 	}
-	// if req.Visibility != nil && *req.Visibility != existing.Visibility {
-	// 	restrictedFields = append(restrictedFields, "visibility")
-	// }
+	if len(req.Sessions) > 0 {
+		for _, sessionReq := range req.Sessions {
+			// If any session ID is provided, it indicates an update to existing sessions, which is restricted
+			// If session ID is empty, it indicates a new session creation, which is allowed
+			if sessionReq.ID != "" {
+				restrictedFields = append(restrictedFields, "sessions")
+				break
+			}
+		}
+	}
 
 	if len(restrictedFields) > 0 {
 		return models.NewBusinessError(
@@ -289,26 +307,7 @@ func (s *EventService) validatePublishedEventChanges(existing *models.Event, req
 
 	// Allow changes to:
 	// - FAQ (req.FAQ)
-	return nil
-}
-
-func (s *EventService) validateDeletePermissions(event *models.Event) error {
-	// Published events cannot be deleted
-	if event.Status == models.StatusPublished {
-		return models.NewBusinessError("PUBLISHED_IMMUTABLE", "published events cannot be deleted", nil)
-	}
-
-	// If archived, check for orders
-	if event.Status == models.StatusArchived {
-		hasOrders, err := s.orderService.HasOrders(context.Background(), event.ID.Hex())
-		if err != nil {
-			return fmt.Errorf("failed to check orders: %w", err)
-		}
-		if hasOrders {
-			return models.NewBusinessError("HAS_ORDERS", "cannot delete event with existing orders", models.ErrHasOrders)
-		}
-	}
-
+	// - Visibility (req.Visibility)
 	return nil
 }
 
@@ -333,16 +332,15 @@ func (s *EventService) validateStatusTransition(ctx context.Context, event *mode
 		if err := s.validatePublishRequirements(ctx, event); err != nil {
 			return err
 		}
-	case models.StatusDraft:
-		// Can only transition to draft from archived
-		if event.Status == models.StatusArchived {
-			hasOrders, err := s.orderService.HasOrders(ctx, event.ID.Hex())
-			if err != nil {
-				return fmt.Errorf("failed to check orders: %w", err)
-			}
-			if hasOrders {
-				return models.NewBusinessError("HAS_ORDERS", "cannot change status of event with existing orders", models.ErrHasOrders)
-			}
+	case models.StatusArchived:
+		// Validate all required fields for publishing
+		// TODO: change method to CanArchived
+		hasOrders, err := s.orderService.HasOrders(ctx, event.ID.Hex())
+		if err != nil {
+			return fmt.Errorf("failed to check orders: %w", err)
+		}
+		if hasOrders {
+			return models.NewBusinessError("HAS_ORDERS", "cannot change status of event with existing orders", models.ErrHasOrders)
 		}
 	}
 
@@ -470,14 +468,12 @@ func (s *EventService) applyPatchToEvent(existing *models.Event, req *PatchEvent
 	existing.UpdatedBy = userID
 	existing.UpdatedAt = time.Now()
 
+	// Sessions are handled separately by SessionService
 	if req.Title != nil {
 		existing.Title = *req.Title
 	}
 	if req.Summary != nil {
 		existing.Summary = *req.Summary
-	}
-	if req.Status != nil {
-		existing.Status = *req.Status
 	}
 	if req.Visibility != nil {
 		existing.Visibility = *req.Visibility
@@ -499,20 +495,6 @@ func (s *EventService) applyPatchToEvent(existing *models.Event, req *PatchEvent
 			}
 		}
 		existing.Location = location
-	}
-
-	if len(req.Sessions) > 0 {
-		sessions := make([]models.Session, len(req.Sessions))
-		for i, sessionReq := range req.Sessions {
-			startTime, _ := time.Parse(time.RFC3339, sessionReq.StartTime)
-			endTime, _ := time.Parse(time.RFC3339, sessionReq.EndTime)
-			sessions[i] = models.Session{
-				ID:        primitive.NewObjectID(),
-				StartTime: startTime,
-				EndTime:   endTime,
-			}
-		}
-		// Sessions are handled separately by SessionService
 	}
 
 	if req.Detail != nil {

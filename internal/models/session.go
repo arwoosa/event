@@ -56,10 +56,6 @@ func (s *Session) Duration() time.Duration {
 
 // ValidateSessions checks for duplicate sessions within a collection
 func ValidateSessions(sessions []*Session) error {
-	if len(sessions) == 0 {
-		return errors.New("at least one session is required")
-	}
-
 	// Check each session's validity
 	for i, session := range sessions {
 		if err := session.IsValid(); err != nil {

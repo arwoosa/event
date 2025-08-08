@@ -121,6 +121,19 @@ func (e *Event) IsValidStatusForUpdate() error {
 	return nil
 }
 
+func (e *Event) IsValidStatusForDelete() error {
+	switch e.Status {
+	case StatusDraft:
+		// Draft events can be deleted
+		return nil
+	case StatusPublished:
+		return NewBusinessError("PUBLISHED_IMMUTABLE", "published events cannot be deleted", nil)
+	case StatusArchived:
+		return NewBusinessError("ARCHIVED_IMMUTABLE", "archived events cannot be deleted", nil)
+	}
+	return nil
+}
+
 // IsPublic checks if the event is published and public (visible in search)
 func (e *Event) IsPublic() bool {
 	return e.Status == StatusPublished && e.Visibility == VisibilityPublic
