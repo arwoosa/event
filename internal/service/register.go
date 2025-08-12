@@ -1,19 +1,21 @@
 package service
 
 import (
+	"fmt"
+
 	"google.golang.org/grpc"
 
 	pb "event/api/event"
 	"event/internal/conf"
 	"event/internal/dao/mongodb"
 	"event/internal/dao/repository"
+
 	"github.com/arwoosa/vulpes/ezgrpc"
 )
 
 // This file registers the services with the Vulpes framework
-// It will be called automatically when the package is imported
 
-// RegisterServices registers both gRPC services and Gateway handlers
+// RegisterServices registers both gRPC services and Gateway handlers (legacy)
 func RegisterServices(appConfig *conf.AppConfig) {
 	// Register gRPC services
 	ezgrpc.InjectGrpcService(func(s grpc.ServiceRegistrar) {
@@ -22,6 +24,28 @@ func RegisterServices(appConfig *conf.AppConfig) {
 
 	// Register gRPC-Gateway handlers
 	ezgrpc.RegisterHandlerFromEndpoint(pb.RegisterEventServiceHandlerFromEndpoint)
+	ezgrpc.RegisterHandlerFromEndpoint(pb.RegisterPublicEventServiceHandlerFromEndpoint)
+}
+
+// RegisterConsoleServices registers only the console (management) services
+func RegisterConsoleServices(appConfig *conf.AppConfig) {
+	// Register console gRPC services
+	ezgrpc.InjectGrpcService(func(s grpc.ServiceRegistrar) {
+		registerConsoleServices(s, appConfig)
+	})
+
+	// Register console gRPC-Gateway handlers
+	ezgrpc.RegisterHandlerFromEndpoint(pb.RegisterEventServiceHandlerFromEndpoint)
+}
+
+// RegisterPublicServices registers only the public services
+func RegisterPublicServices(appConfig *conf.AppConfig) {
+	// Register public gRPC services
+	ezgrpc.InjectGrpcService(func(s grpc.ServiceRegistrar) {
+		registerPublicServices(s, appConfig)
+	})
+
+	// Register public gRPC-Gateway handlers
 	ezgrpc.RegisterHandlerFromEndpoint(pb.RegisterPublicEventServiceHandlerFromEndpoint)
 }
 
@@ -78,5 +102,85 @@ func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 
 	// Register gRPC services with the server
 	pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
+	pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
+}
+
+// registerConsoleServices sets up and registers only console (EventService) related gRPC services
+func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
+	if appConfig == nil {
+		mockOrderService := NewMockOrderServiceClient(false, nil)
+		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
+		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
+		return
+	}
+
+	// Initialize MongoDB
+	mongoClient, cleanup, err := mongodb.NewMongoDB(appConfig.MongodbConfig)
+	if err != nil {
+		mockOrderService := NewMockOrderServiceClient(false, nil)
+		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
+		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
+		return
+	}
+
+	_ = cleanup
+
+	// Initialize repositories
+	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB)
+	sessionRepo := repository.NewMongoSessionRepository(mongoClient, appConfig.MongodbConfig.DB)
+
+	// Initialize external services
+	var orderService OrderServiceClient
+	if appConfig.ExternalConfig != nil {
+		orderService = NewOrderServiceClient(appConfig.ExternalConfig.OrderService)
+		fmt.Println("Using real order service for console services")
+	} else {
+		fmt.Println("Using mock order service for console services")
+		orderService = NewMockOrderServiceClient(false, nil)
+	}
+
+	// Initialize business services
+	sessionSvc := NewSessionService(sessionRepo, eventRepo, orderService)
+	eventSvc := NewEventService(eventRepo, sessionSvc, orderService)
+
+	// Register only EventService (console API)
+	pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
+}
+
+// registerPublicServices sets up and registers only public (PublicEventService) related gRPC services
+func registerPublicServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
+	if appConfig == nil {
+		publicSvc := &PublicService{eventRepo: nil, sessionService: nil}
+		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
+		return
+	}
+
+	// Initialize MongoDB
+	mongoClient, cleanup, err := mongodb.NewMongoDB(appConfig.MongodbConfig)
+	if err != nil {
+		publicSvc := &PublicService{eventRepo: nil, sessionService: nil}
+		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
+		return
+	}
+
+	_ = cleanup
+
+	// Initialize repositories
+	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB)
+	sessionRepo := repository.NewMongoSessionRepository(mongoClient, appConfig.MongodbConfig.DB)
+
+	// Initialize external services - public service might need some external dependencies too
+	var orderService OrderServiceClient
+	if appConfig.ExternalConfig != nil {
+		orderService = NewOrderServiceClient(appConfig.ExternalConfig.OrderService)
+	} else {
+		orderService = NewMockOrderServiceClient(false, nil)
+	}
+
+	// Initialize business services
+	sessionSvc := NewSessionService(sessionRepo, eventRepo, orderService)
+	publicSvc := NewPublicService(eventRepo, sessionSvc)
+
+	// Register only PublicEventService (public API)
 	pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
 }

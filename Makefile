@@ -1,15 +1,20 @@
 .PHONY: all build run gotool clean help
 
-BINARY="xxx"
+BINARY="event-server"
 OLD_MODULE="grpc_gateway_framework"
 
 all: gotool build
 
 build:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o ./bin/${BINARY} ./cmd/server
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o ./bin/${BINARY} ./cmd/event-server
 
-run:
-	@go run ./cmd/server -c internal/conf/config.yaml
+# Start console (management) API server
+run-console:
+	@go run ./cmd/event-server console --config internal/conf/config.yaml
+
+# Start public API server
+run-public:
+	@go run ./cmd/event-server public --config internal/conf/config.yaml
 
 gotool:
 	go fmt ./...
@@ -58,11 +63,17 @@ clean:
 	@if [ -f ./bin/${BINARY} ]; then rm ./bin/${BINARY} ; fi
 
 help:
-	@echo "make - 格式化 Go 程式碼, then go build"
-	@echo "make build - go build"
-	@echo "make run - go run"
-	@echo "make clean - 移除二進制檔案 和 vim swap files"
+	@echo "Build & Run:"
+	@echo "make build - 編譯二進制檔案"
+	@echo "make run-console - 啟動 console (管理) API 服務"
+	@echo "make run-public - 啟動 public (公開) API 服務"
+	@echo "make run - 啟動 console 服務 (向後兼容)"
+	@echo "make clean - 移除二進制檔案"
 	@echo "make gotool - Go tool 'fmt' and 'vet'"
+	@echo ""
+	@echo "Services:"
+	@echo "console - 內部管理 API (/console/events/*)"
+	@echo "public  - 公開讀取 API (/events/*)"
 	@echo ""
 	@echo "Testing:"
 	@echo "make test - 運行所有測試"
