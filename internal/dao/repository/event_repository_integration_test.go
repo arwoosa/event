@@ -102,9 +102,11 @@ func testEvent() *models.Event {
 				Coordinates: [2]float64{121.5654, 25.0330},
 			},
 		},
-		Detail: models.Detail{
-			Content:     "Test event detail content",
-			ContentType: "html",
+		Detail: []models.DetailBlock{
+			{
+				Type: models.BlockTypeText,
+				Data: models.TextData{Content: "Test event detail content"},
+			},
 		},
 		FAQ:       []models.FAQ{},
 		CreatedBy: createdBy,

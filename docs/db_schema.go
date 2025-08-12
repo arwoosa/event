@@ -14,7 +14,7 @@ type Event struct {
 	CoverImageURL string             `bson:"cover_image_url" json:"cover_image_url"` // 封面圖片 URL
 	Location      Location           `bson:"location" json:"location"`
 	Sessions      []Session          `bson:"sessions" json:"sessions"`
-	Detail        Detail             `bson:"detail" json:"detail"`
+	Detail        []DetailBlock      `bson:"detail" json:"detail"`
 	FAQ           []FAQ              `bson:"faq" json:"faq"`
 	CreatedAt     primitive.DateTime `bson:"created_at" json:"created_at"`
 	CreatedBy     primitive.ObjectID `bson:"created_by" json:"created_by"`
@@ -35,10 +35,22 @@ type GeoJSONPoint struct {
 	Coordinates []float64 `bson:"coordinates" json:"coordinates"` // [lng, lat]
 }
 
-// Detail 活動詳細內容，支援富文本編輯器
-type Detail struct {
-	Content     string `bson:"content" json:"content"`           // 富文本內容 (HTML 或 JSON 格式)
-	ContentType string `bson:"content_type" json:"content_type"` // 內容類型: "html", "json", "markdown"
+// DetailBlock 活動詳細內容區塊，支援多種類型內容
+type DetailBlock struct {
+	Type string      `bson:"type" json:"type"` // 區塊類型: "text", "image"
+	Data interface{} `bson:"data" json:"data"` // 區塊資料，根據 Type 可為 TextData 或 ImageData
+}
+
+// TextData 文字區塊資料
+type TextData struct {
+	Content string `bson:"content" json:"content"` // 文字內容，最大 10,000 字
+}
+
+// ImageData 圖片區塊資料
+type ImageData struct {
+	URL     string `bson:"url" json:"url"`         // 圖片 URL (必填)
+	Alt     string `bson:"alt" json:"alt"`         // 替代文字，最大 200 字
+	Caption string `bson:"caption" json:"caption"` // 圖片說明，最大 500 字
 }
 
 // FAQ 常見問題
@@ -50,6 +62,8 @@ type FAQ struct {
 // Session 活動場次
 type Session struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	StartTime primitive.DateTime `bson:"start_time" json:"start_time"`
-	EndTime   primitive.DateTime `bson:"end_time" json:"end_time"`
+	Name      string             `bson:"name" json:"name"`               // 場次名稱 (可選)
+	Capacity  *int32             `bson:"capacity" json:"capacity"`       // 容量限制 (可選，null 表示不限制)
+	StartTime primitive.DateTime `bson:"start_time" json:"start_time"`   // 開始時間
+	EndTime   primitive.DateTime `bson:"end_time" json:"end_time"`       // 結束時間
 }

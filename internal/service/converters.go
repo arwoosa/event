@@ -6,6 +6,7 @@ import (
 	pb "event/api/event"
 	"event/internal/dao/repository"
 	"event/internal/models"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // ProtobufConverter provides methods to convert between domain models and protobuf messages
@@ -29,7 +30,7 @@ func (c *ProtobufConverter) ConvertEventToPB(event *models.Event) *pb.Event {
 		CoverImageUrl: event.CoverImageURL,
 		Location:      c.ConvertLocationToPB(&event.Location),
 		Sessions:      c.ConvertSessionsToPB(event.Sessions),
-		Detail:        c.ConvertDetailToPB(&event.Detail),
+		Detail:        c.ConvertDetailToPB(event.Detail),
 		Faq:           c.ConvertFAQToPB(event.FAQ),
 		CreatedAt:     event.CreatedAt.Format(time.RFC3339),
 		CreatedBy:     event.CreatedBy.Hex(),
@@ -75,12 +76,57 @@ func (c *ProtobufConverter) ConvertSessionsToPB(sessions []models.Session) []*pb
 	return sessionsPB
 }
 
-// ConvertDetailToPB converts a domain Detail to protobuf Detail
-func (c *ProtobufConverter) ConvertDetailToPB(detail *models.Detail) *pb.Detail {
-	return &pb.Detail{
-		Content:     detail.Content,
-		ContentType: detail.ContentType,
+// ConvertDetailToPB converts domain DetailBlocks to protobuf DetailBlocks
+func (c *ProtobufConverter) ConvertDetailToPB(detail []models.DetailBlock) []*pb.DetailBlock {
+	blocks := make([]*pb.DetailBlock, len(detail))
+	for i, block := range detail {
+		pbBlock := &pb.DetailBlock{
+			Type: block.Type,
+		}
+
+		// Convert data based on type
+		switch block.Type {
+		case models.BlockTypeText:
+			if textData, ok := block.Data.(models.TextData); ok {
+				pbBlock.Data = &pb.DetailBlock_TextData{
+					TextData: &pb.TextData{
+						Content: textData.Content,
+					},
+				}
+			} else if primitiveD, ok := block.Data.(primitive.D); ok {
+				// Handle primitive.D from MongoDB
+				if content := extractStringFromPrimitiveD(primitiveD, "content"); content != "" {
+					pbBlock.Data = &pb.DetailBlock_TextData{
+						TextData: &pb.TextData{
+							Content: content,
+						},
+					}
+				}
+			}
+		case models.BlockTypeImage:
+			if imageData, ok := block.Data.(models.ImageData); ok {
+				pbBlock.Data = &pb.DetailBlock_ImageData{
+					ImageData: &pb.ImageData{
+						Url:     imageData.URL,
+						Alt:     imageData.Alt,
+						Caption: imageData.Caption,
+					},
+				}
+			} else if primitiveD, ok := block.Data.(primitive.D); ok {
+				// Handle primitive.D from MongoDB
+				pbBlock.Data = &pb.DetailBlock_ImageData{
+					ImageData: &pb.ImageData{
+						Url:     extractStringFromPrimitiveD(primitiveD, "url"),
+						Alt:     extractStringFromPrimitiveD(primitiveD, "alt"),
+						Caption: extractStringFromPrimitiveD(primitiveD, "caption"),
+					},
+				}
+			}
+		}
+		blocks[i] = pbBlock
 	}
+
+	return blocks
 }
 
 // ConvertFAQToPB converts domain FAQ to protobuf FAQ
@@ -164,15 +210,39 @@ func (c *ProtobufConverter) ConvertSessionsFromPB(sessions []*pb.Session) []*Ses
 	return sessionReqs
 }
 
-// ConvertDetailFromPB converts protobuf Detail to service DetailRequest
-func (c *ProtobufConverter) ConvertDetailFromPB(detail *pb.Detail) *DetailRequest {
+// ConvertDetailFromPB converts protobuf DetailBlocks to service DetailBlockRequest slice
+func (c *ProtobufConverter) ConvertDetailFromPB(detail []*pb.DetailBlock) []DetailBlockRequest {
 	if detail == nil {
 		return nil
 	}
-	return &DetailRequest{
-		Content:     detail.Content,
-		ContentType: detail.ContentType,
+
+	blocks := make([]DetailBlockRequest, len(detail))
+	for i, block := range detail {
+		blockReq := DetailBlockRequest{
+			Type: block.Type,
+		}
+
+		// Convert data based on type
+		switch block.Type {
+		case models.BlockTypeText:
+			if textData := block.GetTextData(); textData != nil {
+				blockReq.Data = models.TextData{
+					Content: textData.Content,
+				}
+			}
+		case models.BlockTypeImage:
+			if imageData := block.GetImageData(); imageData != nil {
+				blockReq.Data = models.ImageData{
+					URL:     imageData.Url,
+					Alt:     imageData.Alt,
+					Caption: imageData.Caption,
+				}
+			}
+		}
+		blocks[i] = blockReq
 	}
+
+	return blocks
 }
 
 // ConvertFAQFromPB converts protobuf FAQ to service FAQRequest
@@ -185,4 +255,16 @@ func (c *ProtobufConverter) ConvertFAQFromPB(faqs []*pb.FAQ) []*FAQRequest {
 		}
 	}
 	return faqReqs
+}
+
+// extractStringFromPrimitiveD extracts a string value from primitive.D by key
+func extractStringFromPrimitiveD(d primitive.D, key string) string {
+	for _, elem := range d {
+		if elem.Key == key {
+			if str, ok := elem.Value.(string); ok {
+				return str
+			}
+		}
+	}
+	return ""
 }

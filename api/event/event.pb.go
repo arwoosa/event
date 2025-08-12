@@ -37,7 +37,7 @@ type Event struct {
 	CoverImageUrl string                 `protobuf:"bytes,7,opt,name=cover_image_url,json=coverImageUrl,proto3" json:"cover_image_url,omitempty"`
 	Location      *Location              `protobuf:"bytes,8,opt,name=location,proto3" json:"location,omitempty"`
 	Sessions      []*Session             `protobuf:"bytes,9,rep,name=sessions,proto3" json:"sessions,omitempty"`
-	Detail        *Detail                `protobuf:"bytes,10,opt,name=detail,proto3" json:"detail,omitempty"`
+	Detail        []*DetailBlock         `protobuf:"bytes,10,rep,name=detail,proto3" json:"detail,omitempty"`
 	Faq           []*FAQ                 `protobuf:"bytes,11,rep,name=faq,proto3" json:"faq,omitempty"`
 	CreatedAt     string                 `protobuf:"bytes,12,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	CreatedBy     string                 `protobuf:"bytes,13,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
@@ -140,7 +140,7 @@ func (x *Event) GetSessions() []*Session {
 	return nil
 }
 
-func (x *Event) GetDetail() *Detail {
+func (x *Event) GetDetail() []*DetailBlock {
 	if x != nil {
 		return x.Detail
 	}
@@ -380,29 +380,33 @@ func (x *Session) GetEndTime() string {
 	return ""
 }
 
-// Event detail content
-type Detail struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Content       string                 `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
-	ContentType   string                 `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"` // html, json, markdown
+// Detail block for structured content
+type DetailBlock struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Type  string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	// Types that are valid to be assigned to Data:
+	//
+	//	*DetailBlock_TextData
+	//	*DetailBlock_ImageData
+	Data          isDetailBlock_Data `protobuf_oneof:"data"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Detail) Reset() {
-	*x = Detail{}
+func (x *DetailBlock) Reset() {
+	*x = DetailBlock{}
 	mi := &file_api_event_event_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Detail) String() string {
+func (x *DetailBlock) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Detail) ProtoMessage() {}
+func (*DetailBlock) ProtoMessage() {}
 
-func (x *Detail) ProtoReflect() protoreflect.Message {
+func (x *DetailBlock) ProtoReflect() protoreflect.Message {
 	mi := &file_api_event_event_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -414,21 +418,161 @@ func (x *Detail) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Detail.ProtoReflect.Descriptor instead.
-func (*Detail) Descriptor() ([]byte, []int) {
+// Deprecated: Use DetailBlock.ProtoReflect.Descriptor instead.
+func (*DetailBlock) Descriptor() ([]byte, []int) {
 	return file_api_event_event_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *Detail) GetContent() string {
+func (x *DetailBlock) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *DetailBlock) GetData() isDetailBlock_Data {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *DetailBlock) GetTextData() *TextData {
+	if x != nil {
+		if x, ok := x.Data.(*DetailBlock_TextData); ok {
+			return x.TextData
+		}
+	}
+	return nil
+}
+
+func (x *DetailBlock) GetImageData() *ImageData {
+	if x != nil {
+		if x, ok := x.Data.(*DetailBlock_ImageData); ok {
+			return x.ImageData
+		}
+	}
+	return nil
+}
+
+type isDetailBlock_Data interface {
+	isDetailBlock_Data()
+}
+
+type DetailBlock_TextData struct {
+	TextData *TextData `protobuf:"bytes,2,opt,name=text_data,json=textData,proto3,oneof"`
+}
+
+type DetailBlock_ImageData struct {
+	ImageData *ImageData `protobuf:"bytes,3,opt,name=image_data,json=imageData,proto3,oneof"`
+}
+
+func (*DetailBlock_TextData) isDetailBlock_Data() {}
+
+func (*DetailBlock_ImageData) isDetailBlock_Data() {}
+
+// Text block data
+type TextData struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Content       string                 `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TextData) Reset() {
+	*x = TextData{}
+	mi := &file_api_event_event_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TextData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TextData) ProtoMessage() {}
+
+func (x *TextData) ProtoReflect() protoreflect.Message {
+	mi := &file_api_event_event_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TextData.ProtoReflect.Descriptor instead.
+func (*TextData) Descriptor() ([]byte, []int) {
+	return file_api_event_event_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *TextData) GetContent() string {
 	if x != nil {
 		return x.Content
 	}
 	return ""
 }
 
-func (x *Detail) GetContentType() string {
+// Image block data
+type ImageData struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Alt           string                 `protobuf:"bytes,2,opt,name=alt,proto3" json:"alt,omitempty"`
+	Caption       string                 `protobuf:"bytes,3,opt,name=caption,proto3" json:"caption,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageData) Reset() {
+	*x = ImageData{}
+	mi := &file_api_event_event_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageData) ProtoMessage() {}
+
+func (x *ImageData) ProtoReflect() protoreflect.Message {
+	mi := &file_api_event_event_proto_msgTypes[6]
 	if x != nil {
-		return x.ContentType
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageData.ProtoReflect.Descriptor instead.
+func (*ImageData) Descriptor() ([]byte, []int) {
+	return file_api_event_event_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ImageData) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *ImageData) GetAlt() string {
+	if x != nil {
+		return x.Alt
+	}
+	return ""
+}
+
+func (x *ImageData) GetCaption() string {
+	if x != nil {
+		return x.Caption
 	}
 	return ""
 }
@@ -444,7 +588,7 @@ type FAQ struct {
 
 func (x *FAQ) Reset() {
 	*x = FAQ{}
-	mi := &file_api_event_event_proto_msgTypes[5]
+	mi := &file_api_event_event_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -456,7 +600,7 @@ func (x *FAQ) String() string {
 func (*FAQ) ProtoMessage() {}
 
 func (x *FAQ) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[5]
+	mi := &file_api_event_event_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -469,7 +613,7 @@ func (x *FAQ) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FAQ.ProtoReflect.Descriptor instead.
 func (*FAQ) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{5}
+	return file_api_event_event_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *FAQ) GetQuestion() string {
@@ -492,19 +636,19 @@ type CreateEventRequest struct {
 	Title   string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
 	Summary string                 `protobuf:"bytes,2,opt,name=summary,proto3" json:"summary,omitempty"`
 	// status field removed - events are always created as draft
-	Visibility    string     `protobuf:"bytes,3,opt,name=visibility,proto3" json:"visibility,omitempty"`
-	CoverImageUrl string     `protobuf:"bytes,4,opt,name=cover_image_url,json=coverImageUrl,proto3" json:"cover_image_url,omitempty"`
-	Location      *Location  `protobuf:"bytes,5,opt,name=location,proto3,oneof" json:"location,omitempty"`
-	Sessions      []*Session `protobuf:"bytes,6,rep,name=sessions,proto3" json:"sessions,omitempty"`
-	Detail        *Detail    `protobuf:"bytes,7,opt,name=detail,proto3,oneof" json:"detail,omitempty"`
-	Faq           []*FAQ     `protobuf:"bytes,8,rep,name=faq,proto3" json:"faq,omitempty"`
+	Visibility    string         `protobuf:"bytes,3,opt,name=visibility,proto3" json:"visibility,omitempty"`
+	CoverImageUrl string         `protobuf:"bytes,4,opt,name=cover_image_url,json=coverImageUrl,proto3" json:"cover_image_url,omitempty"`
+	Location      *Location      `protobuf:"bytes,5,opt,name=location,proto3,oneof" json:"location,omitempty"`
+	Sessions      []*Session     `protobuf:"bytes,6,rep,name=sessions,proto3" json:"sessions,omitempty"`
+	Detail        []*DetailBlock `protobuf:"bytes,7,rep,name=detail,proto3" json:"detail,omitempty"`
+	Faq           []*FAQ         `protobuf:"bytes,8,rep,name=faq,proto3" json:"faq,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateEventRequest) Reset() {
 	*x = CreateEventRequest{}
-	mi := &file_api_event_event_proto_msgTypes[6]
+	mi := &file_api_event_event_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -516,7 +660,7 @@ func (x *CreateEventRequest) String() string {
 func (*CreateEventRequest) ProtoMessage() {}
 
 func (x *CreateEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[6]
+	mi := &file_api_event_event_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -529,7 +673,7 @@ func (x *CreateEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateEventRequest.ProtoReflect.Descriptor instead.
 func (*CreateEventRequest) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{6}
+	return file_api_event_event_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CreateEventRequest) GetTitle() string {
@@ -574,7 +718,7 @@ func (x *CreateEventRequest) GetSessions() []*Session {
 	return nil
 }
 
-func (x *CreateEventRequest) GetDetail() *Detail {
+func (x *CreateEventRequest) GetDetail() []*DetailBlock {
 	if x != nil {
 		return x.Detail
 	}
@@ -609,7 +753,7 @@ type GetEventListRequest struct {
 
 func (x *GetEventListRequest) Reset() {
 	*x = GetEventListRequest{}
-	mi := &file_api_event_event_proto_msgTypes[7]
+	mi := &file_api_event_event_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -621,7 +765,7 @@ func (x *GetEventListRequest) String() string {
 func (*GetEventListRequest) ProtoMessage() {}
 
 func (x *GetEventListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[7]
+	mi := &file_api_event_event_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -634,7 +778,7 @@ func (x *GetEventListRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEventListRequest.ProtoReflect.Descriptor instead.
 func (*GetEventListRequest) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{7}
+	return file_api_event_event_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetEventListRequest) GetPageToken() string {
@@ -716,15 +860,15 @@ type PatchEventRequest struct {
 	CoverImageUrl *string                `protobuf:"bytes,5,opt,name=cover_image_url,json=coverImageUrl,proto3,oneof" json:"cover_image_url,omitempty"`
 	Location      *Location              `protobuf:"bytes,6,opt,name=location,proto3,oneof" json:"location,omitempty"`
 	Sessions      []*Session             `protobuf:"bytes,7,rep,name=sessions,proto3" json:"sessions,omitempty"` // Replace all sessions if provided
-	Detail        *Detail                `protobuf:"bytes,8,opt,name=detail,proto3,oneof" json:"detail,omitempty"`
-	Faq           []*FAQ                 `protobuf:"bytes,9,rep,name=faq,proto3" json:"faq,omitempty"` // Replace all FAQ if provided
+	Detail        []*DetailBlock         `protobuf:"bytes,8,rep,name=detail,proto3" json:"detail,omitempty"`     // Replace all detail blocks if provided
+	Faq           []*FAQ                 `protobuf:"bytes,9,rep,name=faq,proto3" json:"faq,omitempty"`           // Replace all FAQ if provided
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PatchEventRequest) Reset() {
 	*x = PatchEventRequest{}
-	mi := &file_api_event_event_proto_msgTypes[8]
+	mi := &file_api_event_event_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -736,7 +880,7 @@ func (x *PatchEventRequest) String() string {
 func (*PatchEventRequest) ProtoMessage() {}
 
 func (x *PatchEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[8]
+	mi := &file_api_event_event_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -749,7 +893,7 @@ func (x *PatchEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatchEventRequest.ProtoReflect.Descriptor instead.
 func (*PatchEventRequest) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{8}
+	return file_api_event_event_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *PatchEventRequest) GetId() string {
@@ -801,7 +945,7 @@ func (x *PatchEventRequest) GetSessions() []*Session {
 	return nil
 }
 
-func (x *PatchEventRequest) GetDetail() *Detail {
+func (x *PatchEventRequest) GetDetail() []*DetailBlock {
 	if x != nil {
 		return x.Detail
 	}
@@ -825,7 +969,7 @@ type UpdateEventStatusRequest struct {
 
 func (x *UpdateEventStatusRequest) Reset() {
 	*x = UpdateEventStatusRequest{}
-	mi := &file_api_event_event_proto_msgTypes[9]
+	mi := &file_api_event_event_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -837,7 +981,7 @@ func (x *UpdateEventStatusRequest) String() string {
 func (*UpdateEventStatusRequest) ProtoMessage() {}
 
 func (x *UpdateEventStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[9]
+	mi := &file_api_event_event_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -850,7 +994,7 @@ func (x *UpdateEventStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateEventStatusRequest.ProtoReflect.Descriptor instead.
 func (*UpdateEventStatusRequest) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{9}
+	return file_api_event_event_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *UpdateEventStatusRequest) GetId() string {
@@ -877,7 +1021,7 @@ type DeleteSessionRequest struct {
 
 func (x *DeleteSessionRequest) Reset() {
 	*x = DeleteSessionRequest{}
-	mi := &file_api_event_event_proto_msgTypes[10]
+	mi := &file_api_event_event_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -889,7 +1033,7 @@ func (x *DeleteSessionRequest) String() string {
 func (*DeleteSessionRequest) ProtoMessage() {}
 
 func (x *DeleteSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[10]
+	mi := &file_api_event_event_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -902,7 +1046,7 @@ func (x *DeleteSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSessionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSessionRequest) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{10}
+	return file_api_event_event_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteSessionRequest) GetEventId() string {
@@ -943,7 +1087,7 @@ type SearchEventsRequest struct {
 
 func (x *SearchEventsRequest) Reset() {
 	*x = SearchEventsRequest{}
-	mi := &file_api_event_event_proto_msgTypes[11]
+	mi := &file_api_event_event_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -955,7 +1099,7 @@ func (x *SearchEventsRequest) String() string {
 func (*SearchEventsRequest) ProtoMessage() {}
 
 func (x *SearchEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[11]
+	mi := &file_api_event_event_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -968,7 +1112,7 @@ func (x *SearchEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchEventsRequest.ProtoReflect.Descriptor instead.
 func (*SearchEventsRequest) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{11}
+	return file_api_event_event_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SearchEventsRequest) GetPageToken() string {
@@ -1066,7 +1210,7 @@ type CreateEventResponse struct {
 
 func (x *CreateEventResponse) Reset() {
 	*x = CreateEventResponse{}
-	mi := &file_api_event_event_proto_msgTypes[12]
+	mi := &file_api_event_event_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1078,7 +1222,7 @@ func (x *CreateEventResponse) String() string {
 func (*CreateEventResponse) ProtoMessage() {}
 
 func (x *CreateEventResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[12]
+	mi := &file_api_event_event_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1091,7 +1235,7 @@ func (x *CreateEventResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateEventResponse.ProtoReflect.Descriptor instead.
 func (*CreateEventResponse) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{12}
+	return file_api_event_event_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CreateEventResponse) GetId() string {
@@ -1118,7 +1262,7 @@ type EventListResponse struct {
 
 func (x *EventListResponse) Reset() {
 	*x = EventListResponse{}
-	mi := &file_api_event_event_proto_msgTypes[13]
+	mi := &file_api_event_event_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1130,7 +1274,7 @@ func (x *EventListResponse) String() string {
 func (*EventListResponse) ProtoMessage() {}
 
 func (x *EventListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[13]
+	mi := &file_api_event_event_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1143,7 +1287,7 @@ func (x *EventListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EventListResponse.ProtoReflect.Descriptor instead.
 func (*EventListResponse) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{13}
+	return file_api_event_event_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *EventListResponse) GetEvents() []*Event {
@@ -1175,7 +1319,7 @@ type Pagination struct {
 
 func (x *Pagination) Reset() {
 	*x = Pagination{}
-	mi := &file_api_event_event_proto_msgTypes[14]
+	mi := &file_api_event_event_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1187,7 +1331,7 @@ func (x *Pagination) String() string {
 func (*Pagination) ProtoMessage() {}
 
 func (x *Pagination) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[14]
+	mi := &file_api_event_event_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1200,7 +1344,7 @@ func (x *Pagination) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Pagination.ProtoReflect.Descriptor instead.
 func (*Pagination) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{14}
+	return file_api_event_event_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Pagination) GetNextPageToken() string {
@@ -1262,7 +1406,7 @@ type IsPublishedResponse struct {
 
 func (x *IsPublishedResponse) Reset() {
 	*x = IsPublishedResponse{}
-	mi := &file_api_event_event_proto_msgTypes[15]
+	mi := &file_api_event_event_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1274,7 +1418,7 @@ func (x *IsPublishedResponse) String() string {
 func (*IsPublishedResponse) ProtoMessage() {}
 
 func (x *IsPublishedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[15]
+	mi := &file_api_event_event_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1287,7 +1431,7 @@ func (x *IsPublishedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IsPublishedResponse.ProtoReflect.Descriptor instead.
 func (*IsPublishedResponse) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{15}
+	return file_api_event_event_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *IsPublishedResponse) GetIsPublished() bool {
@@ -1301,7 +1445,7 @@ var File_api_event_event_proto protoreflect.FileDescriptor
 
 const file_api_event_event_proto_rawDesc = "" +
 	"\n" +
-	"\x15api/event/event.proto\x12\x05event\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x10api/common.proto\x1a#third_party/validate/validate.proto\"\xdc\x03\n" +
+	"\x15api/event/event.proto\x12\x05event\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x10api/common.proto\x1a#third_party/validate/validate.proto\"\xed\x03\n" +
 	"\x05Event\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x19\n" +
@@ -1313,9 +1457,10 @@ const file_api_event_event_proto_rawDesc = "" +
 	"visibility\x12&\n" +
 	"\x0fcover_image_url\x18\a \x01(\tR\rcoverImageUrl\x12+\n" +
 	"\blocation\x18\b \x01(\v2\x0f.event.LocationR\blocation\x12*\n" +
-	"\bsessions\x18\t \x03(\v2\x0e.event.SessionR\bsessions\x12%\n" +
+	"\bsessions\x18\t \x03(\v2\x0e.event.SessionR\bsessions\x126\n" +
 	"\x06detail\x18\n" +
-	" \x01(\v2\r.event.DetailR\x06detail\x12\x1c\n" +
+	" \x03(\v2\x12.event.DetailBlockB\n" +
+	"\xfaB\a\x92\x01\x04\b\x00\x102R\x06detail\x12\x1c\n" +
 	"\x03faq\x18\v \x03(\v2\n" +
 	".event.FAQR\x03faq\x12\x1d\n" +
 	"\n" +
@@ -1343,14 +1488,24 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\n" +
 	"start_time\x18\x04 \x01(\tR\tstartTime\x12\x19\n" +
 	"\bend_time\x18\x05 \x01(\tR\aendTimeB\v\n" +
-	"\t_capacity\"q\n" +
-	"\x06Detail\x12#\n" +
-	"\acontent\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x18\x80\x80\x04R\acontent\x12B\n" +
-	"\fcontent_type\x18\x02 \x01(\tB\x1f\xfaB\x1cr\x1aR\x04htmlR\bmarkdownR\x05plain\xd0\x01\x01R\vcontentType\"P\n" +
+	"\t_capacity\"\xa0\x01\n" +
+	"\vDetailBlock\x12&\n" +
+	"\x04type\x18\x01 \x01(\tB\x12\xfaB\x0fr\rR\x04textR\x05imageR\x04type\x12.\n" +
+	"\ttext_data\x18\x02 \x01(\v2\x0f.event.TextDataH\x00R\btextData\x121\n" +
+	"\n" +
+	"image_data\x18\x03 \x01(\v2\x10.event.ImageDataH\x00R\timageDataB\x06\n" +
+	"\x04data\".\n" +
+	"\bTextData\x12\"\n" +
+	"\acontent\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x18\x90NR\acontent\"i\n" +
+	"\tImageData\x12\x1c\n" +
+	"\x03url\x18\x01 \x01(\tB\n" +
+	"\xfaB\ar\x05\x10\x01\x88\x01\x01R\x03url\x12\x1a\n" +
+	"\x03alt\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xc8\x01R\x03alt\x12\"\n" +
+	"\acaption\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\xf4\x03R\acaption\"P\n" +
 	"\x03FAQ\x12%\n" +
 	"\bquestion\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18dR\bquestion\x12\"\n" +
 	"\x06answer\x18\x02 \x01(\tB\n" +
-	"\xfaB\ar\x05\x10\x01\x18\xac\x02R\x06answer\"\x95\x03\n" +
+	"\xfaB\ar\x05\x10\x01\x18\xac\x02R\x06answer\"\x96\x03\n" +
 	"\x12CreateEventRequest\x12\x1f\n" +
 	"\x05title\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18<R\x05title\x12\"\n" +
 	"\asummary\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xa0\x01R\asummary\x129\n" +
@@ -1359,13 +1514,13 @@ const file_api_event_event_proto_rawDesc = "" +
 	"visibility\x123\n" +
 	"\x0fcover_image_url\x18\x04 \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\x88\x01\x01R\rcoverImageUrl\x120\n" +
 	"\blocation\x18\x05 \x01(\v2\x0f.event.LocationH\x00R\blocation\x88\x01\x01\x12*\n" +
-	"\bsessions\x18\x06 \x03(\v2\x0e.event.SessionR\bsessions\x12*\n" +
-	"\x06detail\x18\a \x01(\v2\r.event.DetailH\x01R\x06detail\x88\x01\x01\x12(\n" +
+	"\bsessions\x18\x06 \x03(\v2\x0e.event.SessionR\bsessions\x126\n" +
+	"\x06detail\x18\a \x03(\v2\x12.event.DetailBlockB\n" +
+	"\xfaB\a\x92\x01\x04\b\x00\x102R\x06detail\x12(\n" +
 	"\x03faq\x18\b \x03(\v2\n" +
 	".event.FAQB\n" +
 	"\xfaB\a\x92\x01\x04\b\x00\x10\x14R\x03faqB\v\n" +
-	"\t_locationB\t\n" +
-	"\a_detail\"\xd6\x05\n" +
+	"\t_location\"\xd6\x05\n" +
 	"\x13GetEventListRequest\x12\"\n" +
 	"\n" +
 	"page_token\x18\x01 \x01(\tH\x00R\tpageToken\x88\x01\x01\x12 \n" +
@@ -1395,7 +1550,7 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\r_title_searchB\n" +
 	"\n" +
 	"\b_sort_byB\r\n" +
-	"\v_sort_order\"\x80\x04\n" +
+	"\v_sort_order\"\x81\x04\n" +
 	"\x11PatchEventRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x12'\n" +
 	"\x05title\x18\x02 \x01(\tB\f\xfaB\tr\a\x10\x01\x18<\xd0\x01\x01H\x00R\x05title\x88\x01\x01\x12*\n" +
@@ -1405,8 +1560,9 @@ const file_api_event_event_proto_rawDesc = "" +
 	"visibility\x88\x01\x01\x128\n" +
 	"\x0fcover_image_url\x18\x05 \x01(\tB\v\xfaB\br\x06\xd0\x01\x01\x88\x01\x01H\x03R\rcoverImageUrl\x88\x01\x01\x120\n" +
 	"\blocation\x18\x06 \x01(\v2\x0f.event.LocationH\x04R\blocation\x88\x01\x01\x12*\n" +
-	"\bsessions\x18\a \x03(\v2\x0e.event.SessionR\bsessions\x12*\n" +
-	"\x06detail\x18\b \x01(\v2\r.event.DetailH\x05R\x06detail\x88\x01\x01\x12(\n" +
+	"\bsessions\x18\a \x03(\v2\x0e.event.SessionR\bsessions\x126\n" +
+	"\x06detail\x18\b \x03(\v2\x12.event.DetailBlockB\n" +
+	"\xfaB\a\x92\x01\x04\b\x00\x102R\x06detail\x12(\n" +
 	"\x03faq\x18\t \x03(\v2\n" +
 	".event.FAQB\n" +
 	"\xfaB\a\x92\x01\x04\b\x00\x10\x14R\x03faqB\b\n" +
@@ -1415,8 +1571,7 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\b_summaryB\r\n" +
 	"\v_visibilityB\x12\n" +
 	"\x10_cover_image_urlB\v\n" +
-	"\t_locationB\t\n" +
-	"\a_detail\"n\n" +
+	"\t_location\"n\n" +
 	"\x18UpdateEventStatusRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x02id\x129\n" +
 	"\x06status\x18\x02 \x01(\tB!\xfaB\x1er\x1cR\x05draftR\tpublishedR\barchivedR\x06status\"b\n" +
@@ -1511,68 +1666,72 @@ func file_api_event_event_proto_rawDescGZIP() []byte {
 	return file_api_event_event_proto_rawDescData
 }
 
-var file_api_event_event_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_api_event_event_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_api_event_event_proto_goTypes = []any{
 	(*Event)(nil),                    // 0: event.Event
 	(*Location)(nil),                 // 1: event.Location
 	(*GeoJSONPoint)(nil),             // 2: event.GeoJSONPoint
 	(*Session)(nil),                  // 3: event.Session
-	(*Detail)(nil),                   // 4: event.Detail
-	(*FAQ)(nil),                      // 5: event.FAQ
-	(*CreateEventRequest)(nil),       // 6: event.CreateEventRequest
-	(*GetEventListRequest)(nil),      // 7: event.GetEventListRequest
-	(*PatchEventRequest)(nil),        // 8: event.PatchEventRequest
-	(*UpdateEventStatusRequest)(nil), // 9: event.UpdateEventStatusRequest
-	(*DeleteSessionRequest)(nil),     // 10: event.DeleteSessionRequest
-	(*SearchEventsRequest)(nil),      // 11: event.SearchEventsRequest
-	(*CreateEventResponse)(nil),      // 12: event.CreateEventResponse
-	(*EventListResponse)(nil),        // 13: event.EventListResponse
-	(*Pagination)(nil),               // 14: event.Pagination
-	(*IsPublishedResponse)(nil),      // 15: event.IsPublishedResponse
-	(*api.ID)(nil),                   // 16: api.ID
-	(*emptypb.Empty)(nil),            // 17: google.protobuf.Empty
+	(*DetailBlock)(nil),              // 4: event.DetailBlock
+	(*TextData)(nil),                 // 5: event.TextData
+	(*ImageData)(nil),                // 6: event.ImageData
+	(*FAQ)(nil),                      // 7: event.FAQ
+	(*CreateEventRequest)(nil),       // 8: event.CreateEventRequest
+	(*GetEventListRequest)(nil),      // 9: event.GetEventListRequest
+	(*PatchEventRequest)(nil),        // 10: event.PatchEventRequest
+	(*UpdateEventStatusRequest)(nil), // 11: event.UpdateEventStatusRequest
+	(*DeleteSessionRequest)(nil),     // 12: event.DeleteSessionRequest
+	(*SearchEventsRequest)(nil),      // 13: event.SearchEventsRequest
+	(*CreateEventResponse)(nil),      // 14: event.CreateEventResponse
+	(*EventListResponse)(nil),        // 15: event.EventListResponse
+	(*Pagination)(nil),               // 16: event.Pagination
+	(*IsPublishedResponse)(nil),      // 17: event.IsPublishedResponse
+	(*api.ID)(nil),                   // 18: api.ID
+	(*emptypb.Empty)(nil),            // 19: google.protobuf.Empty
 }
 var file_api_event_event_proto_depIdxs = []int32{
 	1,  // 0: event.Event.location:type_name -> event.Location
 	3,  // 1: event.Event.sessions:type_name -> event.Session
-	4,  // 2: event.Event.detail:type_name -> event.Detail
-	5,  // 3: event.Event.faq:type_name -> event.FAQ
+	4,  // 2: event.Event.detail:type_name -> event.DetailBlock
+	7,  // 3: event.Event.faq:type_name -> event.FAQ
 	2,  // 4: event.Location.coordinates:type_name -> event.GeoJSONPoint
-	1,  // 5: event.CreateEventRequest.location:type_name -> event.Location
-	3,  // 6: event.CreateEventRequest.sessions:type_name -> event.Session
-	4,  // 7: event.CreateEventRequest.detail:type_name -> event.Detail
-	5,  // 8: event.CreateEventRequest.faq:type_name -> event.FAQ
-	1,  // 9: event.PatchEventRequest.location:type_name -> event.Location
-	3,  // 10: event.PatchEventRequest.sessions:type_name -> event.Session
-	4,  // 11: event.PatchEventRequest.detail:type_name -> event.Detail
-	5,  // 12: event.PatchEventRequest.faq:type_name -> event.FAQ
-	0,  // 13: event.EventListResponse.events:type_name -> event.Event
-	14, // 14: event.EventListResponse.pagination:type_name -> event.Pagination
-	6,  // 15: event.EventService.CreateEvent:input_type -> event.CreateEventRequest
-	7,  // 16: event.EventService.GetEventList:input_type -> event.GetEventListRequest
-	16, // 17: event.EventService.GetEvent:input_type -> api.ID
-	8,  // 18: event.EventService.PatchEvent:input_type -> event.PatchEventRequest
-	16, // 19: event.EventService.DeleteEvent:input_type -> api.ID
-	9,  // 20: event.EventService.UpdateEventStatus:input_type -> event.UpdateEventStatusRequest
-	10, // 21: event.EventService.DeleteSession:input_type -> event.DeleteSessionRequest
-	11, // 22: event.PublicEventService.SearchEvents:input_type -> event.SearchEventsRequest
-	16, // 23: event.PublicEventService.GetEvent:input_type -> api.ID
-	16, // 24: event.PublicEventService.IsPublished:input_type -> api.ID
-	12, // 25: event.EventService.CreateEvent:output_type -> event.CreateEventResponse
-	13, // 26: event.EventService.GetEventList:output_type -> event.EventListResponse
-	0,  // 27: event.EventService.GetEvent:output_type -> event.Event
-	0,  // 28: event.EventService.PatchEvent:output_type -> event.Event
-	17, // 29: event.EventService.DeleteEvent:output_type -> google.protobuf.Empty
-	0,  // 30: event.EventService.UpdateEventStatus:output_type -> event.Event
-	17, // 31: event.EventService.DeleteSession:output_type -> google.protobuf.Empty
-	13, // 32: event.PublicEventService.SearchEvents:output_type -> event.EventListResponse
-	0,  // 33: event.PublicEventService.GetEvent:output_type -> event.Event
-	15, // 34: event.PublicEventService.IsPublished:output_type -> event.IsPublishedResponse
-	25, // [25:35] is the sub-list for method output_type
-	15, // [15:25] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	5,  // 5: event.DetailBlock.text_data:type_name -> event.TextData
+	6,  // 6: event.DetailBlock.image_data:type_name -> event.ImageData
+	1,  // 7: event.CreateEventRequest.location:type_name -> event.Location
+	3,  // 8: event.CreateEventRequest.sessions:type_name -> event.Session
+	4,  // 9: event.CreateEventRequest.detail:type_name -> event.DetailBlock
+	7,  // 10: event.CreateEventRequest.faq:type_name -> event.FAQ
+	1,  // 11: event.PatchEventRequest.location:type_name -> event.Location
+	3,  // 12: event.PatchEventRequest.sessions:type_name -> event.Session
+	4,  // 13: event.PatchEventRequest.detail:type_name -> event.DetailBlock
+	7,  // 14: event.PatchEventRequest.faq:type_name -> event.FAQ
+	0,  // 15: event.EventListResponse.events:type_name -> event.Event
+	16, // 16: event.EventListResponse.pagination:type_name -> event.Pagination
+	8,  // 17: event.EventService.CreateEvent:input_type -> event.CreateEventRequest
+	9,  // 18: event.EventService.GetEventList:input_type -> event.GetEventListRequest
+	18, // 19: event.EventService.GetEvent:input_type -> api.ID
+	10, // 20: event.EventService.PatchEvent:input_type -> event.PatchEventRequest
+	18, // 21: event.EventService.DeleteEvent:input_type -> api.ID
+	11, // 22: event.EventService.UpdateEventStatus:input_type -> event.UpdateEventStatusRequest
+	12, // 23: event.EventService.DeleteSession:input_type -> event.DeleteSessionRequest
+	13, // 24: event.PublicEventService.SearchEvents:input_type -> event.SearchEventsRequest
+	18, // 25: event.PublicEventService.GetEvent:input_type -> api.ID
+	18, // 26: event.PublicEventService.IsPublished:input_type -> api.ID
+	14, // 27: event.EventService.CreateEvent:output_type -> event.CreateEventResponse
+	15, // 28: event.EventService.GetEventList:output_type -> event.EventListResponse
+	0,  // 29: event.EventService.GetEvent:output_type -> event.Event
+	0,  // 30: event.EventService.PatchEvent:output_type -> event.Event
+	19, // 31: event.EventService.DeleteEvent:output_type -> google.protobuf.Empty
+	0,  // 32: event.EventService.UpdateEventStatus:output_type -> event.Event
+	19, // 33: event.EventService.DeleteSession:output_type -> google.protobuf.Empty
+	15, // 34: event.PublicEventService.SearchEvents:output_type -> event.EventListResponse
+	0,  // 35: event.PublicEventService.GetEvent:output_type -> event.Event
+	17, // 36: event.PublicEventService.IsPublished:output_type -> event.IsPublishedResponse
+	27, // [27:37] is the sub-list for method output_type
+	17, // [17:27] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_api_event_event_proto_init() }
@@ -1581,18 +1740,22 @@ func file_api_event_event_proto_init() {
 		return
 	}
 	file_api_event_event_proto_msgTypes[3].OneofWrappers = []any{}
-	file_api_event_event_proto_msgTypes[6].OneofWrappers = []any{}
-	file_api_event_event_proto_msgTypes[7].OneofWrappers = []any{}
+	file_api_event_event_proto_msgTypes[4].OneofWrappers = []any{
+		(*DetailBlock_TextData)(nil),
+		(*DetailBlock_ImageData)(nil),
+	}
 	file_api_event_event_proto_msgTypes[8].OneofWrappers = []any{}
-	file_api_event_event_proto_msgTypes[11].OneofWrappers = []any{}
-	file_api_event_event_proto_msgTypes[14].OneofWrappers = []any{}
+	file_api_event_event_proto_msgTypes[9].OneofWrappers = []any{}
+	file_api_event_event_proto_msgTypes[10].OneofWrappers = []any{}
+	file_api_event_event_proto_msgTypes[13].OneofWrappers = []any{}
+	file_api_event_event_proto_msgTypes[16].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_event_event_proto_rawDesc), len(file_api_event_event_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

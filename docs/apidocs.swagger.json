@@ -491,7 +491,12 @@
           "title": "Replace all sessions if provided"
         },
         "detail": {
-          "$ref": "#/definitions/eventDetail"
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/eventDetailBlock"
+          },
+          "title": "Replace all detail blocks if provided"
         },
         "faq": {
           "type": "array",
@@ -539,7 +544,11 @@
           }
         },
         "detail": {
-          "$ref": "#/definitions/eventDetail"
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/eventDetailBlock"
+          }
         },
         "faq": {
           "type": "array",
@@ -563,18 +572,20 @@
       },
       "title": "Response messages"
     },
-    "eventDetail": {
+    "eventDetailBlock": {
       "type": "object",
       "properties": {
-        "content": {
+        "type": {
           "type": "string"
         },
-        "content_type": {
-          "type": "string",
-          "title": "html, json, markdown"
+        "text_data": {
+          "$ref": "#/definitions/eventTextData"
+        },
+        "image_data": {
+          "$ref": "#/definitions/eventImageData"
         }
       },
-      "title": "Event detail content"
+      "title": "Detail block for structured content"
     },
     "eventEvent": {
       "type": "object",
@@ -613,7 +624,11 @@
           }
         },
         "detail": {
-          "$ref": "#/definitions/eventDetail"
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/eventDetailBlock"
+          }
         },
         "faq": {
           "type": "array",
@@ -680,6 +695,21 @@
           "title": "[longitude, latitude]"
         }
       }
+    },
+    "eventImageData": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string"
+        },
+        "caption": {
+          "type": "string"
+        }
+      },
+      "title": "Image block data"
     },
     "eventIsPublishedResponse": {
       "type": "object",
@@ -766,6 +796,15 @@
         }
       },
       "title": "Session for time-based event scheduling"
+    },
+    "eventTextData": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string"
+        }
+      },
+      "title": "Text block data"
     },
     "protobufAny": {
       "type": "object",

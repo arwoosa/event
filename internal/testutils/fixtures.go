@@ -28,9 +28,19 @@ func TestEvent() *models.Event {
 				Coordinates: [2]float64{121.5654, 25.0330}, // Taipei coordinates
 			},
 		},
-		Detail: models.Detail{
-			Content:     "<p>Test event content</p>",
-			ContentType: models.ContentTypeHTML,
+		Detail: []models.DetailBlock{
+			{
+				Type: models.BlockTypeText,
+				Data: models.TextData{Content: "Test event content"},
+			},
+			{
+				Type: models.BlockTypeImage,
+				Data: models.ImageData{
+					URL:     "https://example.com/test-image.jpg",
+					Alt:     "Test image",
+					Caption: "This is a test image",
+				},
+			},
 		},
 		FAQ: []models.FAQ{
 			{
@@ -132,9 +142,9 @@ type TestSessionRequest struct {
 	EndTime   string
 }
 
-type TestDetailRequest struct {
-	Content     string
-	ContentType string
+type TestDetailBlockRequest struct {
+	Type string
+	Data interface{}
 }
 
 type TestFAQRequest struct {
@@ -149,7 +159,7 @@ type TestCreateEventRequest struct {
 	CoverImageURL string
 	Location      *TestLocationRequest
 	Sessions      []*TestSessionRequest
-	Detail        *TestDetailRequest
+	Detail        []TestDetailBlockRequest
 	FAQ           []*TestFAQRequest
 	BrandID       string
 	UserID        string
@@ -191,9 +201,19 @@ func CreateTestCreateEventRequest() *TestCreateEventRequest {
 				EndTime:   time.Now().Add(time.Hour * 26).Format(time.RFC3339),
 			},
 		},
-		Detail: &TestDetailRequest{
-			Content:     "<p>Test event content</p>",
-			ContentType: models.ContentTypeHTML,
+		Detail: []TestDetailBlockRequest{
+			{
+				Type: models.BlockTypeText,
+				Data: models.TextData{Content: "Test event content"},
+			},
+			{
+				Type: models.BlockTypeImage,
+				Data: models.ImageData{
+					URL:     "https://example.com/test-image.jpg",
+					Alt:     "Test image",
+					Caption: "This is a test image",
+				},
+			},
 		},
 		FAQ: []*TestFAQRequest{
 			{

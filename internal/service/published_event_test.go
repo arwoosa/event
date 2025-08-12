@@ -55,9 +55,11 @@ func TestEventService_ValidatePublishedEventChanges(t *testing.T) {
 			name: "Restrict detail content changes",
 			req: &PatchEventRequest{
 				ID: publishedEvent.ID.Hex(),
-				Detail: &DetailRequest{
-					Content:     "Updated content",
-					ContentType: "html",
+				Detail: []DetailBlockRequest{
+					{
+						Type: models.BlockTypeText,
+						Data: models.TextData{Content: "Updated content"},
+					},
 				},
 				UserID: testutils.ValidObjectIDString(),
 			},

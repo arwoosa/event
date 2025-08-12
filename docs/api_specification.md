@@ -48,6 +48,50 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 - 前端使用 HTTP Status Code 判斷請求成功/失敗
 - 錯誤處理格式由 EzGRPC 統一管理，保持不變
 
+### 內容結構重要變更
+
+**Detail 內容結構**已從單一內容欄位改為結構化內容區塊：
+
+**舊格式（已棄用）：**
+```json
+{
+  "detail": {
+    "content": "HTML content",
+    "content_type": "html"
+  }
+}
+```
+
+**新格式：**
+```json
+{
+  "detail": [
+    {
+      "type": "text",
+      "text_data": {
+        "content": "文字內容"
+      }
+    },
+    {
+      "type": "image",
+      "image_data": {
+        "url": "https://example.com/image.jpg",
+        "alt": "圖片替代文字",
+        "caption": "圖片說明"
+      }
+    }
+  ]
+}
+```
+
+**變更說明：**
+- 支援多種內容類型：文字 (text) 和圖片 (image)
+- 使用 oneof 欄位設計，確保類型安全
+- 最多支援 50 個內容區塊
+- 文字內容最大 10,000 字
+- 圖片支援 URL、alt 文字和說明文字
+- 可為空陣列，但不可為 null
+
 ### 狀態碼
 
 - `1000`: 成功
@@ -118,10 +162,22 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
       "end_time": "2024-01-01T12:00:00Z"
     }
   ],
-  "detail": {
-    "content": "Rich text content",
-    "content_type": "html"
-  },
+  "detail": [
+    {
+      "type": "text",
+      "text_data": {
+        "content": "這是活動的詳細描述內容"
+      }
+    },
+    {
+      "type": "image",
+      "image_data": {
+        "url": "https://example.com/detail-image.jpg",
+        "alt": "活動詳細圖片",
+        "caption": "活動現場圖片說明"
+      }
+    }
+  ],
   "faq": [
     {
       "question": "問題",
@@ -227,10 +283,14 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
       "end_time": "2024-01-01T12:00:00Z"
     }
   ],
-  "detail": {
-    "content": "Rich text content",
-    "content_type": "html"
-  },
+  "detail": [
+    {
+      "type": "text",
+      "text_data": {
+        "content": "活動詳細內容描述"
+      }
+    }
+  ],
   "faq": [
     {
       "question": "問題",
@@ -392,17 +452,22 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 ## 資料驗證規則
 
 ### 必填欄位
-- **Event**: title, brand_id, sessions, cover_image_url, detail.content, location, visibility
+- **Event**: title, brand_id, sessions, cover_image_url, detail (可為空陣列), location, visibility
 - **Session**: start_time, end_time
 - **Session 可選欄位**: name(場次名稱，可空白), capacity(容量限制，null表示不限制)
 - **Location**: name, address, place_id, coordinates
-- **Detail**: content
+- **DetailBlock**: type (text|image), 對應的 data 欄位 (text_data 或 image_data)
+- **TextData**: content
+- **ImageData**: url (必填), alt 和 caption (可選)
 - **FAQ**: question, answer (當 FAQ 存在時，最多 20 個)
 
 ### 長度限制
 - title: 最大 60 字
 - summary: 最大 160 字
-- detail.content: 最大 64KB
+- detail 陣列: 最多 50 個內容區塊
+- text_data.content: 最大 10,000 字
+- image_data.alt: 最大 200 字
+- image_data.caption: 最大 500 字
 - faq.question: 最大 100 字
 - faq.answer: 最大 300 字
 - faq 數量: 最多 20 個
@@ -493,7 +558,7 @@ db.events.createIndex({"brand_id": 1, "updated_at": -1})
 - ❌ 活動標題 (title)
 - ❌ 活動地點 (location)
 - ❌ 活動簡介 (summary)
-- ❌ 活動內容 (detail.content)
+- ❌ 活動內容 (detail 區塊內容)
 - ❌ 活動狀態 (status) - 須使用專門 API
 
 ### 場次設定權限

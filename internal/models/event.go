@@ -17,7 +17,7 @@ type Event struct {
 	CoverImageURL string             `json:"cover_image_url" bson:"cover_image_url"`
 	Location      Location           `json:"location" bson:"location"`
 	Sessions      []Session          `json:"sessions" bson:"sessions,omitempty"` // Populated from aggregation, not stored in events collection
-	Detail        Detail             `json:"detail" bson:"detail"`
+	Detail        []DetailBlock      `json:"detail" bson:"detail"`
 	FAQ           []FAQ              `json:"faq" bson:"faq"`
 	CreatedAt     time.Time          `json:"created_at" bson:"created_at"`
 	CreatedBy     primitive.ObjectID `json:"created_by" bson:"created_by"`
@@ -39,10 +39,22 @@ type GeoJSONPoint struct {
 	Coordinates [2]float64 `json:"coordinates" bson:"coordinates"` // [longitude, latitude]
 }
 
-// Detail represents the event detail content
-type Detail struct {
-	Content     string `json:"content" bson:"content"`
-	ContentType string `json:"content_type" bson:"content_type"` // html, json, markdown
+// DetailBlock represents a single content block
+type DetailBlock struct {
+	Type string      `json:"type" bson:"type"` // text, image
+	Data interface{} `json:"data" bson:"data"`
+}
+
+// TextData represents text block data
+type TextData struct {
+	Content string `json:"content" bson:"content"`
+}
+
+// ImageData represents image block data
+type ImageData struct {
+	URL     string `json:"url" bson:"url"`
+	Alt     string `json:"alt" bson:"alt"`
+	Caption string `json:"caption" bson:"caption"`
 }
 
 // FAQ represents a frequently asked question entry
@@ -64,11 +76,10 @@ const (
 	VisibilityPrivate = "private"
 )
 
-// Content type constants
+// Detail block type constants
 const (
-	ContentTypeHTML     = "html"
-	ContentTypeJSON     = "json"
-	ContentTypeMarkdown = "markdown"
+	BlockTypeText  = "text"
+	BlockTypeImage = "image"
 )
 
 // GeoJSON type constants
@@ -86,9 +97,9 @@ func IsValidVisibility(visibility string) bool {
 	return visibility == VisibilityPublic || visibility == VisibilityPrivate
 }
 
-// IsValidContentType checks if the content type is valid
-func IsValidContentType(contentType string) bool {
-	return contentType == ContentTypeHTML || contentType == ContentTypeJSON || contentType == ContentTypeMarkdown
+// IsValidBlockType checks if the block type is valid
+func IsValidBlockType(blockType string) bool {
+	return blockType == BlockTypeText || blockType == BlockTypeImage
 }
 
 // CanTransitionTo checks if the event can transition to the new status

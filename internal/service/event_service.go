@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -41,7 +42,7 @@ type CreateEventRequest struct {
 	CoverImageURL string
 	Location      *LocationRequest
 	Sessions      []*SessionRequest
-	Detail        *DetailRequest
+	Detail        []DetailBlockRequest
 	FAQ           []*FAQRequest
 	BrandID       string
 	UserID        string
@@ -56,7 +57,7 @@ type PatchEventRequest struct {
 	CoverImageURL *string
 	Location      *LocationRequest
 	Sessions      []*SessionRequest
-	Detail        *DetailRequest
+	Detail        []DetailBlockRequest
 	FAQ           []*FAQRequest
 	UserID        string
 }
@@ -84,10 +85,10 @@ type SessionRequest struct {
 	EndTime   string `json:"end_time"`     // RFC3339 format
 }
 
-// DetailRequest represents detail content in requests
-type DetailRequest struct {
-	Content     string
-	ContentType string
+// DetailBlockRequest represents a single content block in requests
+type DetailBlockRequest struct {
+	Type string
+	Data interface{}
 }
 
 // FAQRequest represents FAQ data in requests
@@ -171,6 +172,20 @@ func (s *EventService) PatchEvent(ctx context.Context, brandID string, req *Patc
 
 	if err := s.validateEventChanges(existingEvent, req); err != nil {
 		return nil, err
+	}
+
+	// Validate detail size if provided
+	if len(req.Detail) > 0 {
+		detail := make([]models.DetailBlock, len(req.Detail))
+		for i, blockReq := range req.Detail {
+			detail[i] = models.DetailBlock{
+				Type: blockReq.Type,
+				Data: blockReq.Data,
+			}
+		}
+		if err := validateDetailSize(detail); err != nil {
+			return nil, err
+		}
 	}
 
 	// Update sessions if provided
@@ -280,7 +295,8 @@ func (s *EventService) validateEventChanges(existing *models.Event, req *PatchEv
 	if req.CoverImageURL != nil && *req.CoverImageURL != existing.CoverImageURL {
 		restrictedFields = append(restrictedFields, "cover_image_url")
 	}
-	if req.Detail != nil && (req.Detail.Content != existing.Detail.Content || req.Detail.ContentType != existing.Detail.ContentType) {
+	if len(req.Detail) > 0 {
+		// For the new blocks structure, any detail change is restricted for published events
 		restrictedFields = append(restrictedFields, "detail")
 	}
 	if req.Location != nil {
@@ -354,8 +370,8 @@ func (s *EventService) validatePublishRequirements(ctx context.Context, event *m
 	if event.CoverImageURL == "" {
 		return models.NewValidationError("cover_image_url", "cover image is required for publishing")
 	}
-	if event.Detail.Content == "" {
-		return models.NewValidationError("detail.content", "detail content is required for publishing")
+	if len(event.Detail) == 0 {
+		return models.NewValidationError("detail", "detail blocks are required for publishing")
 	}
 
 	// Check actual session count from database instead of cached count
@@ -428,14 +444,19 @@ func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*mo
 	// Sessions are now handled by SessionService
 
 	// Convert detail (optional for drafts)
-	var detail models.Detail
-	if req.Detail != nil {
-		detail = models.Detail{
-			Content:     req.Detail.Content,
-			ContentType: req.Detail.ContentType,
+	var detail []models.DetailBlock
+	if len(req.Detail) > 0 {
+		detail = make([]models.DetailBlock, len(req.Detail))
+		for i, blockReq := range req.Detail {
+			detail[i] = models.DetailBlock{
+				Type: blockReq.Type,
+				Data: blockReq.Data,
+			}
 		}
-		if detail.ContentType == "" {
-			detail.ContentType = models.ContentTypeHTML
+		
+		// Validate detail size
+		if err := validateDetailSize(detail); err != nil {
+			return nil, err
 		}
 	}
 
@@ -497,13 +518,13 @@ func (s *EventService) applyPatchToEvent(existing *models.Event, req *PatchEvent
 		existing.Location = location
 	}
 
-	if req.Detail != nil {
-		detail := models.Detail{
-			Content:     req.Detail.Content,
-			ContentType: req.Detail.ContentType,
-		}
-		if detail.ContentType == "" {
-			detail.ContentType = models.ContentTypeHTML
+	if len(req.Detail) > 0 {
+		detail := make([]models.DetailBlock, len(req.Detail))
+		for i, blockReq := range req.Detail {
+			detail[i] = models.DetailBlock{
+				Type: blockReq.Type,
+				Data: blockReq.Data,
+			}
 		}
 		existing.Detail = detail
 	}
@@ -520,4 +541,21 @@ func (s *EventService) applyPatchToEvent(existing *models.Event, req *PatchEvent
 	}
 
 	return existing
+}
+
+// validateDetailSize validates that the detail blocks don't exceed the size limit
+func validateDetailSize(detail []models.DetailBlock) error {
+	// Serialize detail to calculate size
+	data, err := json.Marshal(detail)
+	if err != nil {
+		return models.NewValidationError("detail", "failed to serialize detail blocks")
+	}
+	
+	const maxSize = 64 * 1024 // 64KB
+	if len(data) > maxSize {
+		return models.NewValidationError("detail", 
+			fmt.Sprintf("detail size exceeds limit: %d bytes (max: %d bytes)", len(data), maxSize))
+	}
+	
+	return nil
 }

@@ -36,10 +36,13 @@ func ConvertTestCreateEventRequest(req *testutils.TestCreateEventRequest) *Creat
 		}
 	}
 
-	if req.Detail != nil {
-		serviceReq.Detail = &DetailRequest{
-			Content:     req.Detail.Content,
-			ContentType: req.Detail.ContentType,
+	if len(req.Detail) > 0 {
+		serviceReq.Detail = make([]DetailBlockRequest, len(req.Detail))
+		for i, block := range req.Detail {
+			serviceReq.Detail[i] = DetailBlockRequest{
+				Type: block.Type,
+				Data: block.Data,
+			}
 		}
 	}
 

@@ -95,7 +95,7 @@ message Event {
   string cover_image_url = 7;
   Location location = 8;
   repeated Session sessions = 9;
-  Detail detail = 10;
+  repeated DetailBlock detail = 10 [(validate.rules).repeated = {min_items: 0, max_items: 50}];
   repeated FAQ faq = 11;
   string created_at = 12;
   string created_by = 13;
@@ -125,10 +125,25 @@ message Session {
   string end_time = 5;   // RFC3339 format
 }
 
-// Event detail content
-message Detail {
-  string content = 1 [(validate.rules).string.max_len = 65536];
-  string content_type = 2 [(validate.rules).string = {ignore_empty: true, in: ["html", "markdown", "plain"]}]; // html, json, markdown
+// Detail block for structured content
+message DetailBlock {
+  string type = 1 [(validate.rules).string = {in: ["text", "image"]}];
+  oneof data {
+    TextData text_data = 2;
+    ImageData image_data = 3;
+  }
+}
+
+// Text block data
+message TextData {
+  string content = 1 [(validate.rules).string.max_len = 10000];
+}
+
+// Image block data
+message ImageData {
+  string url = 1 [(validate.rules).string = {min_len: 1, uri: true}];
+  string alt = 2 [(validate.rules).string.max_len = 200];
+  string caption = 3 [(validate.rules).string.max_len = 500];
 }
 
 // FAQ entry
@@ -146,7 +161,7 @@ message CreateEventRequest {
   string cover_image_url = 4 [(validate.rules).string = {ignore_empty: true, uri: true}];
   optional Location location = 5;
   repeated Session sessions = 6;
-  optional Detail detail = 7;
+  repeated DetailBlock detail = 7 [(validate.rules).repeated = {min_items: 0, max_items: 50}];
   repeated FAQ faq = 8 [(validate.rules).repeated = {min_items: 0, max_items: 20}];
 }
 
@@ -177,7 +192,7 @@ message PatchEventRequest {
   optional string cover_image_url = 5 [(validate.rules).string = {ignore_empty: true, uri: true}];
   optional Location location = 6;
   repeated Session sessions = 7; // Replace all sessions if provided
-  optional Detail detail = 8;
+  repeated DetailBlock detail = 8 [(validate.rules).repeated = {min_items: 0, max_items: 50}]; // Replace all detail blocks if provided
   repeated FAQ faq = 9 [(validate.rules).repeated = {min_items: 0, max_items: 20}]; // Replace all FAQ if provided
 }
 

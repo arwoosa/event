@@ -50,23 +50,22 @@ func TestIsValidVisibility(t *testing.T) {
 	}
 }
 
-func TestIsValidContentType(t *testing.T) {
+func TestIsValidBlockType(t *testing.T) {
 	tests := []struct {
-		name        string
-		contentType string
-		expected    bool
+		name      string
+		blockType string
+		expected  bool
 	}{
-		{"Valid HTML content type", ContentTypeHTML, true},
-		{"Valid JSON content type", ContentTypeJSON, true},
-		{"Valid Markdown content type", ContentTypeMarkdown, true},
-		{"Invalid content type", "invalid", false},
-		{"Empty content type", "", false},
-		{"Case sensitive", "Html", false},
+		{"Valid text block type", BlockTypeText, true},
+		{"Valid image block type", BlockTypeImage, true},
+		{"Invalid block type", "invalid", false},
+		{"Empty block type", "", false},
+		{"Case sensitive", "Text", false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := IsValidContentType(tt.contentType)
+			result := IsValidBlockType(tt.blockType)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -283,61 +282,68 @@ func TestLocation_Complete(t *testing.T) {
 func TestDetail_Validation(t *testing.T) {
 	tests := []struct {
 		name        string
-		detail      Detail
+		detail      []DetailBlock
 		expectValid bool
 	}{
 		{
-			name: "Valid HTML detail",
-			detail: Detail{
-				Content:     "<p>Test content</p>",
-				ContentType: ContentTypeHTML,
+			name: "Valid text block detail",
+			detail: []DetailBlock{
+				{
+					Type: BlockTypeText,
+					Data: TextData{Content: "Test content"},
+				},
 			},
 			expectValid: true,
 		},
 		{
-			name: "Valid JSON detail",
-			detail: Detail{
-				Content:     `{"key": "value"}`,
-				ContentType: ContentTypeJSON,
+			name: "Valid image block detail",
+			detail: []DetailBlock{
+				{
+					Type: BlockTypeImage,
+					Data: ImageData{
+						URL:     "https://example.com/image.jpg",
+						Alt:     "Test image",
+						Caption: "Test caption",
+					},
+				},
 			},
 			expectValid: true,
 		},
 		{
-			name: "Valid Markdown detail",
-			detail: Detail{
-				Content:     "# Test\n\nContent",
-				ContentType: ContentTypeMarkdown,
+			name: "Mixed blocks detail",
+			detail: []DetailBlock{
+				{
+					Type: BlockTypeText,
+					Data: TextData{Content: "Text content"},
+				},
+				{
+					Type: BlockTypeImage,
+					Data: ImageData{
+						URL: "https://example.com/image.jpg",
+						Alt: "Test image",
+					},
+				},
 			},
 			expectValid: true,
 		},
 		{
-			name: "Invalid content type",
-			detail: Detail{
-				Content:     "Test content",
-				ContentType: "invalid",
-			},
-			expectValid: false,
-		},
-		{
-			name: "Empty content type defaults to HTML",
-			detail: Detail{
-				Content:     "Test content",
-				ContentType: "",
-			},
-			expectValid: false, // Empty content type is invalid
+			name:        "Empty blocks",
+			detail:      []DetailBlock{},
+			expectValid: false, // Empty blocks array is not valid for publishing
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.expectValid {
-				assert.True(t, IsValidContentType(tt.detail.ContentType), "Content type should be valid")
-				assert.NotEmpty(t, tt.detail.Content, "Content should not be empty")
-			} else {
-				if tt.detail.ContentType != "" {
-					assert.False(t, IsValidContentType(tt.detail.ContentType), "Content type should be invalid")
+			// For our test validation, we check if blocks are not empty
+			valid := len(tt.detail) > 0
+			for _, block := range tt.detail {
+				if !IsValidBlockType(block.Type) {
+					valid = false
+					break
 				}
 			}
+			assert.Equal(t, tt.expectValid, valid)
 		})
 	}
 }
@@ -364,10 +370,9 @@ func TestEventConstants(t *testing.T) {
 	assert.Equal(t, "public", VisibilityPublic)
 	assert.Equal(t, "private", VisibilityPrivate)
 
-	// Test content type constants
-	assert.Equal(t, "html", ContentTypeHTML)
-	assert.Equal(t, "json", ContentTypeJSON)
-	assert.Equal(t, "markdown", ContentTypeMarkdown)
+	// Test block type constants
+	assert.Equal(t, "text", BlockTypeText)
+	assert.Equal(t, "image", BlockTypeImage)
 
 	// Test GeoJSON type constant
 	assert.Equal(t, "Point", GeoJSONTypePoint)
