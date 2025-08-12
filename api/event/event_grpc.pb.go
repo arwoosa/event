@@ -371,7 +371,6 @@ var EventService_ServiceDesc = grpc.ServiceDesc{
 const (
 	PublicEventService_SearchEvents_FullMethodName = "/event.PublicEventService/SearchEvents"
 	PublicEventService_GetEvent_FullMethodName     = "/event.PublicEventService/GetEvent"
-	PublicEventService_IsPublished_FullMethodName  = "/event.PublicEventService/IsPublished"
 )
 
 // PublicEventServiceClient is the client API for PublicEventService service.
@@ -384,8 +383,6 @@ type PublicEventServiceClient interface {
 	SearchEvents(ctx context.Context, in *SearchEventsRequest, opts ...grpc.CallOption) (*EventListResponse, error)
 	// Get a public event by ID (for sharing links)
 	GetEvent(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*Event, error)
-	// Check if event is published (for OrderService - internal gRPC only)
-	IsPublished(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*IsPublishedResponse, error)
 }
 
 type publicEventServiceClient struct {
@@ -416,16 +413,6 @@ func (c *publicEventServiceClient) GetEvent(ctx context.Context, in *api.ID, opt
 	return out, nil
 }
 
-func (c *publicEventServiceClient) IsPublished(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*IsPublishedResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(IsPublishedResponse)
-	err := c.cc.Invoke(ctx, PublicEventService_IsPublished_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // PublicEventServiceServer is the server API for PublicEventService service.
 // All implementations must embed UnimplementedPublicEventServiceServer
 // for forward compatibility.
@@ -436,8 +423,6 @@ type PublicEventServiceServer interface {
 	SearchEvents(context.Context, *SearchEventsRequest) (*EventListResponse, error)
 	// Get a public event by ID (for sharing links)
 	GetEvent(context.Context, *api.ID) (*Event, error)
-	// Check if event is published (for OrderService - internal gRPC only)
-	IsPublished(context.Context, *api.ID) (*IsPublishedResponse, error)
 	mustEmbedUnimplementedPublicEventServiceServer()
 }
 
@@ -453,9 +438,6 @@ func (UnimplementedPublicEventServiceServer) SearchEvents(context.Context, *Sear
 }
 func (UnimplementedPublicEventServiceServer) GetEvent(context.Context, *api.ID) (*Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEvent not implemented")
-}
-func (UnimplementedPublicEventServiceServer) IsPublished(context.Context, *api.ID) (*IsPublishedResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method IsPublished not implemented")
 }
 func (UnimplementedPublicEventServiceServer) mustEmbedUnimplementedPublicEventServiceServer() {}
 func (UnimplementedPublicEventServiceServer) testEmbeddedByValue()                            {}
@@ -514,24 +496,6 @@ func _PublicEventService_GetEvent_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PublicEventService_IsPublished_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(api.ID)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PublicEventServiceServer).IsPublished(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PublicEventService_IsPublished_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PublicEventServiceServer).IsPublished(ctx, req.(*api.ID))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // PublicEventService_ServiceDesc is the grpc.ServiceDesc for PublicEventService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -547,9 +511,113 @@ var PublicEventService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetEvent",
 			Handler:    _PublicEventService_GetEvent_Handler,
 		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/event/event.proto",
+}
+
+const (
+	InternalService_GetEventById_FullMethodName = "/event.InternalService/GetEventById"
+)
+
+// InternalServiceClient is the client API for InternalService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Internal Service for inter-service communication
+type InternalServiceClient interface {
+	// Get event by ID without brand validation (for internal services)
+	GetEventById(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*Event, error)
+}
+
+type internalServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewInternalServiceClient(cc grpc.ClientConnInterface) InternalServiceClient {
+	return &internalServiceClient{cc}
+}
+
+func (c *internalServiceClient) GetEventById(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*Event, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Event)
+	err := c.cc.Invoke(ctx, InternalService_GetEventById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// InternalServiceServer is the server API for InternalService service.
+// All implementations must embed UnimplementedInternalServiceServer
+// for forward compatibility.
+//
+// Internal Service for inter-service communication
+type InternalServiceServer interface {
+	// Get event by ID without brand validation (for internal services)
+	GetEventById(context.Context, *api.ID) (*Event, error)
+	mustEmbedUnimplementedInternalServiceServer()
+}
+
+// UnimplementedInternalServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedInternalServiceServer struct{}
+
+func (UnimplementedInternalServiceServer) GetEventById(context.Context, *api.ID) (*Event, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEventById not implemented")
+}
+func (UnimplementedInternalServiceServer) mustEmbedUnimplementedInternalServiceServer() {}
+func (UnimplementedInternalServiceServer) testEmbeddedByValue()                         {}
+
+// UnsafeInternalServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to InternalServiceServer will
+// result in compilation errors.
+type UnsafeInternalServiceServer interface {
+	mustEmbedUnimplementedInternalServiceServer()
+}
+
+func RegisterInternalServiceServer(s grpc.ServiceRegistrar, srv InternalServiceServer) {
+	// If the following call pancis, it indicates UnimplementedInternalServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&InternalService_ServiceDesc, srv)
+}
+
+func _InternalService_GetEventById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(api.ID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InternalServiceServer).GetEventById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InternalService_GetEventById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InternalServiceServer).GetEventById(ctx, req.(*api.ID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// InternalService_ServiceDesc is the grpc.ServiceDesc for InternalService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var InternalService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "event.InternalService",
+	HandlerType: (*InternalServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "IsPublished",
-			Handler:    _PublicEventService_IsPublished_Handler,
+			MethodName: "GetEventById",
+			Handler:    _InternalService_GetEventById_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

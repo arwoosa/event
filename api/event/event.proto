@@ -80,8 +80,12 @@ service PublicEventService {
     };
   }
   
-  // Check if event is published (for OrderService - internal gRPC only)
-  rpc IsPublished(api.ID) returns (IsPublishedResponse);
+}
+
+// Internal Service for inter-service communication
+service InternalService {
+  // Get event by ID without brand validation (for internal services)
+  rpc GetEventById(api.ID) returns (Event);
 }
 
 // Core Event message
@@ -249,7 +253,3 @@ message Pagination {
   optional int32 total_pages = 7;      // for page-based
 }
 
-// Response for IsPublished API
-message IsPublishedResponse {
-  bool is_published = 1;
-}

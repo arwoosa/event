@@ -105,19 +105,6 @@ func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*
 	return s.converter.ConvertEventToPB(event), nil
 }
 
-// IsPublished implements the gRPC IsPublished method for OrderService
-func (s *PublicEventServiceServer) IsPublished(ctx context.Context, req *api.ID) (*pb.IsPublishedResponse, error) {
-	// Check if event is published
-	isPublished, err := s.publicService.IsPublished(ctx, req.Id)
-	if err != nil {
-		return nil, s.handleServiceError(err)
-	}
-
-	// Return simple boolean response
-	return &pb.IsPublishedResponse{
-		IsPublished: isPublished,
-	}, nil
-}
 
 // Helper methods
 

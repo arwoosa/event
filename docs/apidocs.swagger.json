@@ -10,6 +10,9 @@
     },
     {
       "name": "PublicEventService"
+    },
+    {
+      "name": "InternalService"
     }
   ],
   "consumes": [
@@ -710,15 +713,6 @@
         }
       },
       "title": "Image block data"
-    },
-    "eventIsPublishedResponse": {
-      "type": "object",
-      "properties": {
-        "is_published": {
-          "type": "boolean"
-        }
-      },
-      "title": "Response for IsPublished API"
     },
     "eventLocation": {
       "type": "object",

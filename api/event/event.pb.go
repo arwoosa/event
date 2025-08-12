@@ -1396,51 +1396,6 @@ func (x *Pagination) GetTotalPages() int32 {
 	return 0
 }
 
-// Response for IsPublished API
-type IsPublishedResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	IsPublished   bool                   `protobuf:"varint,1,opt,name=is_published,json=isPublished,proto3" json:"is_published,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *IsPublishedResponse) Reset() {
-	*x = IsPublishedResponse{}
-	mi := &file_api_event_event_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *IsPublishedResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IsPublishedResponse) ProtoMessage() {}
-
-func (x *IsPublishedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_event_event_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IsPublishedResponse.ProtoReflect.Descriptor instead.
-func (*IsPublishedResponse) Descriptor() ([]byte, []int) {
-	return file_api_event_event_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *IsPublishedResponse) GetIsPublished() bool {
-	if x != nil {
-		return x.IsPublished
-	}
-	return false
-}
-
 var File_api_event_event_proto protoreflect.FileDescriptor
 
 const file_api_event_event_proto_rawDesc = "" +
@@ -1637,9 +1592,7 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\t_has_prevB\x0e\n" +
 	"\f_total_countB\x0f\n" +
 	"\r_current_pageB\x0e\n" +
-	"\f_total_pages\"8\n" +
-	"\x13IsPublishedResponse\x12!\n" +
-	"\fis_published\x18\x01 \x01(\bR\visPublished2\xa1\x05\n" +
+	"\f_total_pages2\xa1\x05\n" +
 	"\fEventService\x12`\n" +
 	"\vCreateEvent\x12\x19.event.CreateEventRequest\x1a\x1a.event.CreateEventResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/console/events\x12]\n" +
 	"\fGetEventList\x12\x1a.event.GetEventListRequest\x1a\x18.event.EventListResponse\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/console/events\x12?\n" +
@@ -1648,11 +1601,12 @@ const file_api_event_event_proto_rawDesc = "" +
 	"PatchEvent\x12\x18.event.PatchEventRequest\x1a\f.event.Event\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*2\x14/console/events/{id}\x12L\n" +
 	"\vDeleteEvent\x12\a.api.ID\x1a\x16.google.protobuf.Empty\"\x1c\x82\xd3\xe4\x93\x02\x16*\x14/console/events/{id}\x12j\n" +
 	"\x11UpdateEventStatus\x12\x1f.event.UpdateEventStatusRequest\x1a\f.event.Event\"&\x82\xd3\xe4\x93\x02 :\x01*\x1a\x1b/console/events/{id}/status\x12~\n" +
-	"\rDeleteSession\x12\x1b.event.DeleteSessionRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x022*0/console/events/{event_id}/sessions/{session_id}2\xd8\x01\n" +
+	"\rDeleteSession\x12\x1b.event.DeleteSessionRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x022*0/console/events/{event_id}/sessions/{session_id}2\xa4\x01\n" +
 	"\x12PublicEventService\x12U\n" +
 	"\fSearchEvents\x12\x1a.event.SearchEventsRequest\x1a\x18.event.EventListResponse\"\x0f\x82\xd3\xe4\x93\x02\t\x12\a/events\x127\n" +
-	"\bGetEvent\x12\a.api.ID\x1a\f.event.Event\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/events/{id}\x122\n" +
-	"\vIsPublished\x12\a.api.ID\x1a\x1a.event.IsPublishedResponseB\x11Z\x0fevent/api/eventb\x06proto3"
+	"\bGetEvent\x12\a.api.ID\x1a\f.event.Event\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/events/{id}28\n" +
+	"\x0fInternalService\x12%\n" +
+	"\fGetEventById\x12\a.api.ID\x1a\f.event.EventB\x11Z\x0fevent/api/eventb\x06proto3"
 
 var (
 	file_api_event_event_proto_rawDescOnce sync.Once
@@ -1666,7 +1620,7 @@ func file_api_event_event_proto_rawDescGZIP() []byte {
 	return file_api_event_event_proto_rawDescData
 }
 
-var file_api_event_event_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_api_event_event_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_api_event_event_proto_goTypes = []any{
 	(*Event)(nil),                    // 0: event.Event
 	(*Location)(nil),                 // 1: event.Location
@@ -1685,9 +1639,8 @@ var file_api_event_event_proto_goTypes = []any{
 	(*CreateEventResponse)(nil),      // 14: event.CreateEventResponse
 	(*EventListResponse)(nil),        // 15: event.EventListResponse
 	(*Pagination)(nil),               // 16: event.Pagination
-	(*IsPublishedResponse)(nil),      // 17: event.IsPublishedResponse
-	(*api.ID)(nil),                   // 18: api.ID
-	(*emptypb.Empty)(nil),            // 19: google.protobuf.Empty
+	(*api.ID)(nil),                   // 17: api.ID
+	(*emptypb.Empty)(nil),            // 18: google.protobuf.Empty
 }
 var file_api_event_event_proto_depIdxs = []int32{
 	1,  // 0: event.Event.location:type_name -> event.Location
@@ -1709,24 +1662,24 @@ var file_api_event_event_proto_depIdxs = []int32{
 	16, // 16: event.EventListResponse.pagination:type_name -> event.Pagination
 	8,  // 17: event.EventService.CreateEvent:input_type -> event.CreateEventRequest
 	9,  // 18: event.EventService.GetEventList:input_type -> event.GetEventListRequest
-	18, // 19: event.EventService.GetEvent:input_type -> api.ID
+	17, // 19: event.EventService.GetEvent:input_type -> api.ID
 	10, // 20: event.EventService.PatchEvent:input_type -> event.PatchEventRequest
-	18, // 21: event.EventService.DeleteEvent:input_type -> api.ID
+	17, // 21: event.EventService.DeleteEvent:input_type -> api.ID
 	11, // 22: event.EventService.UpdateEventStatus:input_type -> event.UpdateEventStatusRequest
 	12, // 23: event.EventService.DeleteSession:input_type -> event.DeleteSessionRequest
 	13, // 24: event.PublicEventService.SearchEvents:input_type -> event.SearchEventsRequest
-	18, // 25: event.PublicEventService.GetEvent:input_type -> api.ID
-	18, // 26: event.PublicEventService.IsPublished:input_type -> api.ID
+	17, // 25: event.PublicEventService.GetEvent:input_type -> api.ID
+	17, // 26: event.InternalService.GetEventById:input_type -> api.ID
 	14, // 27: event.EventService.CreateEvent:output_type -> event.CreateEventResponse
 	15, // 28: event.EventService.GetEventList:output_type -> event.EventListResponse
 	0,  // 29: event.EventService.GetEvent:output_type -> event.Event
 	0,  // 30: event.EventService.PatchEvent:output_type -> event.Event
-	19, // 31: event.EventService.DeleteEvent:output_type -> google.protobuf.Empty
+	18, // 31: event.EventService.DeleteEvent:output_type -> google.protobuf.Empty
 	0,  // 32: event.EventService.UpdateEventStatus:output_type -> event.Event
-	19, // 33: event.EventService.DeleteSession:output_type -> google.protobuf.Empty
+	18, // 33: event.EventService.DeleteSession:output_type -> google.protobuf.Empty
 	15, // 34: event.PublicEventService.SearchEvents:output_type -> event.EventListResponse
 	0,  // 35: event.PublicEventService.GetEvent:output_type -> event.Event
-	17, // 36: event.PublicEventService.IsPublished:output_type -> event.IsPublishedResponse
+	0,  // 36: event.InternalService.GetEventById:output_type -> event.Event
 	27, // [27:37] is the sub-list for method output_type
 	17, // [17:27] is the sub-list for method input_type
 	17, // [17:17] is the sub-list for extension type_name
@@ -1755,9 +1708,9 @@ func file_api_event_event_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_event_event_proto_rawDesc), len(file_api_event_event_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   17,
 			NumExtensions: 0,
-			NumServices:   2,
+			NumServices:   3,
 		},
 		GoTypes:           file_api_event_event_proto_goTypes,
 		DependencyIndexes: file_api_event_event_proto_depIdxs,
