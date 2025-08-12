@@ -93,10 +93,17 @@ grpc:
 		--go-grpc_out=. --go-grpc_opt=paths=source_relative \
 		--validate_out="lang=go,paths=source_relative:." \
 		api/event/*.proto api/order/*.proto api/*.proto
-	# Generate gRPC-Gateway and OpenAPI only for event service APIs (exclude order)
+	# Generate gRPC-Gateway
 	protoc -I . -I third_party/googleapis \
 		--grpc-gateway_out=. --grpc-gateway_opt=paths=source_relative \
+		api/event/*.proto api/*.proto
+	# Generate OpenAPI JSON only for event service APIs (exclude order)
+	protoc -I . -I third_party/googleapis \
 		--openapiv2_out=docs --openapiv2_opt=logtostderr=true,json_names_for_fields=false,allow_merge=true \
+		api/event/*.proto api/*.proto
+	# Generate OpenAPI YAML only for event service APIs (exclude order)
+	protoc -I . -I third_party/googleapis \
+		--openapiv2_out=docs --openapiv2_opt=logtostderr=true,json_names_for_fields=false,allow_merge=true,output_format=yaml \
 		api/event/*.proto api/*.proto
 
 docker_run:
