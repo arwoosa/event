@@ -7,22 +7,44 @@ package api.orders;
 import "api/common.proto";
 import "google/api/annotations.proto";
 import "third_party/buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
 
-
-service Orders {
-  rpc AddOrder (AddOrderRequest) returns (api.Response) {
+service OrdersAdminService {
+  rpc AddOrder (AddOrderRequest) returns (Response) {
     option (google.api.http) = {
-      post: "/api/v1/{event}/tickets"
+      post: "/api/v1/console/events/{event}/orders"
       body: "*"
     };
   };
 
-  rpc IsEventHasOrders (IsEventHasOrdersRequest) returns (api.Response) {
+  rpc IsEventHasOpenOrders (IsEventHasOrdersRequest) returns (Response) {
     option (google.api.http) = {
-      get: "/api/v1/events/{event}/orders/exist"
+      get: "/api/v1/console/events/{event}/orders/has-open"
+    };
+  }
+
+  rpc GetOrdersByEvent (GetOrdersByEventRequest) returns (Response) {
+    option (google.api.http) = {
+      get: "/api/v1/console/events/{event}/orders"
+    };
+  }
+
+  rpc GetOrdersBySession (GetOrdersBySessionRequest) returns (Response) {
+    option (google.api.http) = {
+      get: "/api/v1/console/sessions/{session}/orders"
+    };
+  }
+
+  rpc ChangeOrderStatus (ChangeOrderStatusRequest) returns (Response) {
+    option (google.api.http) = {
+      //highlight-start
+      patch: "/api/v1/console/orders/{order}/status"
+      //highlight-end
+      body: "*"
     };
   }
 }
+
 
 message AddOrderRequest {
   string payment =1 [(buf.validate.field).string.len = 24];
@@ -39,4 +61,50 @@ message AddOrderRequest {
 
 message IsEventHasOrdersRequest {
   string event = 1 [(buf.validate.field).string.len = 24];
+}
+
+message GetOrdersByEventRequest {
+  string event = 1 [(buf.validate.field).string.len = 24];
+}
+
+
+
+message GetOrdersResponse {
+  message GetOrdersOrder {
+    string id = 1;
+    string payment =2;
+    message Item {
+      string ticket = 1;
+      string session = 2;
+      int64 quantity = 3;
+      string price = 4;
+    }
+    repeated Item items = 3;
+    string subtotal = 4;
+    string total = 5;
+    string event = 7;
+    string status = 8;
+    string note = 9;
+    User user = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+  }
+  repeated GetOrdersOrder data = 1;
+}
+
+message GetOrdersBySessionRequest {
+  string session = 1 [(buf.validate.field).string.len = 24];
+}
+
+message ChangeOrderStatusRequest {
+  string order = 1 [(buf.validate.field).string.len = 24];
+    OrderStatus status = 2 [(buf.validate.field).enum.defined_only = true];
+}
+
+enum OrderStatus {
+  UNKNOWN = 0;
+  PROCESSING = 1;
+  COMPLETED = 2;
+  CANCELLED = 3;
+  REFUNDED = 4;
 }

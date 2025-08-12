@@ -20,139 +20,253 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Orders_AddOrder_FullMethodName         = "/api.orders.Orders/AddOrder"
-	Orders_IsEventHasOrders_FullMethodName = "/api.orders.Orders/IsEventHasOrders"
+	OrdersAdminService_AddOrder_FullMethodName             = "/api.orders.OrdersAdminService/AddOrder"
+	OrdersAdminService_IsEventHasOpenOrders_FullMethodName = "/api.orders.OrdersAdminService/IsEventHasOpenOrders"
+	OrdersAdminService_GetOrdersByEvent_FullMethodName     = "/api.orders.OrdersAdminService/GetOrdersByEvent"
+	OrdersAdminService_GetOrdersBySession_FullMethodName   = "/api.orders.OrdersAdminService/GetOrdersBySession"
+	OrdersAdminService_ChangeOrderStatus_FullMethodName    = "/api.orders.OrdersAdminService/ChangeOrderStatus"
 )
 
-// OrdersClient is the client API for Orders service.
+// OrdersAdminServiceClient is the client API for OrdersAdminService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type OrdersClient interface {
+type OrdersAdminServiceClient interface {
 	AddOrder(ctx context.Context, in *AddOrderRequest, opts ...grpc.CallOption) (*api.Response, error)
-	IsEventHasOrders(ctx context.Context, in *IsEventHasOrdersRequest, opts ...grpc.CallOption) (*api.Response, error)
+	IsEventHasOpenOrders(ctx context.Context, in *IsEventHasOrdersRequest, opts ...grpc.CallOption) (*api.Response, error)
+	GetOrdersByEvent(ctx context.Context, in *GetOrdersByEventRequest, opts ...grpc.CallOption) (*api.Response, error)
+	GetOrdersBySession(ctx context.Context, in *GetOrdersBySessionRequest, opts ...grpc.CallOption) (*api.Response, error)
+	ChangeOrderStatus(ctx context.Context, in *ChangeOrderStatusRequest, opts ...grpc.CallOption) (*api.Response, error)
 }
 
-type ordersClient struct {
+type ordersAdminServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewOrdersClient(cc grpc.ClientConnInterface) OrdersClient {
-	return &ordersClient{cc}
+func NewOrdersAdminServiceClient(cc grpc.ClientConnInterface) OrdersAdminServiceClient {
+	return &ordersAdminServiceClient{cc}
 }
 
-func (c *ordersClient) AddOrder(ctx context.Context, in *AddOrderRequest, opts ...grpc.CallOption) (*api.Response, error) {
+func (c *ordersAdminServiceClient) AddOrder(ctx context.Context, in *AddOrderRequest, opts ...grpc.CallOption) (*api.Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(api.Response)
-	err := c.cc.Invoke(ctx, Orders_AddOrder_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, OrdersAdminService_AddOrder_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ordersClient) IsEventHasOrders(ctx context.Context, in *IsEventHasOrdersRequest, opts ...grpc.CallOption) (*api.Response, error) {
+func (c *ordersAdminServiceClient) IsEventHasOpenOrders(ctx context.Context, in *IsEventHasOrdersRequest, opts ...grpc.CallOption) (*api.Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(api.Response)
-	err := c.cc.Invoke(ctx, Orders_IsEventHasOrders_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, OrdersAdminService_IsEventHasOpenOrders_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// OrdersServer is the server API for Orders service.
-// All implementations must embed UnimplementedOrdersServer
+func (c *ordersAdminServiceClient) GetOrdersByEvent(ctx context.Context, in *GetOrdersByEventRequest, opts ...grpc.CallOption) (*api.Response, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(api.Response)
+	err := c.cc.Invoke(ctx, OrdersAdminService_GetOrdersByEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ordersAdminServiceClient) GetOrdersBySession(ctx context.Context, in *GetOrdersBySessionRequest, opts ...grpc.CallOption) (*api.Response, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(api.Response)
+	err := c.cc.Invoke(ctx, OrdersAdminService_GetOrdersBySession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ordersAdminServiceClient) ChangeOrderStatus(ctx context.Context, in *ChangeOrderStatusRequest, opts ...grpc.CallOption) (*api.Response, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(api.Response)
+	err := c.cc.Invoke(ctx, OrdersAdminService_ChangeOrderStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// OrdersAdminServiceServer is the server API for OrdersAdminService service.
+// All implementations must embed UnimplementedOrdersAdminServiceServer
 // for forward compatibility.
-type OrdersServer interface {
+type OrdersAdminServiceServer interface {
 	AddOrder(context.Context, *AddOrderRequest) (*api.Response, error)
-	IsEventHasOrders(context.Context, *IsEventHasOrdersRequest) (*api.Response, error)
-	mustEmbedUnimplementedOrdersServer()
+	IsEventHasOpenOrders(context.Context, *IsEventHasOrdersRequest) (*api.Response, error)
+	GetOrdersByEvent(context.Context, *GetOrdersByEventRequest) (*api.Response, error)
+	GetOrdersBySession(context.Context, *GetOrdersBySessionRequest) (*api.Response, error)
+	ChangeOrderStatus(context.Context, *ChangeOrderStatusRequest) (*api.Response, error)
+	mustEmbedUnimplementedOrdersAdminServiceServer()
 }
 
-// UnimplementedOrdersServer must be embedded to have
+// UnimplementedOrdersAdminServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedOrdersServer struct{}
+type UnimplementedOrdersAdminServiceServer struct{}
 
-func (UnimplementedOrdersServer) AddOrder(context.Context, *AddOrderRequest) (*api.Response, error) {
+func (UnimplementedOrdersAdminServiceServer) AddOrder(context.Context, *AddOrderRequest) (*api.Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddOrder not implemented")
 }
-func (UnimplementedOrdersServer) IsEventHasOrders(context.Context, *IsEventHasOrdersRequest) (*api.Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method IsEventHasOrders not implemented")
+func (UnimplementedOrdersAdminServiceServer) IsEventHasOpenOrders(context.Context, *IsEventHasOrdersRequest) (*api.Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsEventHasOpenOrders not implemented")
 }
-func (UnimplementedOrdersServer) mustEmbedUnimplementedOrdersServer() {}
-func (UnimplementedOrdersServer) testEmbeddedByValue()                {}
+func (UnimplementedOrdersAdminServiceServer) GetOrdersByEvent(context.Context, *GetOrdersByEventRequest) (*api.Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrdersByEvent not implemented")
+}
+func (UnimplementedOrdersAdminServiceServer) GetOrdersBySession(context.Context, *GetOrdersBySessionRequest) (*api.Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrdersBySession not implemented")
+}
+func (UnimplementedOrdersAdminServiceServer) ChangeOrderStatus(context.Context, *ChangeOrderStatusRequest) (*api.Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeOrderStatus not implemented")
+}
+func (UnimplementedOrdersAdminServiceServer) mustEmbedUnimplementedOrdersAdminServiceServer() {}
+func (UnimplementedOrdersAdminServiceServer) testEmbeddedByValue()                            {}
 
-// UnsafeOrdersServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to OrdersServer will
+// UnsafeOrdersAdminServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to OrdersAdminServiceServer will
 // result in compilation errors.
-type UnsafeOrdersServer interface {
-	mustEmbedUnimplementedOrdersServer()
+type UnsafeOrdersAdminServiceServer interface {
+	mustEmbedUnimplementedOrdersAdminServiceServer()
 }
 
-func RegisterOrdersServer(s grpc.ServiceRegistrar, srv OrdersServer) {
-	// If the following call pancis, it indicates UnimplementedOrdersServer was
+func RegisterOrdersAdminServiceServer(s grpc.ServiceRegistrar, srv OrdersAdminServiceServer) {
+	// If the following call pancis, it indicates UnimplementedOrdersAdminServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Orders_ServiceDesc, srv)
+	s.RegisterService(&OrdersAdminService_ServiceDesc, srv)
 }
 
-func _Orders_AddOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OrdersAdminService_AddOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrdersServer).AddOrder(ctx, in)
+		return srv.(OrdersAdminServiceServer).AddOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Orders_AddOrder_FullMethodName,
+		FullMethod: OrdersAdminService_AddOrder_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrdersServer).AddOrder(ctx, req.(*AddOrderRequest))
+		return srv.(OrdersAdminServiceServer).AddOrder(ctx, req.(*AddOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Orders_IsEventHasOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OrdersAdminService_IsEventHasOpenOrders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(IsEventHasOrdersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrdersServer).IsEventHasOrders(ctx, in)
+		return srv.(OrdersAdminServiceServer).IsEventHasOpenOrders(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Orders_IsEventHasOrders_FullMethodName,
+		FullMethod: OrdersAdminService_IsEventHasOpenOrders_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrdersServer).IsEventHasOrders(ctx, req.(*IsEventHasOrdersRequest))
+		return srv.(OrdersAdminServiceServer).IsEventHasOpenOrders(ctx, req.(*IsEventHasOrdersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Orders_ServiceDesc is the grpc.ServiceDesc for Orders service.
+func _OrdersAdminService_GetOrdersByEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrdersByEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrdersAdminServiceServer).GetOrdersByEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrdersAdminService_GetOrdersByEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrdersAdminServiceServer).GetOrdersByEvent(ctx, req.(*GetOrdersByEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrdersAdminService_GetOrdersBySession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrdersBySessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrdersAdminServiceServer).GetOrdersBySession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrdersAdminService_GetOrdersBySession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrdersAdminServiceServer).GetOrdersBySession(ctx, req.(*GetOrdersBySessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrdersAdminService_ChangeOrderStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeOrderStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrdersAdminServiceServer).ChangeOrderStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrdersAdminService_ChangeOrderStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrdersAdminServiceServer).ChangeOrderStatus(ctx, req.(*ChangeOrderStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// OrdersAdminService_ServiceDesc is the grpc.ServiceDesc for OrdersAdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Orders_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.orders.Orders",
-	HandlerType: (*OrdersServer)(nil),
+var OrdersAdminService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "api.orders.OrdersAdminService",
+	HandlerType: (*OrdersAdminServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "AddOrder",
-			Handler:    _Orders_AddOrder_Handler,
+			Handler:    _OrdersAdminService_AddOrder_Handler,
 		},
 		{
-			MethodName: "IsEventHasOrders",
-			Handler:    _Orders_IsEventHasOrders_Handler,
+			MethodName: "IsEventHasOpenOrders",
+			Handler:    _OrdersAdminService_IsEventHasOpenOrders_Handler,
+		},
+		{
+			MethodName: "GetOrdersByEvent",
+			Handler:    _OrdersAdminService_GetOrdersByEvent_Handler,
+		},
+		{
+			MethodName: "GetOrdersBySession",
+			Handler:    _OrdersAdminService_GetOrdersBySession_Handler,
+		},
+		{
+			MethodName: "ChangeOrderStatus",
+			Handler:    _OrdersAdminService_ChangeOrderStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

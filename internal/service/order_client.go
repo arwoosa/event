@@ -17,7 +17,7 @@ import (
 // OrderServiceClientImpl implements OrderServiceClient interface
 type OrderServiceClientImpl struct {
 	conn    *grpc.ClientConn
-	client  orderpb.OrdersClient
+	client  orderpb.OrdersAdminServiceClient
 	timeout time.Duration
 }
 
@@ -29,7 +29,7 @@ func NewOrderServiceClient(config conf.ServiceConfig) OrderServiceClient {
 		return NewMockOrderServiceClient(false, fmt.Errorf("failed to connect to order service: %w", err))
 	}
 
-	client := orderpb.NewOrdersClient(conn)
+	client := orderpb.NewOrdersAdminServiceClient(conn)
 
 	return &OrderServiceClientImpl{
 		conn:    conn,
@@ -50,7 +50,7 @@ func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) 
 	}
 
 	// Call gRPC service
-	resp, err := c.client.IsEventHasOrders(timeoutCtx, req)
+	resp, err := c.client.IsEventHasOpenOrders(timeoutCtx, req)
 	if err != nil {
 		return false, fmt.Errorf("failed to call order service: %w", err)
 	}
