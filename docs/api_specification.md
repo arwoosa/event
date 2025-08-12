@@ -430,24 +430,85 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 
 **回應：** 與 Console API 的單一 Event 格式相同，但簡化欄位
 
-### 3. 檢查 Event 是否為 Published 狀態
+## Internal API (內部服務)
 
-**端點：** `GET /events/{id}/is-published`
+### 1. 取得 Event 詳細資料
 
-**用途：** 專門給 OrderService 呼叫，檢查 Event 是否為 Published 狀態
+**端點：** `InternalService.GetEventById` (僅 gRPC)
 
-**權限：** 內部服務呼叫，無需 Header 驗證
+**用途：** 提供給其他內部微服務呼叫，取得 Event 完整資料
+
+**權限：** 內部服務呼叫，**不需要 brand 驗證**，可跨品牌查詢
+
+**gRPC 方法：**
+```protobuf
+rpc GetEventById(api.ID) returns (Event);
+```
+
+**請求參數：**
+```json
+{
+  "id": "event_id"
+}
+```
 
 **回應：**
 ```json
 {
-  "is_published": true,
-  "status": "published"
+  "id": "event_id",
+  "title": "活動標題",
+  "brand_id": "brand_id",
+  "summary": "活動摘要",
+  "status": "published",
+  "visibility": "public",
+  "cover_image_url": "https://example.com/image.jpg",
+  "location": {
+    "name": "地點名稱",
+    "address": "詳細地址",
+    "place_id": "Google Places ID",
+    "coordinates": {
+      "type": "Point",
+      "coordinates": [121.5654, 25.0330]
+    }
+  },
+  "sessions": [
+    {
+      "id": "session_id",
+      "name": "場次名稱",
+      "capacity": 100,
+      "start_time": "2024-01-01T10:00:00Z",
+      "end_time": "2024-01-01T12:00:00Z"
+    }
+  ],
+  "detail": [
+    {
+      "type": "text",
+      "text_data": {
+        "content": "活動詳細內容"
+      }
+    }
+  ],
+  "faq": [
+    {
+      "question": "問題",
+      "answer": "回答"
+    }
+  ],
+  "created_at": "2024-01-01T09:00:00Z",
+  "created_by": "user_id",
+  "updated_at": "2024-01-01T09:30:00Z",
+  "updated_by": "user_id"
 }
 ```
 
 **錯誤情境：**
 - `NotFound`：Event 不存在
+
+**與 Public API 的差異：**
+- ✅ 不需要 Header 驗證
+- ✅ 可查詢任何品牌的 Event（無品牌隔離）
+- ✅ 可查詢任何狀態的 Event（包含 draft, archived）
+- ✅ 僅限內部服務間 gRPC 呼叫
 
 ## 資料驗證規則
 

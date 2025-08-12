@@ -258,17 +258,17 @@ type EventService interface {
     // 新增：獨立的 Session 管理
     DeleteSession(ctx context.Context, eventID string, sessionID string) error
     
-    // 新增：給 OrderService 使用的 API
-    IsPublished(ctx context.Context, eventID string) (bool, error)
 }
 
 type PublicService interface {
     // Public API
     SearchPublicEvents(ctx context.Context, req *SearchPublicEventsRequest) (*EventListResponse, error)
     GetPublicEvent(ctx context.Context, id string) (*Event, error)
-    
-    // 新增：給 OrderService 使用的內部 API
-    IsPublished(ctx context.Context, id string) (bool, string, error)
+}
+
+type InternalService interface {
+    // Internal API - for inter-service communication
+    GetEventById(ctx context.Context, id string) (*Event, error)
 }
 ```
 
@@ -567,6 +567,12 @@ service PublicEventService {
     };
   }
 }
+
+// Internal Service for inter-service communication
+service InternalService {
+  // Get event by ID without brand validation (for internal services)
+  rpc GetEventById(api.ID) returns (Event);
+}
 ```
 
 ### 5.2 使用現有的 Vulpes Framework
@@ -614,12 +620,62 @@ func init() {
     ezgrpc.InjectGrpcService(func(s grpc.ServiceRegistrar) {
         pb.RegisterEventServiceServer(s, &EventServiceServer{})
         pb.RegisterPublicEventServiceServer(s, &PublicEventServiceServer{})
+        pb.RegisterInternalServiceServer(s, &InternalServiceServer{})  // 新增
     })
     
     ezgrpc.RegisterHandlerFromEndpoint(pb.RegisterEventServiceHandlerFromEndpoint)
     ezgrpc.RegisterHandlerFromEndpoint(pb.RegisterPublicEventServiceHandlerFromEndpoint)
+    // Internal Service 僅提供 gRPC，無需註冊 HTTP Handler
 }
 ```
+
+### InternalService 架構說明
+
+**InternalService** 是專門為內部微服務間通信設計的 gRPC 服務：
+
+**設計特點**：
+- ✅ **無權限驗證**：跳過 API Gateway 的身份驗證和品牌驗證
+- ✅ **跨品牌查詢**：可以查詢任何品牌下的 Event
+- ✅ **全狀態支援**：可查詢 draft、published、archived 狀態的 Event  
+- ✅ **僅 gRPC**：不提供 HTTP 接口，僅供內部服務使用
+- ✅ **高效能**：直接資料庫查詢，無額外業務邏輯層
+
+**使用場景**：
+```go
+// OrderService 呼叫範例
+type OrderService struct {
+    eventClient pb.InternalServiceClient
+}
+
+func (s *OrderService) ValidateEventExists(ctx context.Context, eventID string) error {
+    event, err := s.eventClient.GetEventById(ctx, &api.ID{Id: eventID})
+    if err != nil {
+        if status.Code(err) == codes.NotFound {
+            return errors.New("event not found")
+        }
+        return fmt.Errorf("failed to get event: %w", err)
+    }
+    
+    // 可以存取任何狀態的 Event
+    log.Info("Event found", "id", event.Id, "status", event.Status, "brand", event.BrandId)
+    return nil
+}
+```
+
+**安全考量**：
+- 🔒 **內網隔離**：僅在內部網路環境中可存取
+- 🔒 **服務驗證**：透過 mTLS 或其他機制驗證呼叫方身份  
+- 🔒 **資料最小化**：僅返回必要欄位，避免敏感資料外洩
+
+**與其他 API 的差異**：
+
+| 功能 | Console API | Public API | Internal API |
+|------|-------------|------------|--------------|
+| 權限驗證 | 需要 User + Brand | 無需驗證 | 無需驗證 |
+| 品牌隔離 | 僅限所屬Brand | 公開Event | **無限制** |
+| 狀態限制 | 無限制 | 僅Published | **無限制** |
+| 協議支援 | gRPC + HTTP | gRPC + HTTP | **僅gRPC** |
+| 使用對象 | 管理後台 | 前台用戶 | **內部服務** |
 
 ## 6. 配置管理
 
@@ -1288,22 +1344,11 @@ service EventService {
 service PublicEventService {
   // ... 現有 API
   
-  // 新增：給 OrderService 使用
-  rpc IsPublished(api.ID) returns (IsPublishedResponse) {
-    option (google.api.http) = {
-      get: "/events/{id}/is-published"
-    };
-  }
 }
 
 message DeleteSessionRequest {
   string event_id = 1;
   string session_id = 2;
-}
-
-message IsPublishedResponse {
-  bool is_published = 1;
-  string status = 2;
 }
 ```
 
