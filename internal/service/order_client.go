@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	orderpb "event/api/order"
-	"event/internal/conf"
+	"event/conf"
 )
 
 // OrderServiceClientImpl implements OrderServiceClient interface

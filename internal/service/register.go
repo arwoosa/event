@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb "event/api/event"
-	"event/internal/conf"
+	"event/conf"
 	"event/internal/dao/mongodb"
 	"event/internal/dao/repository"
 

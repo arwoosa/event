@@ -10,11 +10,11 @@ build:
 
 # Start console (management) API server
 run-console:
-	@go run ./cmd/event-server console --config internal/conf/config.yaml
+	@go run ./cmd/event-server console --config conf/config.yaml
 
 # Start public API server
 run-public:
-	@go run ./cmd/event-server public --config internal/conf/config.yaml
+	@go run ./cmd/event-server public --config conf/config.yaml
 
 gotool:
 	go fmt ./...

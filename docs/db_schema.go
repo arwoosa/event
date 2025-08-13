@@ -62,8 +62,8 @@ type FAQ struct {
 // Session 活動場次
 type Session struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Name      string             `bson:"name" json:"name"`               // 場次名稱 (可選)
-	Capacity  *int32             `bson:"capacity" json:"capacity"`       // 容量限制 (可選，null 表示不限制)
-	StartTime primitive.DateTime `bson:"start_time" json:"start_time"`   // 開始時間
-	EndTime   primitive.DateTime `bson:"end_time" json:"end_time"`       // 結束時間
+	Name      string             `bson:"name" json:"name"`             // 場次名稱 (可選)
+	Capacity  *int32             `bson:"capacity" json:"capacity"`     // 容量限制 (可選，null 表示不限制)
+	StartTime primitive.DateTime `bson:"start_time" json:"start_time"` // 開始時間
+	EndTime   primitive.DateTime `bson:"end_time" json:"end_time"`     // 結束時間
 }

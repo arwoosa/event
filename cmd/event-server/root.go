@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"event/internal/conf"
+	"event/conf"
 	vulpeslog "github.com/arwoosa/vulpes/log"
 )
 
@@ -39,13 +39,13 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	// Global flags for all commands
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "internal/conf/config.yaml", "config file path")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "conf/config.yaml", "config file path")
 }
 
 // initConfig reads in config file and sets up the application configuration
 func initConfig() {
 	var err error
-	
+
 	// Load configuration using the existing config package
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)

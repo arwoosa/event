@@ -2,7 +2,7 @@ package mongodb
 
 import (
 	"context"
-	"event/internal/conf"
+	"event/conf"
 	"fmt"
 	"log"
 

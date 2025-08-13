@@ -9,13 +9,10 @@ GOARCH=amd64
 
 WORKDIR /build
 
-COPY go.mod .
-COPY go.sum .
+COPY . .
 RUN go mod download
 
-COPY . .
-
-RUN go build -o partivo_event ./cmd/server/
+RUN go build -o partivo_event ./cmd/event-server/
 
 ###################
 # multi-stage build
@@ -37,4 +34,4 @@ COPY --from=builder /build/partivo_event /app/
 #    && apt-get install -y --no-install-recommends netcat \
 EXPOSE 8081
 
-ENTRYPOINT ["/app/partivo_event", "-c", "conf/config_docker.yaml"]
+ENTRYPOINT ["/app/partivo_event", "console","--config", "conf/config_docker.yaml"]

@@ -105,7 +105,6 @@ func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*
 	return s.converter.ConvertEventToPB(event), nil
 }
 
-
 // Helper methods
 
 func (s *PublicEventServiceServer) handleServiceError(err error) error {
