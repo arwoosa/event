@@ -37,6 +37,7 @@ go.sum.bak
 
 # Binarys
 server
+__debug_bin*
 
 # Local files
 *.local.*
