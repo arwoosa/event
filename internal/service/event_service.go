@@ -105,10 +105,6 @@ type OrderServiceClient interface {
 
 // CreateEvent creates a new event
 func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest) (*models.Event, error) {
-	// Validate draft requirements (minimal validation)
-	if err := s.validateDraftRequest(req); err != nil {
-		return nil, err
-	}
 
 	// Convert request to model - will force draft status
 	event, err := s.convertCreateRequestToModel(req)
@@ -251,14 +247,6 @@ func (s *EventService) UpdateEventStatus(ctx context.Context, brandID, eventID, 
 }
 
 // Validation methods
-
-// validateDraftRequest validates business logic requirements for draft event creation
-// Basic field validation is now handled by proto-gen-validate
-func (s *EventService) validateDraftRequest(req *CreateEventRequest) error {
-	// All basic field validation (title, summary, visibility, etc.) is now handled by PGV
-	// Only business logic validation remains here
-	return nil
-}
 
 // validateEventChanges validates field-level restrictions for published events
 func (s *EventService) validateEventChanges(existing *models.Event, req *PatchEventRequest) error {
