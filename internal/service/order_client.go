@@ -71,7 +71,7 @@ func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) 
 		return false, fmt.Errorf("failed to unmarshal response data: %w", err)
 	}
 
-	hasOrders, ok := data["has_orders"].(bool)
+	hasOrders, ok := data["value"].(bool)
 	if !ok {
 		return false, nil
 	}

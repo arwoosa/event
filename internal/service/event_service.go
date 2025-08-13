@@ -350,7 +350,6 @@ func (s *EventService) validateStatusTransition(ctx context.Context, event *mode
 		}
 	case models.StatusArchived:
 		// Validate all required fields for publishing
-		// TODO: change method to CanArchived
 		hasOrders, err := s.orderService.HasOrders(ctx, event.ID.Hex())
 		if err != nil {
 			return fmt.Errorf("failed to check orders: %w", err)
@@ -453,7 +452,7 @@ func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*mo
 				Data: blockReq.Data,
 			}
 		}
-		
+
 		// Validate detail size
 		if err := validateDetailSize(detail); err != nil {
 			return nil, err
@@ -550,12 +549,12 @@ func validateDetailSize(detail []models.DetailBlock) error {
 	if err != nil {
 		return models.NewValidationError("detail", "failed to serialize detail blocks")
 	}
-	
+
 	const maxSize = 64 * 1024 // 64KB
 	if len(data) > maxSize {
-		return models.NewValidationError("detail", 
+		return models.NewValidationError("detail",
 			fmt.Sprintf("detail size exceeds limit: %d bytes (max: %d bytes)", len(data), maxSize))
 	}
-	
+
 	return nil
 }
