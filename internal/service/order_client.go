@@ -79,14 +79,6 @@ func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) 
 	return hasOrders, nil
 }
 
-// HasOrdersForSession checks if a session has any orders using gRPC
-func (c *OrderServiceClientImpl) HasOrdersForSession(ctx context.Context, sessionID string) (bool, error) {
-	// TODO: Implement when order service supports session-level order checking
-	// For now, return false to allow session deletion
-	// In a real implementation, this would call the order service with sessionID
-	return false, nil
-}
-
 // Close closes the gRPC connection
 func (c *OrderServiceClientImpl) Close() error {
 	if c.conn != nil {
