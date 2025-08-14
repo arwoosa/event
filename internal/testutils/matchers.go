@@ -92,7 +92,7 @@ func MatchEmptyStringSlice() interface{} {
 // MatchNonEmptyStringSlice matches non-empty string slice
 func MatchNonEmptyStringSlice() interface{} {
 	return mock.MatchedBy(func(slice []string) bool {
-		return slice != nil && len(slice) > 0
+		return len(slice) > 0
 	})
 }
 

@@ -419,7 +419,7 @@ func TestPublicService_SearchEvents_PageBasedPagination(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.NotNil(t, result.Pagination)
-	
+
 	// Verify page-based pagination fields
 	assert.Equal(t, &totalCount, result.Pagination.TotalCount)
 	assert.Equal(t, &currentPage, result.Pagination.CurrentPage)

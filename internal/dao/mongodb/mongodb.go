@@ -7,10 +7,11 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	
-	vulpeslog "github.com/arwoosa/vulpes/log"
+
+	"github.com/arwoosa/vulpes/log"
 )
 
 var (
@@ -31,7 +32,7 @@ func InitMongoDB(ctx context.Context, cfg *conf.MongodbConfig) (*mongo.Client, e
 		// Use separate context for connection with timeout
 		connectCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		
+
 		var dsn string
 		if cfg.User != "" {
 			dsn = fmt.Sprintf("mongodb://%s:%s@%s:%d", cfg.User, cfg.Password, cfg.Host, cfg.Port)
@@ -47,7 +48,7 @@ func InitMongoDB(ctx context.Context, cfg *conf.MongodbConfig) (*mongo.Client, e
 			SetMaxConnIdleTime(30 * time.Second).
 			SetConnectTimeout(10 * time.Second).
 			SetSocketTimeout(30 * time.Second)
-			
+
 		clientInstance, initErr = mongo.Connect(connectCtx, clientOptions)
 		if initErr != nil {
 			initErr = fmt.Errorf("failed to connect to mongodb: %w", initErr)
@@ -72,9 +73,9 @@ func InitMongoDB(ctx context.Context, cfg *conf.MongodbConfig) (*mongo.Client, e
 			// Use atomic operation to prevent race condition
 			if atomic.CompareAndSwapInt64(&disconnected, 0, 1) {
 				if err := clientInstance.Disconnect(context.Background()); err != nil {
-					vulpeslog.Error("failed to disconnect from mongodb", vulpeslog.Err(err))
+					log.Error("failed to disconnect from mongodb", log.Err(err))
 				} else {
-					vulpeslog.Info("MongoDB connection closed gracefully")
+					log.Info("MongoDB connection closed gracefully")
 				}
 			}
 		}()
@@ -100,14 +101,14 @@ func HealthCheck() error {
 	if client == nil {
 		return fmt.Errorf("mongodb client not initialized or disconnected")
 	}
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	if err := client.Ping(ctx, nil); err != nil {
 		return fmt.Errorf("mongodb health check failed: %w", err)
 	}
-	
+
 	return nil
 }
 

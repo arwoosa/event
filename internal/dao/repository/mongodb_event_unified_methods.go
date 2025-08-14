@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/arwoosa/vulpes/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -25,10 +26,7 @@ func (r *MongoEventRepository) buildUnifiedPipeline(ctx context.Context, baseQue
 	pipeline := []bson.M{}
 
 	// Determine sort direction (default is desc for created_at)
-	isDescending := true
-	if sortOrder != nil && *sortOrder == "asc" {
-		isDescending = false
-	}
+	isDescending := sortOrder == nil || *sortOrder != "asc"
 
 	// Step 1: Match base query conditions and cursor pagination
 	matchConditions := bson.M{}
@@ -161,7 +159,11 @@ func (r *MongoEventRepository) executeUnifiedQuery(ctx context.Context, pipeline
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute unified aggregation: %w", err)
 	}
-	defer cursor.Close(ctx)
+	defer func() {
+		if err := cursor.Close(ctx); err != nil {
+			log.Error("Failed to close cursor in executeUnifiedQuery", log.Err(err))
+		}
+	}()
 
 	// Directly decode to Event models - MongoDB driver handles aggregation results automatically
 	var events []*models.Event

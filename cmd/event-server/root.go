@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -9,7 +8,8 @@ import (
 	"github.com/spf13/viper"
 
 	"event/conf"
-	vulpeslog "github.com/arwoosa/vulpes/log"
+
+	"github.com/arwoosa/vulpes/log"
 )
 
 var (
@@ -46,39 +46,42 @@ func init() {
 func initConfig() {
 	var err error
 
+	// Initialize basic vulpes logger first (will be reconfigured later)
+	log.SetConfig(log.WithDev(true))
+
 	// Load configuration using the existing config package
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Error reading config file: %v\n", err)
+		log.Error("Error reading config file", log.Err(err))
 		os.Exit(1)
 	}
 
 	// Unmarshal into our AppConfig struct
 	appConfig = &conf.AppConfig{}
 	if err := viper.Unmarshal(appConfig); err != nil {
-		fmt.Printf("Error unmarshaling config: %v\n", err)
+		log.Error("Error unmarshaling config", log.Err(err))
 		os.Exit(1)
 	}
 
 	// Set timezone
 	loc, err := time.LoadLocation(appConfig.TimeZone)
 	if err != nil {
-		fmt.Printf("Error loading timezone: %v\n", err)
+		log.Error("Error loading timezone", log.Err(err))
 		os.Exit(1)
 	}
 	time.Local = loc
 
-	// Initialize vulpes logger
+	// Reconfigure log with proper settings
 	isDev := appConfig.Mode == "dev"
-	vulpeslog.SetConfig(
-		vulpeslog.WithDev(isDev),
-		vulpeslog.WithLevel(appConfig.LogConfig.Level),
+	log.SetConfig(
+		log.WithDev(isDev),
+		log.WithLevel(appConfig.LogConfig.Level),
 	)
 
-	vulpeslog.Info("Configuration loaded successfully", vulpeslog.String("config_file", viper.ConfigFileUsed()))
+	log.Info("Configuration loaded successfully", log.String("config_file", viper.ConfigFileUsed()))
 }
 
 // GetAppConfig returns the loaded application configuration

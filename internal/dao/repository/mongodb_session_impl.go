@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/arwoosa/vulpes/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -119,7 +120,11 @@ func (r *MongoSessionRepository) FindByEventID(ctx context.Context, eventID stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to find sessions: %w", err)
 	}
-	defer cursor.Close(ctx)
+	defer func() {
+		if err := cursor.Close(ctx); err != nil {
+			log.Error("Failed to close cursor in FindByEventID", log.Err(err))
+		}
+	}()
 
 	var sessions []*models.Session
 	if err = cursor.All(ctx, &sessions); err != nil {
@@ -149,7 +154,11 @@ func (r *MongoSessionRepository) FindByEventIDs(ctx context.Context, eventIDs []
 	if err != nil {
 		return nil, fmt.Errorf("failed to find sessions: %w", err)
 	}
-	defer cursor.Close(ctx)
+	defer func() {
+		if err := cursor.Close(ctx); err != nil {
+			log.Error("Failed to close cursor in FindByEventIDs", log.Err(err))
+		}
+	}()
 
 	result := make(map[string][]*models.Session)
 	for _, eventID := range eventIDs {
@@ -232,7 +241,11 @@ func (r *MongoSessionRepository) FindByBrandID(ctx context.Context, brandID stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to find sessions: %w", err)
 	}
-	defer cursor.Close(ctx)
+	defer func() {
+		if err := cursor.Close(ctx); err != nil {
+			log.Error("Failed to close cursor in FindByFilter", log.Err(err))
+		}
+	}()
 
 	var sessions []*models.Session
 	if err = cursor.All(ctx, &sessions); err != nil {

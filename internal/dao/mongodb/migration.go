@@ -4,8 +4,8 @@ import (
 	"context"
 	"event/conf"
 	"fmt"
-	"log"
 
+	"github.com/arwoosa/vulpes/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -91,7 +91,7 @@ var migrations = []Migration{
 
 // Migrate runs all the defined migrations.
 func Migrate(client *mongo.Client, cfg *conf.MongodbConfig) error {
-	log.Println("Running MongoDB migrations...")
+	log.Info("Running MongoDB migrations...")
 	db := client.Database(cfg.DB)
 
 	for _, m := range migrations {

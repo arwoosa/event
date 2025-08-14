@@ -61,10 +61,14 @@ func (suite *EventRepositoryIntegrationTestSuite) SetupSuite() {
 
 func (suite *EventRepositoryIntegrationTestSuite) TearDownSuite() {
 	if suite.client != nil {
-		suite.client.Disconnect(suite.ctx)
+		if err := suite.client.Disconnect(suite.ctx); err != nil {
+			suite.T().Logf("Failed to disconnect MongoDB client: %v", err)
+		}
 	}
 	if suite.container != nil {
-		suite.container.Terminate(suite.ctx)
+		if err := suite.container.Terminate(suite.ctx); err != nil {
+			suite.T().Logf("Failed to terminate test container: %v", err)
+		}
 	}
 }
 

@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"google.golang.org/grpc"
 
 	pb "event/api/event"
@@ -11,6 +9,7 @@ import (
 	"event/internal/dao/repository"
 
 	"github.com/arwoosa/vulpes/ezgrpc"
+	"github.com/arwoosa/vulpes/log"
 )
 
 // This file registers the services with the Vulpes framework
@@ -66,9 +65,9 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 	var orderService OrderServiceClient
 	if appConfig.ExternalConfig != nil {
 		orderService = NewOrderServiceClient(appConfig.ExternalConfig.OrderService)
-		fmt.Println("Using real order service for console services")
+		log.Info("Using real order service for console services")
 	} else {
-		fmt.Println("Using mock order service for console services")
+		log.Info("Using mock order service for console services")
 		orderService = NewMockOrderServiceClient(false, nil)
 	}
 

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/arwoosa/vulpes/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -71,7 +72,11 @@ func (r *MongoEventRepository) FindByID(ctx context.Context, id string) (*models
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute aggregation: %w", err)
 	}
-	defer cursor.Close(ctx)
+	defer func() {
+		if err := cursor.Close(ctx); err != nil {
+			log.Error("Failed to close cursor in FindByID", log.Err(err))
+		}
+	}()
 
 	var events []*models.Event
 	if err = cursor.All(ctx, &events); err != nil {
@@ -215,7 +220,11 @@ func (r *MongoEventRepository) FindPublicByID(ctx context.Context, id string) (*
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute aggregation: %w", err)
 	}
-	defer cursor.Close(ctx)
+	defer func() {
+		if err := cursor.Close(ctx); err != nil {
+			log.Error("Failed to close cursor in FindPublicByID", log.Err(err))
+		}
+	}()
 
 	var events []*models.Event
 	if err = cursor.All(ctx, &events); err != nil {
