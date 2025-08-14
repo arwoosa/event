@@ -6,7 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"event/internal/dao/mongodb"
 	"event/internal/service"
+
 	"github.com/arwoosa/vulpes/ezgrpc"
 	vulpeslog "github.com/arwoosa/vulpes/log"
 )
@@ -30,11 +32,20 @@ This service is intended for internal use and requires proper authentication.`,
 func runConsoleServer(cmd *cobra.Command, args []string) {
 	vulpeslog.Info("Starting Event microservice - Console Mode")
 
+	ctx := context.Background()
+	appConfig := GetAppConfig()
+
+	// Initialize MongoDB singleton first - Console service requires database
+	if _, err := mongodb.InitMongoDB(ctx, appConfig.MongodbConfig); err != nil {
+		vulpeslog.Error("Failed to initialize MongoDB", vulpeslog.Err(err))
+		vulpeslog.Fatal("Console service requires MongoDB connection - cannot start without database")
+	}
+
 	// Register only console services
-	service.RegisterConsoleServices(GetAppConfig())
+	service.RegisterConsoleServices(ctx, appConfig)
 
 	// Run the gRPC + Gateway server
-	if err := ezgrpc.RunGrpcGateway(context.Background(), GetAppConfig().Port); err != nil {
+	if err := ezgrpc.RunGrpcGateway(ctx, appConfig.Port); err != nil {
 		vulpeslog.Fatal("failed to run console server", vulpeslog.Err(err))
 		os.Exit(1)
 	}

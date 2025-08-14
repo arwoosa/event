@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"google.golang.org/grpc"
@@ -16,10 +17,10 @@ import (
 // This file registers the services with the Vulpes framework
 
 // RegisterServices registers both gRPC services and Gateway handlers (legacy)
-func RegisterServices(appConfig *conf.AppConfig) {
+func RegisterServices(ctx context.Context, appConfig *conf.AppConfig) {
 	// Register gRPC services
 	ezgrpc.InjectGrpcService(func(s grpc.ServiceRegistrar) {
-		registerEventServices(s, appConfig)
+		registerEventServices(ctx, s, appConfig)
 	})
 
 	// Register gRPC-Gateway handlers
@@ -28,10 +29,10 @@ func RegisterServices(appConfig *conf.AppConfig) {
 }
 
 // RegisterConsoleServices registers only the console (management) services
-func RegisterConsoleServices(appConfig *conf.AppConfig) {
+func RegisterConsoleServices(ctx context.Context, appConfig *conf.AppConfig) {
 	// Register console gRPC services
 	ezgrpc.InjectGrpcService(func(s grpc.ServiceRegistrar) {
-		registerConsoleServices(s, appConfig)
+		registerConsoleServices(ctx, s, appConfig)
 	})
 
 	// Register console gRPC-Gateway handlers
@@ -39,10 +40,10 @@ func RegisterConsoleServices(appConfig *conf.AppConfig) {
 }
 
 // RegisterPublicServices registers only the public services
-func RegisterPublicServices(appConfig *conf.AppConfig) {
+func RegisterPublicServices(ctx context.Context, appConfig *conf.AppConfig) {
 	// Register public gRPC services
 	ezgrpc.InjectGrpcService(func(s grpc.ServiceRegistrar) {
-		registerPublicServices(s, appConfig)
+		registerPublicServices(ctx, s, appConfig)
 	})
 
 	// Register public gRPC-Gateway handlers
@@ -50,7 +51,7 @@ func RegisterPublicServices(appConfig *conf.AppConfig) {
 }
 
 // registerEventServices sets up and registers all event-related gRPC services
-func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
+func registerEventServices(ctx context.Context, s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 	if appConfig == nil {
 		// For now, use a mock service if config fails
 		// This allows the service to start even without proper config during development
@@ -66,8 +67,8 @@ func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 		return
 	}
 
-	// Initialize MongoDB
-	mongoClient, cleanup, err := mongodb.NewMongoDB(appConfig.MongodbConfig)
+	// Initialize MongoDB singleton
+	mongoClient, err := mongodb.InitMongoDB(ctx, appConfig.MongodbConfig)
 	if err != nil {
 		// Use mock services if MongoDB connection fails
 		mockOrderService := NewMockOrderServiceClient(false, nil)
@@ -78,9 +79,6 @@ func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
 		return
 	}
-
-	// Note: In production, you'd want proper graceful shutdown handling
-	_ = cleanup
 
 	// Initialize repositories
 	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB)
@@ -106,7 +104,7 @@ func registerEventServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 }
 
 // registerConsoleServices sets up and registers only console (EventService) related gRPC services
-func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
+func registerConsoleServices(ctx context.Context, s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 	if appConfig == nil {
 		mockOrderService := NewMockOrderServiceClient(false, nil)
 		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
@@ -115,17 +113,16 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 		return
 	}
 
-	// Initialize MongoDB
-	mongoClient, cleanup, err := mongodb.NewMongoDB(appConfig.MongodbConfig)
-	if err != nil {
+	// Get MongoDB singleton (should be initialized by main)
+	mongoClient := mongodb.GetMongoDB()
+	if mongoClient == nil {
+		// MongoDB not available, use mock services
 		mockOrderService := NewMockOrderServiceClient(false, nil)
 		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
 		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
 		pb.RegisterInternalServiceServer(s, NewInternalServiceServer(nil))
 		return
 	}
-
-	_ = cleanup
 
 	// Initialize repositories
 	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB)
@@ -151,22 +148,21 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 }
 
 // registerPublicServices sets up and registers only public (PublicEventService) related gRPC services
-func registerPublicServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
+func registerPublicServices(ctx context.Context, s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 	if appConfig == nil {
 		publicSvc := &PublicService{eventRepo: nil, sessionService: nil}
 		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
 		return
 	}
 
-	// Initialize MongoDB
-	mongoClient, cleanup, err := mongodb.NewMongoDB(appConfig.MongodbConfig)
-	if err != nil {
+	// Get MongoDB singleton (should be initialized by main)
+	mongoClient := mongodb.GetMongoDB()
+	if mongoClient == nil {
+		// MongoDB not available, use mock service
 		publicSvc := &PublicService{eventRepo: nil, sessionService: nil}
 		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
 		return
 	}
-
-	_ = cleanup
 
 	// Initialize repositories
 	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB)
