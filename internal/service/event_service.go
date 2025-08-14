@@ -163,7 +163,7 @@ func (s *EventService) PatchEvent(ctx context.Context, brandID string, req *Patc
 	// Get existing event
 	existingEvent, err := s.GetEvent(ctx, brandID, req.ID)
 	if err != nil {
-		return nil, err // todo: handle not found
+		return nil, err
 	}
 
 	if err := s.validateEventChanges(existingEvent, req); err != nil {
