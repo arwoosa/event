@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -32,7 +33,9 @@ This service is intended for public access and provides only published events.`,
 func runPublicServer(cmd *cobra.Command, args []string) {
 	vulpeslog.Info("Starting Event microservice - Public Mode")
 
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	appConfig := GetAppConfig()
 
 	// Initialize MongoDB singleton first - Public service can fallback to mock for graceful degradation
@@ -44,11 +47,25 @@ func runPublicServer(cmd *cobra.Command, args []string) {
 	// Register only public services
 	service.RegisterPublicServices(appConfig)
 
-	// Run the gRPC + Gateway server
-	if err := ezgrpc.RunGrpcGateway(ctx, appConfig.Port); err != nil {
+	// Channel to listen for server errors
+	errChan := make(chan error, 1)
+
+	// Run the gRPC + Gateway server in a goroutine
+	go func() {
+		if err := ezgrpc.RunGrpcGateway(ctx, appConfig.Port); err != nil {
+			errChan <- err
+		}
+	}()
+
+	// Wait for interrupt signal or server error
+	select {
+	case <-ctx.Done():
+		vulpeslog.Info("Shutdown signal received, shutting down server gracefully...")
+	case err := <-errChan:
 		vulpeslog.Fatal("failed to run public server", vulpeslog.Err(err))
-		os.Exit(1)
 	}
+
+	vulpeslog.Info("Server shut down gracefully")
 }
 
 func init() {

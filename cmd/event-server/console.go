@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -32,7 +33,9 @@ This service is intended for internal use and requires proper authentication.`,
 func runConsoleServer(cmd *cobra.Command, args []string) {
 	vulpeslog.Info("Starting Event microservice - Console Mode")
 
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	appConfig := GetAppConfig()
 
 	// Initialize MongoDB singleton first - Console service requires database
@@ -44,11 +47,28 @@ func runConsoleServer(cmd *cobra.Command, args []string) {
 	// Register only console services
 	service.RegisterConsoleServices(appConfig)
 
-	// Run the gRPC + Gateway server
-	if err := ezgrpc.RunGrpcGateway(ctx, appConfig.Port); err != nil {
+	// Channel to listen for server errors
+	errChan := make(chan error, 1)
+
+	// Run the gRPC + Gateway server in a goroutine
+	go func() {
+		if err := ezgrpc.RunGrpcGateway(ctx, appConfig.Port); err != nil {
+			errChan <- err
+		}
+	}()
+
+	// Wait for interrupt signal or server error
+	select {
+	case <-ctx.Done():
+		vulpeslog.Info("Shutdown signal received, shutting down server gracefully...")
+		// The context is canceled, the server will shut down.
+		// We can add a timeout for graceful shutdown if ezgrpc supports it.
+		// For now, relying on context cancellation.
+	case err := <-errChan:
 		vulpeslog.Fatal("failed to run console server", vulpeslog.Err(err))
-		os.Exit(1)
 	}
+
+	vulpeslog.Info("Server shut down gracefully")
 }
 
 func init() {
