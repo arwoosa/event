@@ -12,23 +12,26 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"event/conf"
 	"event/internal/errors"
 	"event/internal/models"
 )
 
 // MongoEventRepository implements EventRepository using MongoDB
 type MongoEventRepository struct {
-	client     *mongo.Client
-	database   string
-	collection *mongo.Collection
+	client           *mongo.Client
+	database         string
+	collection       *mongo.Collection
+	paginationConfig *conf.PaginationConfig
 }
 
 // NewMongoEventRepository creates a new MongoDB-based event repository
-func NewMongoEventRepository(client *mongo.Client, database string) EventRepository {
+func NewMongoEventRepository(client *mongo.Client, database string, paginationConfig *conf.PaginationConfig) EventRepository {
 	return &MongoEventRepository{
-		client:     client,
-		database:   database,
-		collection: client.Database(database).Collection("events"),
+		client:           client,
+		database:         database,
+		collection:       client.Database(database).Collection("events"),
+		paginationConfig: paginationConfig,
 	}
 }
 
@@ -181,7 +184,7 @@ func (r *MongoEventRepository) FindPublic(ctx context.Context, filter *PublicEve
 				"$geoWithin": bson.M{
 					"$centerSphere": []interface{}{
 						[]float64{*filter.LocationLng, *filter.LocationLat},
-						float64(getLocationRadius(filter.LocationRadius)) / 6378100.0, // Convert meters to earth radius in radians
+						float64(r.getLocationRadius(filter.LocationRadius)) / 6378100.0, // Convert meters to earth radius in radians
 					},
 				},
 			},
@@ -335,9 +338,13 @@ func (r *MongoEventRepository) decodeCursor(token string) (*Cursor, error) {
 	return &cursor, nil
 }
 
-func getLocationRadius(radius *int) int {
+func (r *MongoEventRepository) getLocationRadius(radius *int) int {
 	if radius != nil {
 		return *radius
 	}
-	return DefaultLocationRadius
+	// Use config default if available, otherwise fallback to hardcoded default
+	if r.paginationConfig != nil && r.paginationConfig.DefaultLocationRadius > 0 {
+		return r.paginationConfig.DefaultLocationRadius
+	}
+	return 1000 // Final fallback default radius in meters
 }

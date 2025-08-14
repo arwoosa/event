@@ -4,21 +4,24 @@ import (
 	"context"
 	"time"
 
+	"event/conf"
 	"event/internal/dao/repository"
 	"event/internal/models"
 )
 
 // PublicService implements the business logic for public event access
 type PublicService struct {
-	eventRepo      repository.EventRepository
-	sessionService *SessionService
+	eventRepo        repository.EventRepository
+	sessionService   *SessionService
+	paginationConfig *conf.PaginationConfig
 }
 
 // NewPublicService creates a new public service
-func NewPublicService(eventRepo repository.EventRepository, sessionService *SessionService) *PublicService {
+func NewPublicService(eventRepo repository.EventRepository, sessionService *SessionService, paginationConfig *conf.PaginationConfig) *PublicService {
 	return &PublicService{
-		eventRepo:      eventRepo,
-		sessionService: sessionService,
+		eventRepo:        eventRepo,
+		sessionService:   sessionService,
+		paginationConfig: paginationConfig,
 	}
 }
 
@@ -83,10 +86,21 @@ func (s *PublicService) SearchEvents(ctx context.Context, req *SearchEventsReque
 		}
 	}
 
-	// Handle pagination
-	filter.Limit = repository.DefaultPageSize
+	// Handle pagination with fallback to hardcoded defaults if config is not available
+	defaultPageSize := 20 // Default fallback
+	maxPageSize := 100    // Default fallback
+	if s.paginationConfig != nil {
+		if s.paginationConfig.DefaultPageSize > 0 {
+			defaultPageSize = s.paginationConfig.DefaultPageSize
+		}
+		if s.paginationConfig.MaxPageSize > 0 {
+			maxPageSize = s.paginationConfig.MaxPageSize
+		}
+	}
+
+	filter.Limit = defaultPageSize
 	if req.PageSize != nil {
-		if *req.PageSize > 0 && *req.PageSize <= repository.MaxPageSize {
+		if *req.PageSize > 0 && int(*req.PageSize) <= maxPageSize {
 			filter.Limit = int(*req.PageSize)
 		}
 	}

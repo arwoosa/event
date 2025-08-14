@@ -56,7 +56,7 @@ func (suite *EventRepositoryIntegrationTestSuite) SetupSuite() {
 	err = suite.client.Ping(suite.ctx, nil)
 	suite.Require().NoError(err)
 
-	suite.repository = NewMongoEventRepository(suite.client, "test_db")
+	suite.repository = NewMongoEventRepository(suite.client, "test_db", nil)
 }
 
 func (suite *EventRepositoryIntegrationTestSuite) TearDownSuite() {

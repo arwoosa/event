@@ -113,10 +113,3 @@ mod:
 	go mod edit -module ${BINARY}; \
 	find . -type f -name '*.go' -exec sed -i '' "s|${OLD_MODULE}|${BINARY}|g" {} +; \
 	go mod tidy
-
-wire:
-	go run github.com/google/wire/cmd/wire ./cmd/server
-
-clear_wire:
-	rm cmd/server/.!*wire_gen.go
-

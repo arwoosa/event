@@ -53,7 +53,7 @@ func TestPublicService_IsPublished_Integration(t *testing.T) {
 			// Setup fresh mocks for each test
 			eventRepo := &mocks.MockEventRepository{}
 			sessionService := &SessionService{}
-			publicService := NewPublicService(eventRepo, sessionService)
+			publicService := NewPublicService(eventRepo, sessionService, nil)
 
 			ctx := context.Background()
 			eventID := testutils.ValidObjectIDString()

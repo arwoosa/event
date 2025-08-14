@@ -11,6 +11,7 @@ import (
 
 	"event/api"
 	pb "event/api/event"
+	"event/conf"
 	"event/internal/dao/repository"
 	"event/internal/errors"
 )
@@ -18,15 +19,17 @@ import (
 // EventServiceServer implements the generated gRPC EventService interface
 type EventServiceServer struct {
 	pb.UnimplementedEventServiceServer
-	eventService *EventService
-	converter    *ProtobufConverter
+	eventService     *EventService
+	converter        *ProtobufConverter
+	paginationConfig *conf.PaginationConfig
 }
 
 // NewEventServiceServer creates a new gRPC event service server
-func NewEventServiceServer(eventService *EventService) *EventServiceServer {
+func NewEventServiceServer(eventService *EventService, paginationConfig *conf.PaginationConfig) *EventServiceServer {
 	return &EventServiceServer{
-		eventService: eventService,
-		converter:    NewProtobufConverter(),
+		eventService:     eventService,
+		converter:        NewProtobufConverter(),
+		paginationConfig: paginationConfig,
 	}
 }
 
@@ -111,11 +114,22 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventL
 		}
 	}
 
-	// Handle pagination
-	filter.Limit = repository.DefaultPageSize
+	// Handle pagination with fallback to hardcoded defaults if config is not available
+	defaultPageSize := 20 // Default fallback
+	maxPageSize := 100    // Default fallback
+	if s.paginationConfig != nil {
+		if s.paginationConfig.DefaultPageSize > 0 {
+			defaultPageSize = s.paginationConfig.DefaultPageSize
+		}
+		if s.paginationConfig.MaxPageSize > 0 {
+			maxPageSize = s.paginationConfig.MaxPageSize
+		}
+	}
+
+	filter.Limit = defaultPageSize
 	if req.PageSize != nil {
 		pageSize := int(*req.PageSize)
-		if pageSize > 0 && pageSize <= repository.MaxPageSize {
+		if pageSize > 0 && pageSize <= maxPageSize {
 			filter.Limit = pageSize
 		}
 	}

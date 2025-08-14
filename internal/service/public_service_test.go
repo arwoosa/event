@@ -27,7 +27,7 @@ func TestPublicService_SearchEvents_Success(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{} // Minimal setup
 
-	publicService := NewPublicService(eventRepo, sessionService)
+	publicService := NewPublicService(eventRepo, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -75,7 +75,7 @@ func TestPublicService_SearchEvents_WithLocationFilter(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService)
+	publicService := NewPublicService(eventRepo, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -123,7 +123,7 @@ func TestPublicService_SearchEvents_EmptyRequest(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService)
+	publicService := NewPublicService(eventRepo, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -157,7 +157,7 @@ func TestPublicService_SearchEvents_WithPagination(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService)
+	publicService := NewPublicService(eventRepo, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -198,7 +198,7 @@ func TestPublicService_GetEvent_Success(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService)
+	publicService := NewPublicService(eventRepo, sessionService, nil)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
@@ -226,7 +226,7 @@ func TestPublicService_GetEvent_NotFound(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService)
+	publicService := NewPublicService(eventRepo, sessionService, nil)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
@@ -250,7 +250,7 @@ func TestPublicService_SearchEvents_FilterValidation(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService)
+	publicService := NewPublicService(eventRepo, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -309,7 +309,7 @@ func TestPublicService_SearchEvents_LocationRequiresBoth(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService)
+	publicService := NewPublicService(eventRepo, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -346,7 +346,7 @@ func TestPublicService_SearchEvents_DefaultPageSize(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService)
+	publicService := NewPublicService(eventRepo, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -379,7 +379,7 @@ func TestPublicService_SearchEvents_PageBasedPagination(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService)
+	publicService := NewPublicService(eventRepo, sessionService, nil)
 
 	ctx := context.Background()
 

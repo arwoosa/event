@@ -9,14 +9,15 @@ import (
 
 // AppConfig holds the application configuration.
 type AppConfig struct {
-	Mode            string `mapstructure:"mode"`
-	Port            int    `mapstructure:"port"`
-	Name            string `mapstructure:"name"`
-	Version         string `mapstructure:"version"`
-	TimeZone        string `mapstructure:"time_zone"`
-	*LogConfig      `mapstructure:"log"`
-	*MongodbConfig  `mapstructure:"mongodb"`
-	*ExternalConfig `mapstructure:"external"`
+	Mode              string `mapstructure:"mode"`
+	Port              int    `mapstructure:"port"`
+	Name              string `mapstructure:"name"`
+	Version           string `mapstructure:"version"`
+	TimeZone          string `mapstructure:"time_zone"`
+	*LogConfig        `mapstructure:"log"`
+	*MongodbConfig    `mapstructure:"mongodb"`
+	*ExternalConfig   `mapstructure:"external"`
+	*PaginationConfig `mapstructure:"pagination"`
 }
 
 // MongodbConfig holds the MongoDB configuration.
@@ -47,6 +48,13 @@ type ExternalConfig struct {
 type ServiceConfig struct {
 	Endpoint string        `mapstructure:"endpoint"`
 	Timeout  time.Duration `mapstructure:"timeout"`
+}
+
+// PaginationConfig holds pagination configuration.
+type PaginationConfig struct {
+	DefaultPageSize       int `mapstructure:"default_page_size"`
+	MaxPageSize           int `mapstructure:"max_page_size"`
+	DefaultLocationRadius int `mapstructure:"default_location_radius"`
 }
 
 // NewConfig loads the application configuration from a file.

@@ -41,7 +41,7 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 	if appConfig == nil {
 		mockOrderService := NewMockOrderServiceClient(false, nil)
 		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
-		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
+		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, nil))
 		pb.RegisterInternalServiceServer(s, NewInternalServiceServer(nil))
 		return
 	}
@@ -52,13 +52,13 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 		// MongoDB not available, use mock services
 		mockOrderService := NewMockOrderServiceClient(false, nil)
 		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
-		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
+		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, appConfig.PaginationConfig))
 		pb.RegisterInternalServiceServer(s, NewInternalServiceServer(nil))
 		return
 	}
 
 	// Initialize repositories
-	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB)
+	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB, appConfig.PaginationConfig)
 	sessionRepo := repository.NewMongoSessionRepository(mongoClient, appConfig.MongodbConfig.DB)
 
 	// Initialize external services
@@ -76,14 +76,14 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 	eventSvc := NewEventService(eventRepo, sessionSvc, orderService)
 
 	// Register console services
-	pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc))
+	pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, appConfig.PaginationConfig))
 	pb.RegisterInternalServiceServer(s, NewInternalServiceServer(eventRepo))
 }
 
 // registerPublicServices sets up and registers only public (PublicEventService) related gRPC services
 func registerPublicServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
 	if appConfig == nil {
-		publicSvc := &PublicService{eventRepo: nil, sessionService: nil}
+		publicSvc := &PublicService{eventRepo: nil, sessionService: nil, paginationConfig: nil}
 		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
 		return
 	}
@@ -92,18 +92,18 @@ func registerPublicServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) 
 	mongoClient := mongodb.GetMongoDB()
 	if mongoClient == nil {
 		// MongoDB not available, use mock service
-		publicSvc := &PublicService{eventRepo: nil, sessionService: nil}
+		publicSvc := &PublicService{eventRepo: nil, sessionService: nil, paginationConfig: appConfig.PaginationConfig}
 		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
 		return
 	}
 
 	// Initialize repositories
-	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB)
+	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB, appConfig.PaginationConfig)
 	sessionRepo := repository.NewMongoSessionRepository(mongoClient, appConfig.MongodbConfig.DB)
 
 	// Initialize business services
 	sessionSvc := NewSessionService(sessionRepo, eventRepo)
-	publicSvc := NewPublicService(eventRepo, sessionSvc)
+	publicSvc := NewPublicService(eventRepo, sessionSvc, appConfig.PaginationConfig)
 
 	// Register only PublicEventService (public API)
 	pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
