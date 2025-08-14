@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"event/internal/errors"
 	"event/internal/models"
 )
 
@@ -84,7 +85,7 @@ func (r *MongoEventRepository) FindByID(ctx context.Context, id string) (*models
 	}
 
 	if len(events) == 0 {
-		return nil, models.ErrEventNotFound
+		return nil, errors.ErrEventNotFound
 	}
 
 	return events[0], nil
@@ -105,7 +106,7 @@ func (r *MongoEventRepository) Update(ctx context.Context, id string, event *mod
 	}
 
 	if result.MatchedCount == 0 {
-		return nil, models.ErrEventNotFound
+		return nil, errors.ErrEventNotFound
 	}
 
 	return event, nil
@@ -124,7 +125,7 @@ func (r *MongoEventRepository) Delete(ctx context.Context, id string) error {
 	}
 
 	if result.DeletedCount == 0 {
-		return models.ErrEventNotFound
+		return errors.ErrEventNotFound
 	}
 
 	return nil
@@ -232,7 +233,7 @@ func (r *MongoEventRepository) FindPublicByID(ctx context.Context, id string) (*
 	}
 
 	if len(events) == 0 {
-		return nil, models.ErrEventNotFound
+		return nil, errors.ErrEventNotFound
 	}
 
 	return events[0], nil

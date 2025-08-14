@@ -12,7 +12,7 @@ import (
 	"event/api"
 	pb "event/api/event"
 	"event/internal/dao/repository"
-	"event/internal/models"
+	"event/internal/errors"
 )
 
 // EventServiceServer implements the generated gRPC EventService interface
@@ -272,28 +272,28 @@ func (s *EventServiceServer) extractUserAndBrandFromContext(ctx context.Context)
 
 func (s *EventServiceServer) handleServiceError(err error) error {
 	switch e := err.(type) {
-	case *models.ValidationError:
+	case *errors.ValidationError:
 		return status.Error(codes.InvalidArgument, e.Error())
-	case *models.BusinessError:
+	case *errors.BusinessError:
 		switch e.Code {
-		case "PUBLISHED_IMMUTABLE":
+		case errors.ErrorCodePublishedImmutable:
 			return status.Error(codes.FailedPrecondition, e.Error())
-		case "HAS_ORDERS":
+		case errors.ErrorCodeHasOrders:
 			return status.Error(codes.FailedPrecondition, e.Error())
-		case "SESSION_HAS_ORDERS":
+		case errors.ErrorCodeSessionHasOrders:
 			return status.Error(codes.FailedPrecondition, e.Error())
-		case "LAST_SESSION":
+		case errors.ErrorCodeLastSession:
 			return status.Error(codes.FailedPrecondition, e.Error())
-		case "INVALID_TRANSITION":
+		case errors.ErrorCodeInvalidTransition:
 			return status.Error(codes.FailedPrecondition, e.Error())
 		default:
 			return status.Error(codes.InvalidArgument, e.Error())
 		}
 	default:
-		if err == models.ErrEventNotFound {
+		if err == errors.ErrEventNotFound {
 			return status.Error(codes.NotFound, err.Error())
 		}
-		if err == models.ErrSessionNotFound {
+		if err == errors.ErrSessionNotFound {
 			return status.Error(codes.NotFound, err.Error())
 		}
 		return status.Error(codes.Internal, err.Error())

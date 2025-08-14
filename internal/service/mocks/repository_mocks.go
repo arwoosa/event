@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"event/internal/dao/repository"
+	"event/internal/errors"
 	"event/internal/models"
 )
 
@@ -110,7 +111,7 @@ func (m *MockEventRepository) SetupFindByIDSuccess(id string, event *models.Even
 
 // SetupFindByIDNotFound sets up the mock to return not found error
 func (m *MockEventRepository) SetupFindByIDNotFound(id string) {
-	m.On("FindByID", mock.Anything, id).Return(nil, models.ErrEventNotFound)
+	m.On("FindByID", mock.Anything, id).Return(nil, errors.ErrEventNotFound)
 }
 
 // SetupExistsByBrandAndID sets up the mock for existence check

@@ -110,11 +110,3 @@ func (m *MockOrderServiceClient) HasOrders(ctx context.Context, eventID string) 
 	}
 	return m.hasOrders, nil
 }
-
-// HasOrdersForSession returns the mock result for session orders
-func (m *MockOrderServiceClient) HasOrdersForSession(ctx context.Context, sessionID string) (bool, error) {
-	if m.err != nil {
-		return false, m.err
-	}
-	return m.hasSessionOrders, nil
-}

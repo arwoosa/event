@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"event/internal/errors"
 	"event/internal/models"
 	"event/internal/service/mocks"
 	"event/internal/testutils"
@@ -102,7 +103,7 @@ func TestEventService_GetEvent_NotFound(t *testing.T) {
 	// Assert
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Equal(t, models.ErrEventNotFound, err)
+	assert.Equal(t, errors.ErrEventNotFound, err)
 
 	eventRepo.AssertExpectations(t)
 }
@@ -130,5 +131,5 @@ func TestEventService_CreateEvent_InvalidBrandID(t *testing.T) {
 	// Assert
 	require.Error(t, err)
 	assert.Nil(t, result)
-	testutils.AssertError(t, err, "VALIDATION_ERROR", "invalid brand_id")
+	testutils.AssertError(t, err, errors.ErrorCodeValidationError, "invalid brand_id")
 }

@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	
+	"event/internal/errors"
 )
 
 // Event represents the main event entity
@@ -127,7 +129,7 @@ func (e *Event) CanTransitionTo(newStatus string) bool {
 func (e *Event) IsValidStatusForUpdate() error {
 	// Archived events cannot be updated
 	if e.Status == StatusArchived {
-		return NewBusinessError("ARCHIVED_IMMUTABLE", "archived events cannot be updated", nil)
+		return errors.NewBusinessError("ARCHIVED_IMMUTABLE", "archived events cannot be updated", nil)
 	}
 	return nil
 }
@@ -138,9 +140,9 @@ func (e *Event) IsValidStatusForDelete() error {
 		// Draft events can be deleted
 		return nil
 	case StatusPublished:
-		return NewBusinessError("PUBLISHED_IMMUTABLE", "published events cannot be deleted", nil)
+		return errors.NewBusinessError("PUBLISHED_IMMUTABLE", "published events cannot be deleted", nil)
 	case StatusArchived:
-		return NewBusinessError("ARCHIVED_IMMUTABLE", "archived events cannot be deleted", nil)
+		return errors.NewBusinessError("ARCHIVED_IMMUTABLE", "archived events cannot be deleted", nil)
 	}
 	return nil
 }

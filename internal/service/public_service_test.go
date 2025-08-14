@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"event/internal/dao/repository"
+	"event/internal/errors"
 	"event/internal/models"
 	"event/internal/service/mocks"
 	"event/internal/testutils"
@@ -231,7 +232,7 @@ func TestPublicService_GetEvent_NotFound(t *testing.T) {
 	eventID := testutils.ValidObjectIDString()
 
 	// Mock event not found
-	eventRepo.On("FindPublicByID", ctx, eventID).Return(nil, models.ErrEventNotFound)
+	eventRepo.On("FindPublicByID", ctx, eventID).Return(nil, errors.ErrEventNotFound)
 
 	// Execute
 	result, err := publicService.GetEvent(ctx, eventID)
@@ -239,7 +240,7 @@ func TestPublicService_GetEvent_NotFound(t *testing.T) {
 	// Assert
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Equal(t, models.ErrEventNotFound, err)
+	assert.Equal(t, errors.ErrEventNotFound, err)
 
 	eventRepo.AssertExpectations(t)
 }

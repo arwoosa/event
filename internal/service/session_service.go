@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"event/internal/dao/repository"
+	"event/internal/errors"
 	"event/internal/models"
 )
 
@@ -36,7 +37,7 @@ func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID, br
 		return nil, err
 	}
 	if event.BrandID.Hex() != brandID {
-		return nil, models.ErrUnauthorized
+		return nil, errors.ErrUnauthorized
 	}
 
 	// Convert session requests to models
@@ -47,7 +48,7 @@ func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID, br
 
 	// Validate sessions for duplicates
 	if err := models.ValidateSessions(sessions); err != nil {
-		return nil, models.NewValidationError("sessions", err.Error())
+		return nil, errors.NewValidationError("sessions", err.Error())
 	}
 
 	// Create sessions in batch
@@ -62,7 +63,7 @@ func (s *SessionService) GetSessionsForEvent(ctx context.Context, eventID, brand
 		return nil, err
 	}
 	if !exists {
-		return nil, models.ErrEventNotFound
+		return nil, errors.ErrEventNotFound
 	}
 
 	return s.sessionRepo.FindByEventID(ctx, eventID)
@@ -94,7 +95,7 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, br
 
 	// Validate brand ownership
 	if event.BrandID.Hex() != brandID {
-		return nil, models.ErrUnauthorized
+		return nil, errors.ErrUnauthorized
 	}
 
 	if existingSessions != nil {
@@ -131,7 +132,7 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, br
 			updatedSessionIDs[sessionReq.ID] = true
 			existingSession, exists := existingSessionsMap[sessionReq.ID]
 			if !exists {
-				return nil, models.NewValidationError("session_id", fmt.Sprintf("session with ID %s not found", sessionReq.ID))
+				return nil, errors.NewValidationError("session_id", fmt.Sprintf("session with ID %s not found", sessionReq.ID))
 			}
 
 			updatedSession, err := s.convertSessionRequestToModel(sessionReq, eventID)
@@ -162,7 +163,7 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, br
 
 	// Validate complete final session collection for duplicates
 	if err := models.ValidateSessions(allFinalSessions); err != nil {
-		return nil, models.NewValidationError("sessions", err.Error())
+		return nil, errors.NewValidationError("sessions", err.Error())
 	}
 
 	// Execute all operations in a single bulk write
@@ -182,7 +183,7 @@ func (s *SessionService) DeleteSessionsForEvent(ctx context.Context, eventID, br
 		return err
 	}
 	if !exists {
-		return models.ErrEventNotFound
+		return errors.ErrEventNotFound
 	}
 
 	return s.sessionRepo.DeleteByEventID(ctx, eventID)
@@ -201,7 +202,7 @@ func (s *SessionService) GetSession(ctx context.Context, sessionID, brandID stri
 		return nil, err
 	}
 	if event.BrandID.Hex() != brandID {
-		return nil, models.ErrUnauthorized
+		return nil, errors.ErrUnauthorized
 	}
 
 	return session, nil
@@ -215,7 +216,7 @@ func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, session
 		return err
 	}
 	if event.BrandID.Hex() != brandID {
-		return models.ErrUnauthorized
+		return errors.ErrUnauthorized
 	}
 
 	// Get the specific session
@@ -226,11 +227,11 @@ func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, session
 
 	// Verify session belongs to the specified event
 	if session.EventID.Hex() != eventID {
-		return models.NewBusinessError("SESSION_NOT_FOUND", "session does not belong to this event", models.ErrSessionNotFound)
+		return errors.NewBusinessError(errors.ErrorCodeSessionNotFound, "session does not belong to this event", errors.ErrSessionNotFound)
 	}
 
 	if event.Status != models.StatusDraft {
-		return models.NewBusinessError("PUBLISHED_IMMUTABLE", "cannot delete sessions for published or archived events", nil)
+		return errors.NewBusinessError(errors.ErrorCodePublishedImmutable, "cannot delete sessions for published or archived events", nil)
 	}
 
 	return s.sessionRepo.Delete(ctx, sessionID)
@@ -249,7 +250,7 @@ func (s *SessionService) ValidateSessionsForEvent(ctx context.Context, eventID, 
 		return err
 	}
 	if event.BrandID.Hex() != brandID {
-		return models.ErrUnauthorized
+		return errors.ErrUnauthorized
 	}
 
 	// Convert and validate sessions
@@ -278,21 +279,21 @@ func (s *SessionService) convertSessionRequestsToModels(sessionReqs []*SessionRe
 func (s *SessionService) convertSessionRequestToModel(sessionReq *SessionRequest, eventID string) (*models.Session, error) {
 	eventObjectID, err := primitive.ObjectIDFromHex(eventID)
 	if err != nil {
-		return nil, models.NewValidationError("event_id", "invalid event_id")
+		return nil, errors.NewValidationError("event_id", "invalid event_id")
 	}
 
 	startTime, err := time.Parse(time.RFC3339, sessionReq.StartTime)
 	if err != nil {
-		return nil, models.NewValidationError("start_time", "invalid start_time format, must be RFC3339")
+		return nil, errors.NewValidationError("start_time", "invalid start_time format, must be RFC3339")
 	}
 
 	endTime, err := time.Parse(time.RFC3339, sessionReq.EndTime)
 	if err != nil {
-		return nil, models.NewValidationError("end_time", "invalid end_time format, must be RFC3339")
+		return nil, errors.NewValidationError("end_time", "invalid end_time format, must be RFC3339")
 	}
 
 	if !startTime.Before(endTime) {
-		return nil, models.NewValidationError("time", "start_time must be before end_time")
+		return nil, errors.NewValidationError("time", "start_time must be before end_time")
 	}
 
 	session := &models.Session{
@@ -307,7 +308,7 @@ func (s *SessionService) convertSessionRequestToModel(sessionReq *SessionRequest
 	if sessionReq.ID != "" {
 		sessionObjectID, err := primitive.ObjectIDFromHex(sessionReq.ID)
 		if err != nil {
-			return nil, models.NewValidationError("session_id", "invalid session_id")
+			return nil, errors.NewValidationError("session_id", "invalid session_id")
 		}
 		session.ID = sessionObjectID
 	} else {

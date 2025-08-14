@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"event/internal/errors"
 	"event/internal/models"
 )
 
@@ -100,7 +101,7 @@ func (r *MongoSessionRepository) FindByID(ctx context.Context, id string) (*mode
 	err = r.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&session)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, models.ErrSessionNotFound
+			return nil, errors.ErrSessionNotFound
 		}
 		return nil, fmt.Errorf("failed to find session: %w", err)
 	}
@@ -274,7 +275,7 @@ func (r *MongoSessionRepository) Update(ctx context.Context, id string, session 
 	}
 
 	if result.MatchedCount == 0 {
-		return nil, models.ErrSessionNotFound
+		return nil, errors.ErrSessionNotFound
 	}
 
 	return session, nil
@@ -293,7 +294,7 @@ func (r *MongoSessionRepository) Delete(ctx context.Context, id string) error {
 	}
 
 	if result.DeletedCount == 0 {
-		return models.ErrSessionNotFound
+		return errors.ErrSessionNotFound
 	}
 
 	return nil

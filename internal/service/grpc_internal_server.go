@@ -9,7 +9,7 @@ import (
 	"event/api"
 	pb "event/api/event"
 	"event/internal/dao/repository"
-	"event/internal/models"
+	"event/internal/errors"
 )
 
 // InternalServiceServer implements the generated gRPC InternalService interface
@@ -43,12 +43,12 @@ func (s *InternalServiceServer) GetEventById(ctx context.Context, req *api.ID) (
 func (s *InternalServiceServer) handleServiceError(err error) error {
 	// Handle service errors for internal API
 	switch e := err.(type) {
-	case *models.ValidationError:
+	case *errors.ValidationError:
 		return status.Error(codes.InvalidArgument, e.Error())
-	case *models.BusinessError:
+	case *errors.BusinessError:
 		return status.Error(codes.InvalidArgument, e.Error())
 	default:
-		if err == models.ErrEventNotFound {
+		if err == errors.ErrEventNotFound {
 			return status.Error(codes.NotFound, err.Error())
 		}
 		return status.Error(codes.Internal, err.Error())

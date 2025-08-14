@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"event/internal/errors"
 	"event/internal/models"
 	"event/internal/service/mocks"
 	"event/internal/testutils"
@@ -41,7 +42,7 @@ func TestPublicService_IsPublished_Integration(t *testing.T) {
 		{
 			name:           "Event not found",
 			event:          nil,
-			eventRepoError: models.ErrEventNotFound,
+			eventRepoError: errors.ErrEventNotFound,
 			expectError:    true,
 			expectedResult: false,
 		},

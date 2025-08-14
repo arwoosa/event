@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"event/internal/errors"
 	"event/internal/models"
 )
 
@@ -18,13 +19,13 @@ func AssertError(t *testing.T, err error, expectedErrType string, expectedMessag
 
 	require.Error(t, err, "Expected an error but got nil")
 
-	if businessErr, ok := err.(*models.BusinessError); ok {
+	if businessErr, ok := err.(*errors.BusinessError); ok {
 		assert.Equal(t, expectedErrType, businessErr.Code, "Error code mismatch")
 		if expectedMessage != "" {
 			assert.Contains(t, businessErr.Message, expectedMessage, "Error message mismatch")
 		}
-	} else if validationErr, ok := err.(*models.ValidationError); ok {
-		assert.Equal(t, "VALIDATION_ERROR", expectedErrType, "Expected validation error")
+	} else if validationErr, ok := err.(*errors.ValidationError); ok {
+		assert.Equal(t, errors.ErrorCodeValidationError, expectedErrType, "Expected validation error")
 		if expectedMessage != "" {
 			assert.Contains(t, validationErr.Message, expectedMessage, "Error message mismatch")
 		}

@@ -8,7 +8,7 @@ import (
 
 	"event/api"
 	pb "event/api/event"
-	"event/internal/models"
+	"event/internal/errors"
 )
 
 // PublicEventServiceServer implements the generated gRPC PublicEventService interface
@@ -110,21 +110,21 @@ func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*
 func (s *PublicEventServiceServer) handleServiceError(err error) error {
 	// Handle service errors for public API
 	switch e := err.(type) {
-	case *models.ValidationError:
+	case *errors.ValidationError:
 		return status.Error(codes.InvalidArgument, e.Error())
-	case *models.BusinessError:
+	case *errors.BusinessError:
 		switch e.Code {
-		case "PUBLISHED_IMMUTABLE":
+		case errors.ErrorCodePublishedImmutable:
 			return status.Error(codes.FailedPrecondition, e.Error())
-		case "HAS_ORDERS":
+		case errors.ErrorCodeHasOrders:
 			return status.Error(codes.FailedPrecondition, e.Error())
-		case "INVALID_TRANSITION":
+		case errors.ErrorCodeInvalidTransition:
 			return status.Error(codes.FailedPrecondition, e.Error())
 		default:
 			return status.Error(codes.InvalidArgument, e.Error())
 		}
 	default:
-		if err == models.ErrEventNotFound {
+		if err == errors.ErrEventNotFound {
 			return status.Error(codes.NotFound, err.Error())
 		}
 		return status.Error(codes.Internal, err.Error())

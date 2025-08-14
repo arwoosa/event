@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"event/internal/models"
+	"event/internal/errors"
 	"event/internal/service/mocks"
 	"event/internal/testutils"
 )
@@ -78,7 +78,7 @@ func TestSessionService_CreateSessionsForEvent_EventNotFound(t *testing.T) {
 	}
 
 	// Mock event not found
-	eventRepo.On("FindByID", ctx, eventID).Return(nil, models.ErrEventNotFound)
+	eventRepo.On("FindByID", ctx, eventID).Return(nil, errors.ErrEventNotFound)
 
 	// Execute
 	result, err := sessionService.CreateSessionsForEvent(ctx, eventID, brandID, sessionReqs)
@@ -86,7 +86,7 @@ func TestSessionService_CreateSessionsForEvent_EventNotFound(t *testing.T) {
 	// Assert
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Equal(t, models.ErrEventNotFound, err)
+	assert.Equal(t, errors.ErrEventNotFound, err)
 
 	eventRepo.AssertExpectations(t)
 }
@@ -121,7 +121,7 @@ func TestSessionService_CreateSessionsForEvent_WrongBrand(t *testing.T) {
 	// Assert
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Equal(t, models.ErrUnauthorized, err)
+	assert.Equal(t, errors.ErrUnauthorized, err)
 
 	eventRepo.AssertExpectations(t)
 }
@@ -176,7 +176,7 @@ func TestSessionService_GetSessionsForEvent_EventNotExists(t *testing.T) {
 	// Assert
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Equal(t, models.ErrEventNotFound, err)
+	assert.Equal(t, errors.ErrEventNotFound, err)
 
 	eventRepo.AssertExpectations(t)
 }
@@ -244,7 +244,7 @@ func TestSessionService_GetSession_UnauthorizedBrand(t *testing.T) {
 	// Assert
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Equal(t, models.ErrUnauthorized, err)
+	assert.Equal(t, errors.ErrUnauthorized, err)
 
 	sessionRepo.AssertExpectations(t)
 	eventRepo.AssertExpectations(t)
@@ -321,7 +321,7 @@ func TestSessionService_ValidateSessionsForEvent_DuplicateTimes(t *testing.T) {
 
 	// Assert
 	require.Error(t, err)
-	testutils.AssertError(t, err, "VALIDATION_ERROR", "have identical start and end times")
+	testutils.AssertError(t, err, errors.ErrorCodeValidationError, "have identical start and end times")
 
 	eventRepo.AssertExpectations(t)
 }

@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"event/internal/dao/repository"
+	"event/internal/errors"
 	"event/internal/models"
 )
 
@@ -100,7 +101,6 @@ type FAQRequest struct {
 // OrderServiceClient interface for external order service
 type OrderServiceClient interface {
 	HasOrders(ctx context.Context, eventID string) (bool, error)
-	HasOrdersForSession(ctx context.Context, sessionID string) (bool, error)
 }
 
 // CreateEvent creates a new event
@@ -144,7 +144,7 @@ func (s *EventService) GetEvent(ctx context.Context, brandID, eventID string) (*
 		return nil, err
 	}
 	if !exists {
-		return nil, models.ErrEventNotFound
+		return nil, errors.ErrEventNotFound
 	}
 
 	return s.eventRepo.FindByID(ctx, eventID)
@@ -302,8 +302,8 @@ func (s *EventService) validateEventChanges(existing *models.Event, req *PatchEv
 	}
 
 	if len(restrictedFields) > 0 {
-		return models.NewBusinessError(
-			"PUBLISHED_FIELD_RESTRICTED",
+		return errors.NewBusinessError(
+			errors.ErrorCodePublishedFieldRestricted,
 			fmt.Sprintf("cannot modify restricted fields for published events: %v", restrictedFields),
 			nil,
 		)
@@ -317,7 +317,7 @@ func (s *EventService) validateEventChanges(existing *models.Event, req *PatchEv
 
 func (s *EventService) validateStatusTransition(ctx context.Context, event *models.Event, newStatus string) error {
 	if !models.IsValidStatus(newStatus) {
-		return models.NewValidationError("status", "invalid status")
+		return errors.NewValidationError("status", "invalid status")
 	}
 
 	if event.Status == newStatus {
@@ -325,8 +325,8 @@ func (s *EventService) validateStatusTransition(ctx context.Context, event *mode
 	}
 
 	if !event.CanTransitionTo(newStatus) {
-		return models.NewBusinessError("INVALID_TRANSITION",
-			fmt.Sprintf("cannot transition from %s to %s", event.Status, newStatus), models.ErrInvalidTransition)
+		return errors.NewBusinessError(errors.ErrorCodeInvalidTransition,
+			fmt.Sprintf("cannot transition from %s to %s", event.Status, newStatus), errors.ErrInvalidTransition)
 	}
 
 	// Special validations for transitions
@@ -343,7 +343,7 @@ func (s *EventService) validateStatusTransition(ctx context.Context, event *mode
 			return fmt.Errorf("failed to check orders: %w", err)
 		}
 		if hasOrders {
-			return models.NewBusinessError("HAS_ORDERS", "cannot change status of event with existing orders", models.ErrHasOrders)
+			return errors.NewBusinessError(errors.ErrorCodeHasOrders, "cannot change status of event with existing orders", errors.ErrHasOrders)
 		}
 	}
 
@@ -352,13 +352,13 @@ func (s *EventService) validateStatusTransition(ctx context.Context, event *mode
 
 func (s *EventService) validatePublishRequirements(ctx context.Context, event *models.Event) error {
 	if event.Title == "" {
-		return models.NewValidationError("title", "title is required for publishing")
+		return errors.NewValidationError("title", "title is required for publishing")
 	}
 	if event.CoverImageURL == "" {
-		return models.NewValidationError("cover_image_url", "cover image is required for publishing")
+		return errors.NewValidationError("cover_image_url", "cover image is required for publishing")
 	}
 	if len(event.Detail) == 0 {
-		return models.NewValidationError("detail", "detail blocks are required for publishing")
+		return errors.NewValidationError("detail", "detail blocks are required for publishing")
 	}
 
 	// Check actual session count from database instead of cached count
@@ -367,11 +367,11 @@ func (s *EventService) validatePublishRequirements(ctx context.Context, event *m
 		return fmt.Errorf("failed to check session count: %w", err)
 	}
 	if sessionCount == 0 {
-		return models.NewValidationError("sessions", "at least one session is required for publishing")
+		return errors.NewValidationError("sessions", "at least one session is required for publishing")
 	}
 
 	if event.Location.Name == "" || event.Location.Address == "" {
-		return models.NewValidationError("location", "complete location information is required for publishing")
+		return errors.NewValidationError("location", "complete location information is required for publishing")
 	}
 	return nil
 }
@@ -381,12 +381,12 @@ func (s *EventService) validatePublishRequirements(ctx context.Context, event *m
 func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*models.Event, error) {
 	brandID, err := primitive.ObjectIDFromHex(req.BrandID)
 	if err != nil {
-		return nil, models.NewValidationError("brand_id", "invalid brand_id")
+		return nil, errors.NewValidationError("brand_id", "invalid brand_id")
 	}
 
 	userID, err := primitive.ObjectIDFromHex(req.UserID)
 	if err != nil {
-		return nil, models.NewValidationError("user_id", "invalid user_id")
+		return nil, errors.NewValidationError("user_id", "invalid user_id")
 	}
 
 	// Force draft status for all created events
@@ -535,12 +535,12 @@ func validateDetailSize(detail []models.DetailBlock) error {
 	// Serialize detail to calculate size
 	data, err := json.Marshal(detail)
 	if err != nil {
-		return models.NewValidationError("detail", "failed to serialize detail blocks")
+		return errors.NewValidationError("detail", "failed to serialize detail blocks")
 	}
 
 	const maxSize = 64 * 1024 // 64KB
 	if len(data) > maxSize {
-		return models.NewValidationError("detail",
+		return errors.NewValidationError("detail",
 			fmt.Sprintf("detail size exceeds limit: %d bytes (max: %d bytes)", len(data), maxSize))
 	}
 
