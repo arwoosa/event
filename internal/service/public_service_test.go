@@ -372,3 +372,60 @@ func TestPublicService_SearchEvents_DefaultPageSize(t *testing.T) {
 
 	eventRepo.AssertExpectations(t)
 }
+
+func TestPublicService_SearchEvents_PageBasedPagination(t *testing.T) {
+	// Setup
+	eventRepo := &mocks.MockEventRepository{}
+	sessionService := &SessionService{}
+
+	publicService := NewPublicService(eventRepo, sessionService)
+
+	ctx := context.Background()
+
+	// Create page-based search request
+	page := int32(2)
+	pageSize := int32(5)
+
+	req := &SearchEventsRequest{
+		Page:     &page,
+		PageSize: &pageSize,
+	}
+
+	// Expected result with page-based pagination info
+	totalCount := int64(23)
+	currentPage := int32(2)
+	totalPages := int32(5) // ceil(23/5) = 5
+	expectedResult := &repository.EventListResult{
+		Events: []*models.Event{
+			testutils.TestPublishedEvent(),
+			testutils.TestPublishedEvent(),
+		},
+		Pagination: &repository.Pagination{
+			TotalCount:  &totalCount,
+			CurrentPage: &currentPage,
+			TotalPages:  &totalPages,
+			HasNext:     true,
+			HasPrev:     true,
+		},
+	}
+
+	// Mock repository call
+	eventRepo.On("FindPublic", ctx, matchPublicEventFilter()).Return(expectedResult, nil)
+
+	// Execute
+	result, err := publicService.SearchEvents(ctx, req)
+
+	// Assert
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.NotNil(t, result.Pagination)
+	
+	// Verify page-based pagination fields
+	assert.Equal(t, &totalCount, result.Pagination.TotalCount)
+	assert.Equal(t, &currentPage, result.Pagination.CurrentPage)
+	assert.Equal(t, &totalPages, result.Pagination.TotalPages)
+	assert.True(t, result.Pagination.HasNext)
+	assert.True(t, result.Pagination.HasPrev)
+
+	eventRepo.AssertExpectations(t)
+}

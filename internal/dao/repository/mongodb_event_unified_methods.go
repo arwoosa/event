@@ -194,6 +194,46 @@ func (r *MongoEventRepository) executeUnifiedQuery(ctx context.Context, pipeline
 		pagination.HasPrev = true
 	}
 
+	// Calculate page-based pagination info for offset-based pagination
+	if !isCursorPagination && offset >= 0 {
+		// Get total count for page-based pagination
+		countPipeline := []bson.M{}
+
+		// Add the same match conditions (without skip/limit)
+		for _, stage := range pipeline {
+			if _, hasSkip := stage["$skip"]; hasSkip {
+				continue
+			}
+			if _, hasLimit := stage["$limit"]; hasLimit {
+				continue
+			}
+			countPipeline = append(countPipeline, stage)
+		}
+
+		// Add count stage
+		countPipeline = append(countPipeline, bson.M{"$count": "total"})
+
+		countCursor, err := r.collection.Aggregate(ctx, countPipeline)
+		if err != nil {
+			// If count fails, just proceed without page info
+		} else {
+			var countResult []bson.M
+			if err := countCursor.All(ctx, &countResult); err == nil && len(countResult) > 0 {
+				if total, ok := countResult[0]["total"].(int32); ok {
+					totalCount := int64(total)
+					pagination.TotalCount = &totalCount
+
+					// Calculate current page and total pages
+					currentPage := int32((offset / limit) + 1)
+					pagination.CurrentPage = &currentPage
+
+					totalPages := int32((totalCount + int64(limit) - 1) / int64(limit)) // Ceiling division
+					pagination.TotalPages = &totalPages
+				}
+			}
+		}
+	}
+
 	if len(events) > 0 && pagination.HasNext {
 		lastEvent := events[len(events)-1]
 		nextToken := r.encodeCursor(&Cursor{

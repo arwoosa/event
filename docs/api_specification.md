@@ -206,7 +206,7 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 
 **查詢參數：**
 - `page_token`: string (cursor-based pagination)
-- `page`: int (page-based pagination)  
+- `page`: int (page-based pagination，從 1 開始)  
 - `page_size`: int (預設 20，最大 100)
 - `status`: string (draft|published|archived)
 - `visibility`: string (public|private)
@@ -215,6 +215,11 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 - `title_search`: string (title 全文搜尋)
 - `sort_by`: string (created_at|updated_at|session_start_time)
 - `sort_order`: string (asc|desc，預設 desc)
+
+**分頁說明：**
+- 使用 `page_token` 時採用 cursor-based 分頁（無限滾動）
+- 使用 `page` 時採用 page-based 分頁（傳統分頁），會提供完整的頁數資訊
+- 兩種分頁方式不可同時使用，`page` 參數會覆蓋 `page_token`
 
 **回應：**
 ```json
@@ -245,12 +250,28 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
     }
   ],
   "pagination": {
+    // Cursor-based 分頁欄位（使用 page_token 時）
     "next_page_token": "next_cursor",
+    "prev_page_token": "prev_cursor",
+    
+    // Page-based 分頁欄位（使用 page 時）
+    "current_page": 2,
+    "total_pages": 8,
+    "total_count": 150,
+    
+    // 通用欄位（兩種分頁都有）
     "has_next": true,
-    "total_count": 150
+    "has_prev": true
   }
 }
 ```
+
+**分頁欄位說明：**
+- `next_page_token` / `prev_page_token`: cursor-based 分頁的游標（僅在使用 `page_token` 時出現）
+- `current_page`: 當前頁數，從 1 開始（僅在使用 `page` 時出現）
+- `total_pages`: 總頁數（僅在使用 `page` 時出現）
+- `total_count`: 總筆數（僅在使用 `page` 時出現）
+- `has_next` / `has_prev`: 是否有下一頁/上一頁（兩種分頁都有）
 
 ### 3. 取得單一 Event
 
@@ -404,8 +425,9 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 
 **查詢參數：**
 - `brand_id`: string (選填，篩選特定 Brand)
-- `page_token`: string
-- `page_size`: int
+- `page_token`: string (cursor-based pagination)
+- `page`: int (page-based pagination，從 1 開始)
+- `page_size`: int (預設 20，最大 100)
 - `title_search`: string
 - `session_start_time_from`: string
 - `session_start_time_to`: string
@@ -415,10 +437,14 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 - `sort_by`: string (session_start_time|created_at)
 - `sort_order`: string (asc|desc)
 
+**分頁說明：**
+- 與 Console API 相同，支援 cursor-based 和 page-based 兩種分頁方式
+- 使用 `page` 參數時會提供完整的分頁資訊（`current_page`, `total_pages`, `total_count`）
+
 **限制：**
 - 只返回 `status: "published"` 且 `visibility: "public"` 的 Event
 
-**回應：** 與 Console API 的列表格式相同，但簡化欄位
+**回應：** 與 Console API 的列表格式相同，包含完整的分頁資訊
 
 ### 2. 分享連結查詢
 
