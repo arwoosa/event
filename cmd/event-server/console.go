@@ -42,7 +42,7 @@ func runConsoleServer(cmd *cobra.Command, args []string) {
 	}
 
 	// Register only console services
-	service.RegisterConsoleServices(ctx, appConfig)
+	service.RegisterConsoleServices(appConfig)
 
 	// Run the gRPC + Gateway server
 	if err := ezgrpc.RunGrpcGateway(ctx, appConfig.Port); err != nil {

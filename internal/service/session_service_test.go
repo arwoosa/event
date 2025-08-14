@@ -19,7 +19,7 @@ func TestSessionService_CreateSessionsForEvent_Success(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionRepo := &mocks.MockSessionRepository{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo, nil)
+	sessionService := NewSessionService(sessionRepo, eventRepo)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
@@ -64,7 +64,7 @@ func TestSessionService_CreateSessionsForEvent_EventNotFound(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionRepo := &mocks.MockSessionRepository{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo, nil)
+	sessionService := NewSessionService(sessionRepo, eventRepo)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
@@ -96,7 +96,7 @@ func TestSessionService_CreateSessionsForEvent_WrongBrand(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionRepo := &mocks.MockSessionRepository{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo, nil)
+	sessionService := NewSessionService(sessionRepo, eventRepo)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
@@ -131,7 +131,7 @@ func TestSessionService_GetSessionsForEvent_Success(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionRepo := &mocks.MockSessionRepository{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo, nil)
+	sessionService := NewSessionService(sessionRepo, eventRepo)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
@@ -161,7 +161,7 @@ func TestSessionService_GetSessionsForEvent_EventNotExists(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionRepo := &mocks.MockSessionRepository{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo, nil)
+	sessionService := NewSessionService(sessionRepo, eventRepo)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
@@ -186,7 +186,7 @@ func TestSessionService_GetSession_Success(t *testing.T) {
 	sessionRepo := &mocks.MockSessionRepository{}
 	eventRepo := &mocks.MockEventRepository{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo, nil)
+	sessionService := NewSessionService(sessionRepo, eventRepo)
 
 	ctx := context.Background()
 	sessionID := testutils.ValidObjectIDString()
@@ -220,7 +220,7 @@ func TestSessionService_GetSession_UnauthorizedBrand(t *testing.T) {
 	sessionRepo := &mocks.MockSessionRepository{}
 	eventRepo := &mocks.MockEventRepository{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo, nil)
+	sessionService := NewSessionService(sessionRepo, eventRepo)
 
 	ctx := context.Background()
 	sessionID := testutils.ValidObjectIDString()
@@ -255,7 +255,7 @@ func TestSessionService_ValidateSessionsForEvent_Success(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionRepo := &mocks.MockSessionRepository{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo, nil)
+	sessionService := NewSessionService(sessionRepo, eventRepo)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
@@ -292,7 +292,7 @@ func TestSessionService_ValidateSessionsForEvent_DuplicateTimes(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionRepo := &mocks.MockSessionRepository{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo, nil)
+	sessionService := NewSessionService(sessionRepo, eventRepo)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()

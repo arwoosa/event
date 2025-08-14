@@ -13,21 +13,18 @@ import (
 
 // SessionService implements the business logic for session management
 type SessionService struct {
-	sessionRepo  repository.SessionRepository
-	eventRepo    repository.EventRepository
-	orderService OrderServiceClient
+	sessionRepo repository.SessionRepository
+	eventRepo   repository.EventRepository
 }
 
 // NewSessionService creates a new session service
 func NewSessionService(
 	sessionRepo repository.SessionRepository,
 	eventRepo repository.EventRepository,
-	orderService OrderServiceClient,
 ) *SessionService {
 	return &SessionService{
-		sessionRepo:  sessionRepo,
-		eventRepo:    eventRepo,
-		orderService: orderService,
+		sessionRepo: sessionRepo,
+		eventRepo:   eventRepo,
 	}
 }
 
@@ -43,7 +40,7 @@ func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID, br
 	}
 
 	// Convert session requests to models
-	sessions, err := s.convertSessionRequestsToModels(sessionReqs, eventID, brandID)
+	sessions, err := s.convertSessionRequestsToModels(sessionReqs, eventID)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +121,7 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, br
 	for _, sessionReq := range sessionReqs {
 		if sessionReq.ID == "" {
 			// Create new session
-			newSession, err := s.convertSessionRequestToModel(sessionReq, eventID, brandID)
+			newSession, err := s.convertSessionRequestToModel(sessionReq, eventID)
 			if err != nil {
 				return nil, fmt.Errorf("invalid new session: %w", err)
 			}
@@ -137,7 +134,7 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, br
 				return nil, models.NewValidationError("session_id", fmt.Sprintf("session with ID %s not found", sessionReq.ID))
 			}
 
-			updatedSession, err := s.convertSessionRequestToModel(sessionReq, eventID, brandID)
+			updatedSession, err := s.convertSessionRequestToModel(sessionReq, eventID)
 			if err != nil {
 				return nil, fmt.Errorf("invalid update for session %s: %w", sessionReq.ID, err)
 			}
@@ -236,32 +233,6 @@ func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, session
 		return models.NewBusinessError("PUBLISHED_IMMUTABLE", "cannot delete sessions for published or archived events", nil)
 	}
 
-	/* Old logic for preventing deletion of last session in published events, and checking for orders
-	// Check if this is the last session for the event
-	count, err := s.sessionRepo.CountByEventID(ctx, eventID)
-	if err != nil {
-		return err
-	}
-
-	// Only prevent deletion of last session for published events
-	// Draft and archived events can have their last session deleted
-	if event.Status == models.StatusPublished && count <= 1 {
-		return models.NewBusinessError("LAST_SESSION", "cannot delete the last session of a published event", models.ErrNoSessions)
-	}
-
-
-	// Check if session has any existing orders
-	if s.orderService != nil {
-		hasOrders, err := s.orderService.HasOrdersForSession(ctx, sessionID)
-		if err != nil {
-			return fmt.Errorf("failed to check orders for session: %w", err)
-		}
-		if hasOrders {
-			return models.NewBusinessError("SESSION_HAS_ORDERS", "cannot delete session with existing orders", nil)
-		}
-	}
-	*/
-
 	return s.sessionRepo.Delete(ctx, sessionID)
 }
 
@@ -282,7 +253,7 @@ func (s *SessionService) ValidateSessionsForEvent(ctx context.Context, eventID, 
 	}
 
 	// Convert and validate sessions
-	sessions, err := s.convertSessionRequestsToModels(sessionReqs, eventID, brandID)
+	sessions, err := s.convertSessionRequestsToModels(sessionReqs, eventID)
 	if err != nil {
 		return err
 	}
@@ -292,10 +263,10 @@ func (s *SessionService) ValidateSessionsForEvent(ctx context.Context, eventID, 
 
 // Helper methods
 
-func (s *SessionService) convertSessionRequestsToModels(sessionReqs []*SessionRequest, eventID, brandID string) ([]*models.Session, error) {
+func (s *SessionService) convertSessionRequestsToModels(sessionReqs []*SessionRequest, eventID string) ([]*models.Session, error) {
 	sessions := make([]*models.Session, len(sessionReqs))
 	for i, sessionReq := range sessionReqs {
-		session, err := s.convertSessionRequestToModel(sessionReq, eventID, brandID)
+		session, err := s.convertSessionRequestToModel(sessionReq, eventID)
 		if err != nil {
 			return nil, fmt.Errorf("invalid session at index %d: %w", i, err)
 		}
@@ -304,7 +275,7 @@ func (s *SessionService) convertSessionRequestsToModels(sessionReqs []*SessionRe
 	return sessions, nil
 }
 
-func (s *SessionService) convertSessionRequestToModel(sessionReq *SessionRequest, eventID, brandID string) (*models.Session, error) {
+func (s *SessionService) convertSessionRequestToModel(sessionReq *SessionRequest, eventID string) (*models.Session, error) {
 	eventObjectID, err := primitive.ObjectIDFromHex(eventID)
 	if err != nil {
 		return nil, models.NewValidationError("event_id", "invalid event_id")

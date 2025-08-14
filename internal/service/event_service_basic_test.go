@@ -18,7 +18,7 @@ func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
 	sessionRepo := &mocks.MockSessionRepository{}
 	orderService := &mocks.MockOrderService{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo, orderService)
+	sessionService := NewSessionService(sessionRepo, eventRepo)
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
@@ -113,7 +113,7 @@ func TestEventService_CreateEvent_InvalidBrandID(t *testing.T) {
 	sessionRepo := &mocks.MockSessionRepository{}
 	orderService := &mocks.MockOrderService{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo, orderService)
+	sessionService := NewSessionService(sessionRepo, eventRepo)
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()

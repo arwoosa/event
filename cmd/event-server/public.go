@@ -42,7 +42,7 @@ func runPublicServer(cmd *cobra.Command, args []string) {
 	}
 
 	// Register only public services
-	service.RegisterPublicServices(ctx, appConfig)
+	service.RegisterPublicServices(appConfig)
 
 	// Run the gRPC + Gateway server
 	if err := ezgrpc.RunGrpcGateway(ctx, appConfig.Port); err != nil {
