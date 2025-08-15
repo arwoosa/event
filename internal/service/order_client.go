@@ -23,12 +23,18 @@ type OrderServiceClientImpl struct {
 	timeout time.Duration
 }
 
-// NewOrderServiceClient creates a new order service client
+// NewOrderServiceClient creates a new order service client.
+// It establishes a non-blocking connection to the order service.
 func NewOrderServiceClient(config conf.ServiceConfig) OrderServiceClient {
+	// Use grpc.NewClient for a non-blocking connection. The connection is managed
+	// in the background by gRPC. Errors will be returned on RPC calls if the
+	// connection is unavailable, not during initialization.
 	conn, err := grpc.NewClient(config.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		// For development, we'll use a mock client if connection fails
-		return NewMockOrderServiceClient(false, fmt.Errorf("failed to connect to order service: %w", err))
+		// This error is critical and likely due to a misconfiguration (e.g., invalid endpoint).
+		// The application cannot function correctly without a valid client configuration.
+		// We are changing the behavior from falling back to a mock to failing fast.
+		log.Fatalf("Failed to initialize gRPC client for order service due to configuration error: %v", err)
 	}
 
 	client := orderpb.NewOrdersAdminServiceClient(conn)
