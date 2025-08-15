@@ -3,8 +3,9 @@ package conf
 import (
 	"flag"
 	"fmt"
-	"github.com/spf13/viper"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 // AppConfig holds the application configuration.
@@ -31,11 +32,11 @@ type MongodbConfig struct {
 
 // LogConfig holds the logger configuration.
 type LogConfig struct {
-	Level      string `mapstructure:"level"`
-	Filename   string `mapstructure:"filename"`
-	MaxSize    int    `mapstructure:"max_size"`
-	MaxAge     int    `mapstructure:"max_age"`
-	MaxBackups int    `mapstructure:"max_backups"`
+	Level string `mapstructure:"level"`
+	// Filename   string `mapstructure:"filename"`
+	// MaxSize    int    `mapstructure:"max_size"`
+	// MaxAge     int    `mapstructure:"max_age"`
+	// MaxBackups int    `mapstructure:"max_backups"`
 }
 
 // ExternalConfig holds external service configurations.

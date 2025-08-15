@@ -107,7 +107,30 @@ grpc:
 		api/event/*.proto api/*.proto
 
 docker_run:
-	 docker run -p 8081:8081 -d -v ./logs:/app/logs/ partivo_event:1.0
+	 docker run -p 8081:8081 -d partivo_event:1.0
+
+# Docker Compose commands
+docker-compose-up:
+	docker-compose up -d
+
+docker-compose-down:
+	docker-compose down
+
+docker-compose-logs:
+	docker-compose logs -f
+
+docker-compose-build:
+	docker build -t partivo_event:1.0 . && docker-compose up -d
+
+# Individual service commands
+docker-console-only:
+	docker-compose up -d event-console mongodb
+
+docker-public-only:
+	docker-compose up -d event-public mongodb
+
+docker-restart:
+	docker-compose restart
 
 mod:
 	go mod edit -module ${BINARY}; \

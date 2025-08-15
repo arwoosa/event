@@ -5,10 +5,6 @@ version: 1.0.0
 time_zone: "Asia/Taipei"
 log:
   level: "debug"
-  # filename: "logs/app.log"
-  # max_size: 200 #MB
-  # max_age: 30 #預設儲存時間
-  # max_backups: 7
 mongodb:
   host: "host.docker.internal"
   port: 27017

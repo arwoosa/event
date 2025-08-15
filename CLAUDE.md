@@ -155,7 +155,3 @@ The service expects these headers from API Gateway:
 - **Brand isolation**: All data operations must include brand_id filtering
 - **Submodule dependency**: Vulpes toolkit is included as Git submodule
 - **Proto generation**: Run `make grpc` after modifying .proto files
-- **Wire dependency injection**: Use `make wire` when adding new dependencies
-
-## Development Memories
-- 現在還在開發階段不用考慮向後兼容

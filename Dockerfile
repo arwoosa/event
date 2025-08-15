@@ -34,4 +34,5 @@ COPY --from=builder /build/partivo_event /app/
 #    && apt-get install -y --no-install-recommends netcat \
 EXPOSE 8081
 
-ENTRYPOINT ["/app/partivo_event", "console","--config", "conf/config_docker.yaml"]
+ENTRYPOINT ["/app/partivo_event"]
+CMD ["console", "--config", "conf/config_docker.yaml"]

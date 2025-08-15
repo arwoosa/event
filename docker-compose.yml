@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Console API Service (Management)
+  event-console:
+    image: partivo_event:1.0
+    container_name: partivo_event_console
+    command: ["console", "--config", "conf/config_docker.yaml"]
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - mongodb
+    environment:
+      - SERVICE_NAME=partivo_event_console
+    restart: unless-stopped
+
+  # Public API Service (Read-only)
+  event-public:
+    image: partivo_event:1.0
+    container_name: partivo_event_public
+    command: ["public", "--config", "conf/config_docker.yaml"]
+    ports:
+      - "8082:8081"  # Map to different host port to avoid conflict
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - mongodb
+    environment:
+      - SERVICE_NAME=partivo_event_public
+    restart: unless-stopped
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:latest
+    container_name: partivo_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
+    environment:
+      - MONGO_INITDB_DATABASE=partivo_event
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  default:
+    name: partivo_network
