@@ -12,6 +12,8 @@ import (
 
 	orderpb "event/api/order"
 	"event/conf"
+
+	"github.com/arwoosa/vulpes/log"
 )
 
 // OrderServiceClientImpl implements OrderServiceClient interface
@@ -96,6 +98,7 @@ type MockOrderServiceClient struct {
 
 // NewMockOrderServiceClient creates a new mock order service client
 func NewMockOrderServiceClient(hasOrders bool, err error) OrderServiceClient {
+	log.Warn("Using mock order service client")
 	return &MockOrderServiceClient{
 		hasOrders:        hasOrders,
 		hasSessionOrders: false, // Default to no session orders
