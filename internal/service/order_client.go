@@ -59,7 +59,7 @@ func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) 
 
 	// Parse response data to get has_orders boolean
 	if resp.Data == nil {
-		return false, nil
+		return false, fmt.Errorf("order service returned empty data")
 	}
 
 	// Convert Any to JSON and parse
@@ -75,7 +75,7 @@ func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) 
 
 	hasOrders, ok := data["value"].(bool)
 	if !ok {
-		return false, nil
+		return false, fmt.Errorf("order service returned invalid data format: expected bool, got %T", data["value"])
 	}
 
 	return hasOrders, nil
