@@ -12,8 +12,8 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 ### Console API 權限要求
 所有 Console API 都需要以下權限檢查：
 - **用戶身份驗證**: 必須為已登入用戶
-- **Brand 成員驗證**: 用戶必須為請求中 Brand 的成員
-- **資源隔離**: 只能操作該 Brand 下的 Event 資源
+- **Merchant 成員驗證**: 用戶必須為請求中 Merchant 的成員
+- **資源隔離**: 只能操作該 Merchant 下的 Event 資源
 
 ### Public API 權限要求
 - **公開搜尋** (`GET /events`): 無需身份驗證，僅返回 `published` + `public` 的 Event
@@ -104,7 +104,7 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 - `X-User-Email`: 用戶 Email
 - `X-User-Name`: 用戶名稱
 - `X-User-Avatar`: 用戶頭像 URL
-- `X-Brand-Id`: Brand ID（需新增到 AllowedHeaders，用於權限檢查）
+- `X-Merchant-Id`: Merchant ID（需新增到 AllowedHeaders，用於權限檢查）
 
 **Public API Headers：**
 - 無必需 Headers，支援匿名存取
@@ -424,7 +424,7 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 **端點：** `GET /events`
 
 **查詢參數：**
-- `brand_id`: string (選填，篩選特定 Brand)
+- `merchant_id`: string (選填，篩選特定 Merchant)
 - `page_token`: string (cursor-based pagination)
 - `page`: int (page-based pagination，從 1 開始)
 - `page_size`: int (預設 20，最大 100)
@@ -464,7 +464,7 @@ API Gateway 負責統一的身份驗證和權限檢查，Event 微服務接收�
 
 **用途：** 提供給其他內部微服務呼叫，取得 Event 完整資料
 
-**權限：** 內部服務呼叫，**不需要 brand 驗證**，可跨品牌查詢
+**權限：** 內部服務呼叫，**不需要 merchant 驗證**，可跨品牌查詢
 
 **gRPC 方法：**
 ```protobuf
@@ -483,7 +483,7 @@ rpc GetEventById(api.ID) returns (Event);
 {
   "id": "event_id",
   "title": "活動標題",
-  "brand_id": "brand_id",
+  "merchant_id": "merchant_id",
   "summary": "活動摘要",
   "status": "published",
   "visibility": "public",
@@ -539,7 +539,7 @@ rpc GetEventById(api.ID) returns (Event);
 ## 資料驗證規則
 
 ### 必填欄位
-- **Event**: title, brand_id, sessions, cover_image_url, detail (可為空陣列), location, visibility
+- **Event**: title, merchant_id, sessions, cover_image_url, detail (可為空陣列), location, visibility
 - **Session**: start_time, end_time
 - **Session 可選欄位**: name(場次名稱，可空白), capacity(容量限制，null表示不限制)
 - **Location**: name, address, place_id, coordinates
@@ -572,7 +572,7 @@ rpc GetEventById(api.ID) returns (Event);
 
 - `InvalidArgument` (3): 參數驗證失敗
 - `NotFound` (5): Event/Session 不存在
-- `PermissionDenied` (7): 權限不足（用戶非 Brand 成員或嘗試存取其他 Brand 的資源）
+- `PermissionDenied` (7): 權限不足（用戶非 Merchant 成員或嘗試存取其他 Merchant 的資源）
 - `FailedPrecondition` (9): 業務規則驗證失敗（狀態轉換、Session刪除限制等）
 - `Internal` (13): 內部錯誤或外部服務呼叫失敗
 
@@ -616,10 +616,10 @@ draft → published → archived
 
 ```javascript
 // 基本查詢索引
-db.events.createIndex({"brand_id": 1, "status": 1, "visibility": 1})
+db.events.createIndex({"merchant_id": 1, "status": 1, "visibility": 1})
 
 // 時間範圍查詢索引  
-db.events.createIndex({"brand_id": 1, "sessions.start_time": 1})
+db.events.createIndex({"merchant_id": 1, "sessions.start_time": 1})
 
 // 地理位置索引
 db.events.createIndex({"location.coordinates": "2dsphere"})
@@ -628,8 +628,8 @@ db.events.createIndex({"location.coordinates": "2dsphere"})
 db.events.createIndex({"title": "text"})
 
 // 排序索引
-db.events.createIndex({"brand_id": 1, "created_at": -1})
-db.events.createIndex({"brand_id": 1, "updated_at": -1})
+db.events.createIndex({"merchant_id": 1, "created_at": -1})
+db.events.createIndex({"merchant_id": 1, "updated_at": -1})
 ```
 
 ## Published 狀態編輯權限詳細規範

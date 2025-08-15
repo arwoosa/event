@@ -251,11 +251,11 @@ paths:
           required: false
           type: integer
           format: int32
-        - name: brand_id
+        - name: merchant_id
           description: |-
             Filters
 
-            filter by specific brand
+            filter by specific merchant
           in: query
           required: false
           type: string
@@ -417,7 +417,7 @@ definitions:
         type: string
       title:
         type: string
-      brand_id:
+      merchant_id:
         type: string
       summary:
         type: string

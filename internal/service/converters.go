@@ -6,6 +6,7 @@ import (
 	pb "event/api/event"
 	"event/internal/dao/repository"
 	"event/internal/models"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -23,7 +24,7 @@ func (c *ProtobufConverter) ConvertEventToPB(event *models.Event) *pb.Event {
 	return &pb.Event{
 		Id:            event.ID.Hex(),
 		Title:         event.Title,
-		BrandId:       event.BrandID.Hex(),
+		MerchantId:    event.MerchantID.Hex(),
 		Summary:       event.Summary,
 		Status:        event.Status,
 		Visibility:    event.Visibility,

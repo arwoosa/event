@@ -25,13 +25,13 @@ func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test request without sessions to avoid complexity
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 	userID := testutils.ValidObjectIDString()
 
 	req := &CreateEventRequest{
 		Title:      "Test Event",
 		Summary:    "Test Summary",
-		BrandID:    brandID,
+		MerchantID: merchantID,
 		UserID:     userID,
 		Visibility: models.VisibilityPrivate,
 		// No sessions
@@ -62,17 +62,17 @@ func TestEventService_GetEvent_Success(t *testing.T) {
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 	eventID := testutils.ValidObjectIDString()
 
 	event := testutils.TestEvent()
 
 	// Mock existence check
-	eventRepo.On("ExistsByBrandAndID", ctx, brandID, eventID).Return(true, nil)
+	eventRepo.On("ExistsByMerchantAndID", ctx, merchantID, eventID).Return(true, nil)
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 
 	// Execute
-	result, err := eventService.GetEvent(ctx, brandID, eventID)
+	result, err := eventService.GetEvent(ctx, merchantID, eventID)
 
 	// Assert
 	require.NoError(t, err)
@@ -91,14 +91,14 @@ func TestEventService_GetEvent_NotFound(t *testing.T) {
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 	eventID := testutils.ValidObjectIDString()
 
 	// Mock existence check returns false
-	eventRepo.On("ExistsByBrandAndID", ctx, brandID, eventID).Return(false, nil)
+	eventRepo.On("ExistsByMerchantAndID", ctx, merchantID, eventID).Return(false, nil)
 
 	// Execute
-	result, err := eventService.GetEvent(ctx, brandID, eventID)
+	result, err := eventService.GetEvent(ctx, merchantID, eventID)
 
 	// Assert
 	require.Error(t, err)
@@ -108,7 +108,7 @@ func TestEventService_GetEvent_NotFound(t *testing.T) {
 	eventRepo.AssertExpectations(t)
 }
 
-func TestEventService_CreateEvent_InvalidBrandID(t *testing.T) {
+func TestEventService_CreateEvent_InvalidMerchantID(t *testing.T) {
 	// Setup
 	eventRepo := &mocks.MockEventRepository{}
 	sessionRepo := &mocks.MockSessionRepository{}
@@ -120,9 +120,9 @@ func TestEventService_CreateEvent_InvalidBrandID(t *testing.T) {
 	ctx := context.Background()
 
 	req := &CreateEventRequest{
-		Title:   "Test Event",
-		BrandID: "invalid_id", // Invalid ObjectID
-		UserID:  testutils.ValidObjectIDString(),
+		Title:      "Test Event",
+		MerchantID: "invalid_id", // Invalid ObjectID
+		UserID:     testutils.ValidObjectIDString(),
 	}
 
 	// Execute
@@ -131,5 +131,5 @@ func TestEventService_CreateEvent_InvalidBrandID(t *testing.T) {
 	// Assert
 	require.Error(t, err)
 	assert.Nil(t, result)
-	testutils.AssertError(t, err, errors.ErrorCodeValidationError, "invalid brand_id")
+	testutils.AssertError(t, err, errors.ErrorCodeValidationError, "invalid merchant_id")
 }

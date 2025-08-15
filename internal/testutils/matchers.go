@@ -96,7 +96,7 @@ func MatchNonEmptyStringSlice() interface{} {
 	})
 }
 
-// Filter matchers with brand ID are defined in service tests to avoid circular imports
+// Filter matchers with merchant ID are defined in service tests to avoid circular imports
 
 // MatchAnyContext matches any context
 func MatchAnyContext() interface{} {
@@ -119,10 +119,10 @@ func CreateStatusMatcher(status string) func(*models.Event) bool {
 	}
 }
 
-// CreateBrandMatcher creates a matcher for events with specific brand ID
-func CreateBrandMatcher(brandID string) func(*models.Event) bool {
+// CreateMerchantMatcher creates a matcher for events with specific merchant ID
+func CreateMerchantMatcher(merchantID string) func(*models.Event) bool {
 	return func(e *models.Event) bool {
-		return e != nil && e.BrandID.Hex() == brandID
+		return e != nil && e.MerchantID.Hex() == merchantID
 	}
 }
 

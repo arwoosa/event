@@ -60,7 +60,7 @@ func (m *Event) validate(all bool) error {
 
 	// no validation rules for Title
 
-	// no validation rules for BrandId
+	// no validation rules for MerchantId
 
 	// no validation rules for Summary
 
@@ -2528,8 +2528,8 @@ func (m *SearchEventsRequest) validate(all bool) error {
 
 	}
 
-	if m.BrandId != nil {
-		// no validation rules for BrandId
+	if m.MerchantId != nil {
+		// no validation rules for MerchantId
 	}
 
 	if m.TitleSearch != nil {

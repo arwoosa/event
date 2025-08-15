@@ -9,7 +9,7 @@ import "third_party/validate/validate.proto";
 
 option go_package = "event/api/event";
 
-// Console Event Service for brand management
+// Console Event Service for merchant management
 service EventService {
   // Create a new event
   rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse) {
@@ -84,7 +84,7 @@ service PublicEventService {
 
 // Internal Service for inter-service communication
 service InternalService {
-  // Get event by ID without brand validation (for internal services)
+  // Get event by ID without merchant validation (for internal services)
   rpc GetEventById(api.ID) returns (Event);
 }
 
@@ -92,7 +92,7 @@ service InternalService {
 message Event {
   string id = 1;
   string title = 2;
-  string brand_id = 3;
+  string merchant_id = 3;
   string summary = 4;
   string status = 5; // draft, published, archived
   string visibility = 6; // public, private
@@ -217,7 +217,7 @@ message SearchEventsRequest {
   optional int32 page_size = 3 [(validate.rules).int32 = {gte: 1, lte: 100}];
   
   // Filters
-  optional string brand_id = 4;     // filter by specific brand
+  optional string merchant_id = 4;     // filter by specific merchant
   optional string title_search = 5; // full-text search
   optional string session_start_time_from = 6;
   optional string session_start_time_to = 7;

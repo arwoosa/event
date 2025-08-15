@@ -24,8 +24,8 @@ type SessionRepository interface {
 	// FindByEventIDs finds sessions for multiple events (for batch operations)
 	FindByEventIDs(ctx context.Context, eventIDs []string) (map[string][]*models.Session, error)
 
-	// FindByBrandID finds sessions by brand ID with filtering
-	FindByBrandID(ctx context.Context, brandID string, filter *SessionFilter) ([]*models.Session, error)
+	// FindByMerchantID finds sessions by merchant ID with filtering
+	FindByMerchantID(ctx context.Context, merchantID string, filter *SessionFilter) ([]*models.Session, error)
 
 	// Update updates an existing session
 	Update(ctx context.Context, id string, session *models.Session) (*models.Session, error)
@@ -45,8 +45,8 @@ type SessionRepository interface {
 	// ExistsByID checks if a session exists by ID
 	ExistsByID(ctx context.Context, id string) (bool, error)
 
-	// ExistsByEventAndBrand checks if sessions exist for an event within a brand
-	ExistsByEventAndBrand(ctx context.Context, eventID, brandID string) (bool, error)
+	// ExistsByEventAndMerchant checks if sessions exist for an event within a merchant
+	ExistsByEventAndMerchant(ctx context.Context, eventID, merchantID string) (bool, error)
 
 	// BulkUpdateSessions performs bulk operations (create, update, delete) in a single request
 	BulkUpdateSessions(ctx context.Context, creates []*models.Session, updates []*models.Session, deleteIDs []string) error
@@ -55,7 +55,7 @@ type SessionRepository interface {
 // SessionFilter represents filtering options for session queries
 type SessionFilter struct {
 	EventID       *string
-	BrandID       *string
+	MerchantID    *string
 	StartTimeFrom *time.Time
 	StartTimeTo   *time.Time
 	EndTimeFrom   *time.Time

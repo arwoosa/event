@@ -34,7 +34,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Console Event Service for brand management
+// Console Event Service for merchant management
 type EventServiceClient interface {
 	// Create a new event
 	CreateEvent(ctx context.Context, in *CreateEventRequest, opts ...grpc.CallOption) (*CreateEventResponse, error)
@@ -134,7 +134,7 @@ func (c *eventServiceClient) DeleteSession(ctx context.Context, in *DeleteSessio
 // All implementations must embed UnimplementedEventServiceServer
 // for forward compatibility.
 //
-// Console Event Service for brand management
+// Console Event Service for merchant management
 type EventServiceServer interface {
 	// Create a new event
 	CreateEvent(context.Context, *CreateEventRequest) (*CreateEventResponse, error)
@@ -526,7 +526,7 @@ const (
 //
 // Internal Service for inter-service communication
 type InternalServiceClient interface {
-	// Get event by ID without brand validation (for internal services)
+	// Get event by ID without merchant validation (for internal services)
 	GetEventById(ctx context.Context, in *api.ID, opts ...grpc.CallOption) (*Event, error)
 }
 
@@ -554,7 +554,7 @@ func (c *internalServiceClient) GetEventById(ctx context.Context, in *api.ID, op
 //
 // Internal Service for inter-service communication
 type InternalServiceServer interface {
-	// Get event by ID without brand validation (for internal services)
+	// Get event by ID without merchant validation (for internal services)
 	GetEventById(context.Context, *api.ID) (*Event, error)
 	mustEmbedUnimplementedInternalServiceServer()
 }

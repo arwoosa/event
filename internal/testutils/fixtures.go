@@ -14,7 +14,7 @@ func TestEvent() *models.Event {
 	return &models.Event{
 		ID:            primitive.NewObjectID(),
 		Title:         "Test Event",
-		BrandID:       primitive.NewObjectID(),
+		MerchantID:    primitive.NewObjectID(),
 		Summary:       "Test event summary",
 		Status:        models.StatusDraft,
 		Visibility:    models.VisibilityPrivate,
@@ -161,7 +161,7 @@ type TestCreateEventRequest struct {
 	Sessions      []*TestSessionRequest
 	Detail        []TestDetailBlockRequest
 	FAQ           []*TestFAQRequest
-	BrandID       string
+	MerchantID    string
 	UserID        string
 }
 
@@ -174,7 +174,7 @@ type TestPatchEventRequest struct {
 }
 
 type TestSearchEventsRequest struct {
-	BrandID     *string
+	MerchantID  *string
 	TitleSearch *string
 	PageSize    *int32
 }
@@ -221,8 +221,8 @@ func CreateTestCreateEventRequest() *TestCreateEventRequest {
 				Answer:   "This is a test event for testing purposes.",
 			},
 		},
-		BrandID: primitive.NewObjectID().Hex(),
-		UserID:  primitive.NewObjectID().Hex(),
+		MerchantID: primitive.NewObjectID().Hex(),
+		UserID:     primitive.NewObjectID().Hex(),
 	}
 }
 
@@ -241,12 +241,12 @@ func CreateTestPatchEventRequest(eventID string) *TestPatchEventRequest {
 
 // CreateTestSearchEventsRequest creates a test search events request
 func CreateTestSearchEventsRequest() *TestSearchEventsRequest {
-	brandID := primitive.NewObjectID().Hex()
+	merchantID := primitive.NewObjectID().Hex()
 	titleSearch := "test"
 	pageSize := int32(20)
 
 	return &TestSearchEventsRequest{
-		BrandID:     &brandID,
+		MerchantID:  &merchantID,
 		TitleSearch: &titleSearch,
 		PageSize:    &pageSize,
 	}
@@ -257,8 +257,8 @@ func TestUserID() primitive.ObjectID {
 	return primitive.NewObjectID()
 }
 
-// TestBrandID creates a test brand ID
-func TestBrandID() primitive.ObjectID {
+// TestMerchantID creates a test merchant ID
+func TestMerchantID() primitive.ObjectID {
 	return primitive.NewObjectID()
 }
 

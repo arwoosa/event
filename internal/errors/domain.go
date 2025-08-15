@@ -12,5 +12,5 @@ var (
 	ErrNoSessions        = errors.New("event must have at least one session")
 	ErrHasOrders         = errors.New("event has existing orders")
 	ErrUnauthorized      = errors.New("unauthorized access")
-	ErrInvalidBrandID    = errors.New("invalid brand_id")
+	ErrInvalidMerchantID = errors.New("invalid merchant_id")
 )

@@ -27,7 +27,7 @@ func NewPublicService(eventRepo repository.EventRepository, sessionService *Sess
 
 // SearchEventsRequest represents the request to search public events
 type SearchEventsRequest struct {
-	BrandID              *string
+	MerchantID           *string
 	TitleSearch          *string
 	SessionStartTimeFrom *string
 	SessionStartTimeTo   *string
@@ -49,8 +49,8 @@ func (s *PublicService) SearchEvents(ctx context.Context, req *SearchEventsReque
 	}
 
 	// Only set non-nil and non-empty values
-	if req.BrandID != nil && *req.BrandID != "" {
-		filter.BrandID = req.BrandID
+	if req.MerchantID != nil && *req.MerchantID != "" {
+		filter.MerchantID = req.MerchantID
 	}
 	if req.TitleSearch != nil && *req.TitleSearch != "" {
 		filter.TitleSearch = req.TitleSearch
@@ -121,7 +121,7 @@ func (s *PublicService) GetEvent(ctx context.Context, eventID string) (*models.E
 
 // IsPublished checks if an event is published (for OrderService)
 func (s *PublicService) IsPublished(ctx context.Context, eventID string) (bool, error) {
-	// Find event by ID without brand filtering (for internal service use)
+	// Find event by ID without merchant filtering (for internal service use)
 	event, err := s.eventRepo.FindByID(ctx, eventID)
 	if err != nil {
 		return false, err

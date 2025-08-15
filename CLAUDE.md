@@ -53,7 +53,7 @@ This is a **Go gRPC microservice** for event management using the **Vulpes toolk
 - **Clean Architecture**: Separated into transport, service, repository, and data layers
 - **Microservice**: Designed for horizontal scaling and service isolation
 - **Dual Protocol**: gRPC for internal services, HTTP REST for web clients
-- **Brand Isolation**: Multi-tenant architecture with brand-level data separation
+- **Merchant Isolation**: Multi-tenant architecture with merchant-level data separation
 
 ### Core Technologies
 - **Go 1.23+** with standard libraries
@@ -109,16 +109,16 @@ The service requires:
 
 ## Business Domain
 
-This service manages **Events** for a multi-brand platform with:
+This service manages **Events** for a multi-merchant platform with:
 
 ### Core Entities
 - **Event**: Main entity with title, location, sessions, content
 - **Location**: Geographic data with coordinates for spatial queries
 - **Session**: Time-based event scheduling
-- **Brand**: Tenant isolation boundary
+- **Merchant**: Tenant isolation boundary
 
 ### API Endpoints
-- **Console API** (`/console/events/*`): Full CRUD for authenticated brand members
+- **Console API** (`/console/events/*`): Full CRUD for authenticated merchant members
 - **Public API** (`/events/*`): Read-only public access to published events
 
 ### Status Workflow
@@ -147,11 +147,11 @@ Events follow a state machine: `draft → published → archived`
 ### Headers and Authentication
 The service expects these headers from API Gateway:
 - `X-User-Id`, `X-User-Email`, `X-User-Name`, `X-User-Avatar`
-- `X-Brand-Id` for brand isolation (needs to be added to header map)
+- `X-Merchant-Id` for merchant isolation (needs to be added to header map)
 
 ## Important Notes
 
 - **No direct authentication**: Relies on API Gateway for auth/authz
-- **Brand isolation**: All data operations must include brand_id filtering
+- **Merchant isolation**: All data operations must include merchant_id filtering
 - **Submodule dependency**: Vulpes toolkit is included as Git submodule
 - **Proto generation**: Run `make grpc` after modifying .proto files

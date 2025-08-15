@@ -9,7 +9,7 @@ import (
 )
 
 // Session represents an event session as a separate collection
-// Brand isolation is now handled through the parent Event entity
+// Merchant isolation is now handled through the parent Event entity
 type Session struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	EventID   primitive.ObjectID `json:"event_id" bson:"event_id"`
@@ -27,12 +27,12 @@ func (s *Session) IsDuplicateOf(other *Session) bool {
 }
 
 // IsValid validates session time constraints
-// Brand validation is no longer required as sessions inherit brand from event
+// Merchant validation is no longer required as sessions inherit merchant from event
 func (s *Session) IsValid() error {
 	if s.EventID.IsZero() {
 		return errors.New("event_id is required")
 	}
-	// BrandID validation removed - brand isolation handled through Event
+	// MerchantID validation removed - merchant isolation handled through Event
 	if s.StartTime.IsZero() {
 		return errors.New("start_time is required")
 	}

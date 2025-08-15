@@ -179,14 +179,14 @@ func (r *MongoSessionRepository) FindByEventIDs(ctx context.Context, eventIDs []
 	return result, nil
 }
 
-// FindByBrandID finds sessions by brand ID with filtering
-func (r *MongoSessionRepository) FindByBrandID(ctx context.Context, brandID string, filter *SessionFilter) ([]*models.Session, error) {
-	brandObjectID, err := primitive.ObjectIDFromHex(brandID)
+// FindByMerchantID finds sessions by merchant ID with filtering
+func (r *MongoSessionRepository) FindByMerchantID(ctx context.Context, merchantID string, filter *SessionFilter) ([]*models.Session, error) {
+	merchantObjectID, err := primitive.ObjectIDFromHex(merchantID)
 	if err != nil {
-		return nil, fmt.Errorf("invalid brand ID: %w", err)
+		return nil, fmt.Errorf("invalid merchant ID: %w", err)
 	}
 
-	query := bson.M{"brand_id": brandObjectID}
+	query := bson.M{"merchant_id": merchantObjectID}
 
 	// Apply filters
 	if filter.EventID != nil {
@@ -368,21 +368,21 @@ func (r *MongoSessionRepository) ExistsByID(ctx context.Context, id string) (boo
 	return count > 0, nil
 }
 
-// ExistsByEventAndBrand checks if sessions exist for an event within a brand
-func (r *MongoSessionRepository) ExistsByEventAndBrand(ctx context.Context, eventID, brandID string) (bool, error) {
+// ExistsByEventAndMerchant checks if sessions exist for an event within a merchant
+func (r *MongoSessionRepository) ExistsByEventAndMerchant(ctx context.Context, eventID, merchantID string) (bool, error) {
 	eventObjectID, err := primitive.ObjectIDFromHex(eventID)
 	if err != nil {
 		return false, fmt.Errorf("invalid event ID: %w", err)
 	}
 
-	brandObjectID, err := primitive.ObjectIDFromHex(brandID)
+	merchantObjectID, err := primitive.ObjectIDFromHex(merchantID)
 	if err != nil {
-		return false, fmt.Errorf("invalid brand ID: %w", err)
+		return false, fmt.Errorf("invalid merchant ID: %w", err)
 	}
 
 	count, err := r.collection.CountDocuments(ctx, bson.M{
-		"event_id": eventObjectID,
-		"brand_id": brandObjectID,
+		"event_id":    eventObjectID,
+		"merchant_id": merchantObjectID,
 	})
 	if err != nil {
 		return false, fmt.Errorf("failed to check session existence: %w", err)

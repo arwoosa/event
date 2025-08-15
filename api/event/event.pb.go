@@ -30,7 +30,7 @@ type Event struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	BrandId       string                 `protobuf:"bytes,3,opt,name=brand_id,json=brandId,proto3" json:"brand_id,omitempty"`
+	MerchantId    string                 `protobuf:"bytes,3,opt,name=merchant_id,json=merchantId,proto3" json:"merchant_id,omitempty"`
 	Summary       string                 `protobuf:"bytes,4,opt,name=summary,proto3" json:"summary,omitempty"`
 	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`         // draft, published, archived
 	Visibility    string                 `protobuf:"bytes,6,opt,name=visibility,proto3" json:"visibility,omitempty"` // public, private
@@ -91,9 +91,9 @@ func (x *Event) GetTitle() string {
 	return ""
 }
 
-func (x *Event) GetBrandId() string {
+func (x *Event) GetMerchantId() string {
 	if x != nil {
-		return x.BrandId
+		return x.MerchantId
 	}
 	return ""
 }
@@ -1070,7 +1070,7 @@ type SearchEventsRequest struct {
 	Page      *int32  `protobuf:"varint,2,opt,name=page,proto3,oneof" json:"page,omitempty"`
 	PageSize  *int32  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3,oneof" json:"page_size,omitempty"`
 	// Filters
-	BrandId              *string `protobuf:"bytes,4,opt,name=brand_id,json=brandId,proto3,oneof" json:"brand_id,omitempty"`             // filter by specific brand
+	MerchantId           *string `protobuf:"bytes,4,opt,name=merchant_id,json=merchantId,proto3,oneof" json:"merchant_id,omitempty"`    // filter by specific merchant
 	TitleSearch          *string `protobuf:"bytes,5,opt,name=title_search,json=titleSearch,proto3,oneof" json:"title_search,omitempty"` // full-text search
 	SessionStartTimeFrom *string `protobuf:"bytes,6,opt,name=session_start_time_from,json=sessionStartTimeFrom,proto3,oneof" json:"session_start_time_from,omitempty"`
 	SessionStartTimeTo   *string `protobuf:"bytes,7,opt,name=session_start_time_to,json=sessionStartTimeTo,proto3,oneof" json:"session_start_time_to,omitempty"`
@@ -1136,9 +1136,9 @@ func (x *SearchEventsRequest) GetPageSize() int32 {
 	return 0
 }
 
-func (x *SearchEventsRequest) GetBrandId() string {
-	if x != nil && x.BrandId != nil {
-		return *x.BrandId
+func (x *SearchEventsRequest) GetMerchantId() string {
+	if x != nil && x.MerchantId != nil {
+		return *x.MerchantId
 	}
 	return ""
 }
@@ -1400,11 +1400,12 @@ var File_api_event_event_proto protoreflect.FileDescriptor
 
 const file_api_event_event_proto_rawDesc = "" +
 	"\n" +
-	"\x15api/event/event.proto\x12\x05event\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x10api/common.proto\x1a#third_party/validate/validate.proto\"\xed\x03\n" +
+	"\x15api/event/event.proto\x12\x05event\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x10api/common.proto\x1a#third_party/validate/validate.proto\"\xf3\x03\n" +
 	"\x05Event\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12\x19\n" +
-	"\bbrand_id\x18\x03 \x01(\tR\abrandId\x12\x18\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x1f\n" +
+	"\vmerchant_id\x18\x03 \x01(\tR\n" +
+	"merchantId\x12\x18\n" +
 	"\asummary\x18\x04 \x01(\tR\asummary\x12\x16\n" +
 	"\x06status\x18\x05 \x01(\tR\x06status\x12\x1e\n" +
 	"\n" +
@@ -1533,13 +1534,14 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\x14DeleteSessionRequest\x12\"\n" +
 	"\bevent_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\aeventId\x12&\n" +
 	"\n" +
-	"session_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\tsessionId\"\xc9\x06\n" +
+	"session_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\tsessionId\"\xd2\x06\n" +
 	"\x13SearchEventsRequest\x12\"\n" +
 	"\n" +
 	"page_token\x18\x01 \x01(\tH\x00R\tpageToken\x88\x01\x01\x12 \n" +
 	"\x04page\x18\x02 \x01(\x05B\a\xfaB\x04\x1a\x02(\x01H\x01R\x04page\x88\x01\x01\x12+\n" +
-	"\tpage_size\x18\x03 \x01(\x05B\t\xfaB\x06\x1a\x04\x18d(\x01H\x02R\bpageSize\x88\x01\x01\x12\x1e\n" +
-	"\bbrand_id\x18\x04 \x01(\tH\x03R\abrandId\x88\x01\x01\x12&\n" +
+	"\tpage_size\x18\x03 \x01(\x05B\t\xfaB\x06\x1a\x04\x18d(\x01H\x02R\bpageSize\x88\x01\x01\x12$\n" +
+	"\vmerchant_id\x18\x04 \x01(\tH\x03R\n" +
+	"merchantId\x88\x01\x01\x12&\n" +
 	"\ftitle_search\x18\x05 \x01(\tH\x04R\vtitleSearch\x88\x01\x01\x12:\n" +
 	"\x17session_start_time_from\x18\x06 \x01(\tH\x05R\x14sessionStartTimeFrom\x88\x01\x01\x126\n" +
 	"\x15session_start_time_to\x18\a \x01(\tH\x06R\x12sessionStartTimeTo\x88\x01\x01\x12?\n" +
@@ -1555,8 +1557,8 @@ const file_api_event_event_proto_rawDesc = "" +
 	"\v_page_tokenB\a\n" +
 	"\x05_pageB\f\n" +
 	"\n" +
-	"_page_sizeB\v\n" +
-	"\t_brand_idB\x0f\n" +
+	"_page_sizeB\x0e\n" +
+	"\f_merchant_idB\x0f\n" +
 	"\r_title_searchB\x1a\n" +
 	"\x18_session_start_time_fromB\x18\n" +
 	"\x16_session_start_time_toB\x0f\n" +

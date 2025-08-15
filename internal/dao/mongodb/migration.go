@@ -24,7 +24,7 @@ var migrations = []Migration{
 			// Basic query index for console API
 			{
 				Keys: bson.D{
-					{Key: "brand_id", Value: 1},
+					{Key: "merchant_id", Value: 1},
 					{Key: "status", Value: 1},
 					{Key: "visibility", Value: 1},
 				},
@@ -32,7 +32,7 @@ var migrations = []Migration{
 			// Time range query index for sessions
 			{
 				Keys: bson.D{
-					{Key: "brand_id", Value: 1},
+					{Key: "merchant_id", Value: 1},
 					{Key: "sessions.start_time", Value: 1},
 				},
 			},
@@ -47,14 +47,14 @@ var migrations = []Migration{
 			// Sorting index for console list view
 			{
 				Keys: bson.D{
-					{Key: "brand_id", Value: 1},
+					{Key: "merchant_id", Value: 1},
 					{Key: "created_at", Value: -1},
 				},
 			},
 			// Sorting index for updated time
 			{
 				Keys: bson.D{
-					{Key: "brand_id", Value: 1},
+					{Key: "merchant_id", Value: 1},
 					{Key: "updated_at", Value: -1},
 				},
 			},
@@ -79,8 +79,8 @@ var migrations = []Migration{
 		Indexes: []mongo.IndexModel{
 			// 1. 事件查詢
 			{Keys: bson.D{{Key: "event_id", Value: 1}}},
-			// 2. Brand 隔離 + 時間排序
-			{Keys: bson.D{{Key: "brand_id", Value: 1}, {Key: "start_time", Value: 1}}},
+			// 2. Merchant 隔離 + 時間排序
+			{Keys: bson.D{{Key: "merchant_id", Value: 1}, {Key: "start_time", Value: 1}}},
 			// 3. 事件內 session 排序
 			{Keys: bson.D{{Key: "event_id", Value: 1}, {Key: "start_time", Value: 1}}},
 			// 4. 時間範圍查詢

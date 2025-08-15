@@ -140,7 +140,7 @@ func TestEventService_PatchPublishedEvent_Integration(t *testing.T) {
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 
 	// Create a published event
 	publishedEvent := testutils.TestPublishedEvent()
@@ -176,18 +176,18 @@ func TestEventService_PatchPublishedEvent_Integration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Mock the repository calls
-			eventRepo.On("ExistsByBrandAndID", ctx, brandID, eventID).Return(true, nil)
+			eventRepo.On("ExistsByMerchantAndID", ctx, merchantID, eventID).Return(true, nil)
 			eventRepo.On("FindByID", ctx, eventID).Return(publishedEvent, nil)
 
 			if !tt.expectError {
 				// Mock successful update - use MatchedBy to allow for field modifications
 				eventRepo.On("Update", ctx, eventID, mock.MatchedBy(func(event *models.Event) bool {
-					return event.ID == publishedEvent.ID && event.BrandID == publishedEvent.BrandID
+					return event.ID == publishedEvent.ID && event.MerchantID == publishedEvent.MerchantID
 				})).Return(publishedEvent, nil)
 			}
 
 			// Execute
-			result, err := eventService.PatchEvent(ctx, brandID, tt.req)
+			result, err := eventService.PatchEvent(ctx, merchantID, tt.req)
 
 			// Assert
 			if tt.expectError {

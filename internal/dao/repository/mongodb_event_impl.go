@@ -134,14 +134,14 @@ func (r *MongoEventRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// FindByBrandID finds events by brand ID with sessions populated and filtering
-func (r *MongoEventRepository) FindByBrandID(ctx context.Context, brandID string, filter *EventFilter) (*EventListResult, error) {
-	brandObjectID, err := primitive.ObjectIDFromHex(brandID)
+// FindByMerchantID finds events by merchant ID with sessions populated and filtering
+func (r *MongoEventRepository) FindByMerchantID(ctx context.Context, merchantID string, filter *EventFilter) (*EventListResult, error) {
+	merchantObjectID, err := primitive.ObjectIDFromHex(merchantID)
 	if err != nil {
-		return nil, fmt.Errorf("invalid brand ID: %w", err)
+		return nil, fmt.Errorf("invalid merchant ID: %w", err)
 	}
 
-	baseQuery := bson.M{"brand_id": brandObjectID}
+	baseQuery := bson.M{"merchant_id": merchantObjectID}
 
 	// Apply filters
 	if filter.Status != nil {
@@ -166,12 +166,12 @@ func (r *MongoEventRepository) FindPublic(ctx context.Context, filter *PublicEve
 	}
 
 	// Apply filters
-	if filter.BrandID != nil {
-		brandObjectID, err := primitive.ObjectIDFromHex(*filter.BrandID)
+	if filter.MerchantID != nil {
+		merchantObjectID, err := primitive.ObjectIDFromHex(*filter.MerchantID)
 		if err != nil {
-			return nil, fmt.Errorf("invalid brand ID: %w", err)
+			return nil, fmt.Errorf("invalid merchant ID: %w", err)
 		}
-		baseQuery["brand_id"] = brandObjectID
+		baseQuery["merchant_id"] = merchantObjectID
 	}
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
 		baseQuery["$text"] = bson.M{"$search": *filter.TitleSearch}
@@ -242,16 +242,16 @@ func (r *MongoEventRepository) FindPublicByID(ctx context.Context, id string) (*
 	return events[0], nil
 }
 
-// CountByBrandAndStatus counts events by brand and status
-func (r *MongoEventRepository) CountByBrandAndStatus(ctx context.Context, brandID, status string) (int64, error) {
-	brandObjectID, err := primitive.ObjectIDFromHex(brandID)
+// CountByMerchantAndStatus counts events by merchant and status
+func (r *MongoEventRepository) CountByMerchantAndStatus(ctx context.Context, merchantID, status string) (int64, error) {
+	merchantObjectID, err := primitive.ObjectIDFromHex(merchantID)
 	if err != nil {
-		return 0, fmt.Errorf("invalid brand ID: %w", err)
+		return 0, fmt.Errorf("invalid merchant ID: %w", err)
 	}
 
 	query := bson.M{
-		"brand_id": brandObjectID,
-		"status":   status,
+		"merchant_id": merchantObjectID,
+		"status":      status,
 	}
 
 	count, err := r.collection.CountDocuments(ctx, query)
@@ -277,11 +277,11 @@ func (r *MongoEventRepository) ExistsByID(ctx context.Context, id string) (bool,
 	return count > 0, nil
 }
 
-// ExistsByBrandAndID checks if an event exists for a specific brand
-func (r *MongoEventRepository) ExistsByBrandAndID(ctx context.Context, brandID, id string) (bool, error) {
-	brandObjectID, err := primitive.ObjectIDFromHex(brandID)
+// ExistsByMerchantAndID checks if an event exists for a specific merchant
+func (r *MongoEventRepository) ExistsByMerchantAndID(ctx context.Context, merchantID, id string) (bool, error) {
+	merchantObjectID, err := primitive.ObjectIDFromHex(merchantID)
 	if err != nil {
-		return false, fmt.Errorf("invalid brand ID: %w", err)
+		return false, fmt.Errorf("invalid merchant ID: %w", err)
 	}
 
 	objectID, err := primitive.ObjectIDFromHex(id)
@@ -290,8 +290,8 @@ func (r *MongoEventRepository) ExistsByBrandAndID(ctx context.Context, brandID, 
 	}
 
 	count, err := r.collection.CountDocuments(ctx, bson.M{
-		"_id":      objectID,
-		"brand_id": brandObjectID,
+		"_id":         objectID,
+		"merchant_id": merchantObjectID,
 	})
 	if err != nil {
 		return false, fmt.Errorf("failed to check event existence: %w", err)

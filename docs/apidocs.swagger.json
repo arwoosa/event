@@ -366,8 +366,8 @@
             "format": "int32"
           },
           {
-            "name": "brand_id",
-            "description": "Filters\n\nfilter by specific brand",
+            "name": "merchant_id",
+            "description": "Filters\n\nfilter by specific merchant",
             "in": "query",
             "required": false,
             "type": "string"
@@ -599,7 +599,7 @@
         "title": {
           "type": "string"
         },
-        "brand_id": {
+        "merchant_id": {
           "type": "string"
         },
         "summary": {

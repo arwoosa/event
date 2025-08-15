@@ -35,8 +35,8 @@ func NewEventServiceServer(eventService *EventService, paginationConfig *conf.Pa
 
 // CreateEvent implements the gRPC CreateEvent method
 func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEventRequest) (*pb.CreateEventResponse, error) {
-	// Extract user and brand information from context
-	userID, brandID, err := s.extractUserAndBrandFromContext(ctx)
+	// Extract user and merchant information from context
+	userID, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEven
 		Sessions:      s.converter.ConvertSessionsFromPB(req.Sessions),
 		Detail:        s.converter.ConvertDetailFromPB(req.Detail),
 		FAQ:           s.converter.ConvertFAQFromPB(req.Faq),
-		BrandID:       brandID,
+		MerchantID:    merchantID,
 		UserID:        userID,
 	}
 
@@ -70,8 +70,8 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEven
 
 // GetEventList implements the gRPC GetEventList method
 func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventListRequest) (*pb.EventListResponse, error) {
-	// Extract brand information from context
-	_, brandID, err := s.extractUserAndBrandFromContext(ctx)
+	// Extract merchant information from context
+	_, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventL
 	}
 
 	// Get events
-	result, err := s.eventService.GetEventList(ctx, brandID, filter)
+	result, err := s.eventService.GetEventList(ctx, merchantID, filter)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -159,14 +159,14 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventL
 
 // GetEvent implements the gRPC GetEvent method
 func (s *EventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*pb.Event, error) {
-	// Extract brand information from context
-	_, brandID, err := s.extractUserAndBrandFromContext(ctx)
+	// Extract merchant information from context
+	_, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get event
-	event, err := s.eventService.GetEvent(ctx, brandID, req.Id)
+	event, err := s.eventService.GetEvent(ctx, merchantID, req.Id)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -176,8 +176,8 @@ func (s *EventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*pb.Eve
 
 // PatchEvent implements the gRPC PatchEvent method
 func (s *EventServiceServer) PatchEvent(ctx context.Context, req *pb.PatchEventRequest) (*pb.Event, error) {
-	// Extract user and brand information from context
-	userID, brandID, err := s.extractUserAndBrandFromContext(ctx)
+	// Extract user and merchant information from context
+	userID, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func (s *EventServiceServer) PatchEvent(ctx context.Context, req *pb.PatchEventR
 	}
 
 	// Patch event
-	event, err := s.eventService.PatchEvent(ctx, brandID, serviceReq)
+	event, err := s.eventService.PatchEvent(ctx, merchantID, serviceReq)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -226,14 +226,14 @@ func (s *EventServiceServer) PatchEvent(ctx context.Context, req *pb.PatchEventR
 
 // DeleteEvent implements the gRPC DeleteEvent method
 func (s *EventServiceServer) DeleteEvent(ctx context.Context, req *api.ID) (*emptypb.Empty, error) {
-	// Extract user and brand information from context
-	userID, brandID, err := s.extractUserAndBrandFromContext(ctx)
+	// Extract user and merchant information from context
+	userID, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Delete event
-	err = s.eventService.DeleteEvent(ctx, brandID, req.Id, userID)
+	err = s.eventService.DeleteEvent(ctx, merchantID, req.Id, userID)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -244,14 +244,14 @@ func (s *EventServiceServer) DeleteEvent(ctx context.Context, req *api.ID) (*emp
 
 // UpdateEventStatus implements the gRPC UpdateEventStatus method
 func (s *EventServiceServer) UpdateEventStatus(ctx context.Context, req *pb.UpdateEventStatusRequest) (*pb.Event, error) {
-	// Extract user and brand information from context
-	userID, brandID, err := s.extractUserAndBrandFromContext(ctx)
+	// Extract user and merchant information from context
+	userID, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Update status
-	event, err := s.eventService.UpdateEventStatus(ctx, brandID, req.Id, req.Status, userID)
+	event, err := s.eventService.UpdateEventStatus(ctx, merchantID, req.Id, req.Status, userID)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -261,7 +261,7 @@ func (s *EventServiceServer) UpdateEventStatus(ctx context.Context, req *pb.Upda
 
 // Helper methods
 
-func (s *EventServiceServer) extractUserAndBrandFromContext(ctx context.Context) (userID, brandID string, err error) {
+func (s *EventServiceServer) extractUserAndMerchantFromContext(ctx context.Context) (userID, merchantID string, err error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", "", status.Error(codes.Unauthenticated, "missing metadata")
@@ -274,14 +274,14 @@ func (s *EventServiceServer) extractUserAndBrandFromContext(ctx context.Context)
 	}
 	userID = userIDValues[0]
 
-	// Extract brand ID
-	brandIDValues := md.Get("brand-id")
-	if len(brandIDValues) == 0 {
-		return "", "", status.Error(codes.Unauthenticated, "missing brand-id header")
+	// Extract merchant ID
+	merchantIDValues := md.Get("merchant-id")
+	if len(merchantIDValues) == 0 {
+		return "", "", status.Error(codes.Unauthenticated, "missing merchant-id header")
 	}
-	brandID = brandIDValues[0]
+	merchantID = merchantIDValues[0]
 
-	return userID, brandID, nil
+	return userID, merchantID, nil
 }
 
 func (s *EventServiceServer) handleServiceError(err error) error {
@@ -316,14 +316,14 @@ func (s *EventServiceServer) handleServiceError(err error) error {
 
 // DeleteSession implements the gRPC DeleteSession method
 func (s *EventServiceServer) DeleteSession(ctx context.Context, req *pb.DeleteSessionRequest) (*emptypb.Empty, error) {
-	// Extract user and brand information from context
-	_, brandID, err := s.extractUserAndBrandFromContext(ctx)
+	// Extract user and merchant information from context
+	_, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Call session service to delete the session
-	err = s.eventService.sessionService.DeleteSessionById(ctx, req.EventId, req.SessionId, brandID)
+	err = s.eventService.sessionService.DeleteSessionById(ctx, req.EventId, req.SessionId, merchantID)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}

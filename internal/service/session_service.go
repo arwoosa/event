@@ -30,13 +30,13 @@ func NewSessionService(
 }
 
 // CreateSessionsForEvent creates sessions for an event
-func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID, brandID string, sessionReqs []*SessionRequest) ([]*models.Session, error) {
-	// Validate event exists and belongs to brand
+func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID, merchantID string, sessionReqs []*SessionRequest) ([]*models.Session, error) {
+	// Validate event exists and belongs to merchant
 	event, err := s.eventRepo.FindByID(ctx, eventID)
 	if err != nil {
 		return nil, err
 	}
-	if event.BrandID.Hex() != brandID {
+	if event.MerchantID.Hex() != merchantID {
 		return nil, errors.ErrUnauthorized
 	}
 
@@ -56,9 +56,9 @@ func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID, br
 }
 
 // GetSessionsForEvent retrieves all sessions for an event
-func (s *SessionService) GetSessionsForEvent(ctx context.Context, eventID, brandID string) ([]*models.Session, error) {
-	// Verify event belongs to brand
-	exists, err := s.eventRepo.ExistsByBrandAndID(ctx, brandID, eventID)
+func (s *SessionService) GetSessionsForEvent(ctx context.Context, eventID, merchantID string) ([]*models.Session, error) {
+	// Verify event belongs to merchant
+	exists, err := s.eventRepo.ExistsByMerchantAndID(ctx, merchantID, eventID)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (s *SessionService) GetSessionsForEvents(ctx context.Context, eventIDs []st
 // UpdateSessionsForEvent updates sessions for an event with smart diff-based approach
 // Handles create, update operations based on session IDs in the request
 // existingEvent and existingSessions are optional - if provided, skips database queries for better performance
-func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, brandID string, sessionReqs []*SessionRequest, existingEvent *models.Event, existingSessions []*models.Session) ([]*models.Session, error) {
+func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, merchantID string, sessionReqs []*SessionRequest, existingEvent *models.Event, existingSessions []*models.Session) ([]*models.Session, error) {
 	// Use provided data or fetch from database
 	var event *models.Event
 	var sessions []*models.Session
@@ -86,15 +86,15 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, br
 	if existingEvent != nil {
 		event = existingEvent
 	} else {
-		// Validate event exists and belongs to brand
+		// Validate event exists and belongs to merchant
 		event, err = s.eventRepo.FindByID(ctx, eventID)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	// Validate brand ownership
-	if event.BrandID.Hex() != brandID {
+	// Validate merchant ownership
+	if event.MerchantID.Hex() != merchantID {
 		return nil, errors.ErrUnauthorized
 	}
 
@@ -176,9 +176,9 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, br
 }
 
 // DeleteSessionsForEvent removes all sessions for an event
-func (s *SessionService) DeleteSessionsForEvent(ctx context.Context, eventID, brandID string) error {
-	// Verify event belongs to brand
-	exists, err := s.eventRepo.ExistsByBrandAndID(ctx, brandID, eventID)
+func (s *SessionService) DeleteSessionsForEvent(ctx context.Context, eventID, merchantID string) error {
+	// Verify event belongs to merchant
+	exists, err := s.eventRepo.ExistsByMerchantAndID(ctx, merchantID, eventID)
 	if err != nil {
 		return err
 	}
@@ -190,18 +190,18 @@ func (s *SessionService) DeleteSessionsForEvent(ctx context.Context, eventID, br
 }
 
 // GetSession retrieves a single session by ID
-func (s *SessionService) GetSession(ctx context.Context, sessionID, brandID string) (*models.Session, error) {
+func (s *SessionService) GetSession(ctx context.Context, sessionID, merchantID string) (*models.Session, error) {
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Verify session belongs to brand through parent event
+	// Verify session belongs to merchant through parent event
 	event, err := s.eventRepo.FindByID(ctx, session.EventID.Hex())
 	if err != nil {
 		return nil, err
 	}
-	if event.BrandID.Hex() != brandID {
+	if event.MerchantID.Hex() != merchantID {
 		return nil, errors.ErrUnauthorized
 	}
 
@@ -209,13 +209,13 @@ func (s *SessionService) GetSession(ctx context.Context, sessionID, brandID stri
 }
 
 // DeleteSessionById removes a session by session ID for a specific event
-func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, sessionID, brandID string) error {
-	// Validate event exists and belongs to brand
+func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, sessionID, merchantID string) error {
+	// Validate event exists and belongs to merchant
 	event, err := s.eventRepo.FindByID(ctx, eventID)
 	if err != nil {
 		return err
 	}
-	if event.BrandID.Hex() != brandID {
+	if event.MerchantID.Hex() != merchantID {
 		return errors.ErrUnauthorized
 	}
 
@@ -237,19 +237,19 @@ func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, session
 	return s.sessionRepo.Delete(ctx, sessionID)
 }
 
-// GetSessionsByBrand retrieves sessions for a brand with filtering
-func (s *SessionService) GetSessionsByBrand(ctx context.Context, brandID string, filter *repository.SessionFilter) ([]*models.Session, error) {
-	return s.sessionRepo.FindByBrandID(ctx, brandID, filter)
+// GetSessionsByMerchant retrieves sessions for a merchant with filtering
+func (s *SessionService) GetSessionsByMerchant(ctx context.Context, merchantID string, filter *repository.SessionFilter) ([]*models.Session, error) {
+	return s.sessionRepo.FindByMerchantID(ctx, merchantID, filter)
 }
 
 // ValidateSessionsForEvent validates sessions without creating them
-func (s *SessionService) ValidateSessionsForEvent(ctx context.Context, eventID, brandID string, sessionReqs []*SessionRequest) error {
-	// Validate event exists and belongs to brand
+func (s *SessionService) ValidateSessionsForEvent(ctx context.Context, eventID, merchantID string, sessionReqs []*SessionRequest) error {
+	// Validate event exists and belongs to merchant
 	event, err := s.eventRepo.FindByID(ctx, eventID)
 	if err != nil {
 		return err
 	}
-	if event.BrandID.Hex() != brandID {
+	if event.MerchantID.Hex() != merchantID {
 		return errors.ErrUnauthorized
 	}
 

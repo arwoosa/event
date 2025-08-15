@@ -45,7 +45,7 @@ type CreateEventRequest struct {
 	Sessions      []*SessionRequest
 	Detail        []DetailBlockRequest
 	FAQ           []*FAQRequest
-	BrandID       string
+	MerchantID    string
 	UserID        string
 }
 
@@ -120,7 +120,7 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 
 	// Create sessions for the event if provided
 	if len(req.Sessions) > 0 {
-		_, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.BrandID, req.Sessions)
+		_, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.MerchantID, req.Sessions)
 		if err != nil {
 			// If session creation fails, we should delete the event to maintain consistency
 			if deleteErr := s.eventRepo.Delete(ctx, createdEvent.ID.Hex()); deleteErr != nil {
@@ -136,10 +136,10 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 	return createdEvent, nil
 }
 
-// GetEvent retrieves an event by ID for the specified brand
-func (s *EventService) GetEvent(ctx context.Context, brandID, eventID string) (*models.Event, error) {
-	// Check if event exists for this brand
-	exists, err := s.eventRepo.ExistsByBrandAndID(ctx, brandID, eventID)
+// GetEvent retrieves an event by ID for the specified merchant
+func (s *EventService) GetEvent(ctx context.Context, merchantID, eventID string) (*models.Event, error) {
+	// Check if event exists for this merchant
+	exists, err := s.eventRepo.ExistsByMerchantAndID(ctx, merchantID, eventID)
 	if err != nil {
 		return nil, err
 	}
@@ -150,18 +150,18 @@ func (s *EventService) GetEvent(ctx context.Context, brandID, eventID string) (*
 	return s.eventRepo.FindByID(ctx, eventID)
 }
 
-// GetEventList retrieves a list of events for the specified brand with filtering
-func (s *EventService) GetEventList(ctx context.Context, brandID string, filter *repository.EventFilter) (*repository.EventListResult, error) {
-	// Ensure brand ID is set in filter
-	filter.BrandID = &brandID
+// GetEventList retrieves a list of events for the specified merchant with filtering
+func (s *EventService) GetEventList(ctx context.Context, merchantID string, filter *repository.EventFilter) (*repository.EventListResult, error) {
+	// Ensure merchant ID is set in filter
+	filter.MerchantID = &merchantID
 
-	return s.eventRepo.FindByBrandID(ctx, brandID, filter)
+	return s.eventRepo.FindByMerchantID(ctx, merchantID, filter)
 }
 
 // PatchEvent partially updates an event
-func (s *EventService) PatchEvent(ctx context.Context, brandID string, req *PatchEventRequest) (*models.Event, error) {
+func (s *EventService) PatchEvent(ctx context.Context, merchantID string, req *PatchEventRequest) (*models.Event, error) {
 	// Get existing event
-	existingEvent, err := s.GetEvent(ctx, brandID, req.ID)
+	existingEvent, err := s.GetEvent(ctx, merchantID, req.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func (s *EventService) PatchEvent(ctx context.Context, brandID string, req *Patc
 			existingSessionPtrs[i] = &existingEvent.Sessions[i]
 		}
 
-		_, err = s.sessionService.UpdateSessionsForEvent(ctx, req.ID, brandID, req.Sessions, existingEvent, existingSessionPtrs)
+		_, err = s.sessionService.UpdateSessionsForEvent(ctx, req.ID, merchantID, req.Sessions, existingEvent, existingSessionPtrs)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update sessions: %w", err)
 		}
@@ -205,9 +205,9 @@ func (s *EventService) PatchEvent(ctx context.Context, brandID string, req *Patc
 }
 
 // DeleteEvent deletes an event
-func (s *EventService) DeleteEvent(ctx context.Context, brandID, eventID, userID string) error {
+func (s *EventService) DeleteEvent(ctx context.Context, merchantID, eventID, userID string) error {
 	// Get existing event
-	existingEvent, err := s.GetEvent(ctx, brandID, eventID)
+	existingEvent, err := s.GetEvent(ctx, merchantID, eventID)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (s *EventService) DeleteEvent(ctx context.Context, brandID, eventID, userID
 	}
 
 	// Delete sessions first
-	if err := s.sessionService.DeleteSessionsForEvent(ctx, eventID, brandID); err != nil {
+	if err := s.sessionService.DeleteSessionsForEvent(ctx, eventID, merchantID); err != nil {
 		return fmt.Errorf("failed to delete sessions: %w", err)
 	}
 
@@ -226,9 +226,9 @@ func (s *EventService) DeleteEvent(ctx context.Context, brandID, eventID, userID
 }
 
 // UpdateEventStatus updates the status of an event
-func (s *EventService) UpdateEventStatus(ctx context.Context, brandID, eventID, newStatus, userID string) (*models.Event, error) {
+func (s *EventService) UpdateEventStatus(ctx context.Context, merchantID, eventID, newStatus, userID string) (*models.Event, error) {
 	// Get existing event
-	existingEvent, err := s.GetEvent(ctx, brandID, eventID)
+	existingEvent, err := s.GetEvent(ctx, merchantID, eventID)
 	if err != nil {
 		return nil, err
 	}
@@ -379,9 +379,9 @@ func (s *EventService) validatePublishRequirements(ctx context.Context, event *m
 // Conversion methods
 
 func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*models.Event, error) {
-	brandID, err := primitive.ObjectIDFromHex(req.BrandID)
+	merchantID, err := primitive.ObjectIDFromHex(req.MerchantID)
 	if err != nil {
-		return nil, errors.NewValidationError("brand_id", "invalid brand_id")
+		return nil, errors.NewValidationError("merchant_id", "invalid merchant_id")
 	}
 
 	userID, err := primitive.ObjectIDFromHex(req.UserID)
@@ -458,7 +458,7 @@ func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*mo
 
 	return &models.Event{
 		Title:         req.Title,
-		BrandID:       brandID,
+		MerchantID:    merchantID,
 		Summary:       req.Summary,
 		Status:        status,
 		Visibility:    visibility,

@@ -18,7 +18,7 @@ func ConvertTestCreateEventRequest(req *testutils.TestCreateEventRequest) *Creat
 		Summary:       req.Summary,
 		Visibility:    req.Visibility,
 		CoverImageURL: req.CoverImageURL,
-		BrandID:       req.BrandID,
+		MerchantID:    req.MerchantID,
 		UserID:        req.UserID,
 	}
 
@@ -96,17 +96,17 @@ func ConvertTestPatchEventRequest(req *testutils.TestPatchEventRequest) *PatchEv
 // ConvertTestSearchEventsRequest converts testutils search request to service request
 func ConvertTestSearchEventsRequest(req *testutils.TestSearchEventsRequest) *SearchEventsRequest {
 	return &SearchEventsRequest{
-		BrandID:     req.BrandID,
+		MerchantID:  req.MerchantID,
 		TitleSearch: req.TitleSearch,
 		PageSize:    req.PageSize,
 	}
 }
 
-// CreateTestEventForBrand creates a test event with specific brand ID
-func CreateTestEventForBrand(brandID string) *models.Event {
+// CreateTestEventForMerchant creates a test event with specific merchant ID
+func CreateTestEventForMerchant(merchantID string) *models.Event {
 	event := testutils.TestEvent()
-	brand, _ := primitive.ObjectIDFromHex(brandID)
-	event.BrandID = brand
+	merchant, _ := primitive.ObjectIDFromHex(merchantID)
+	event.MerchantID = merchant
 	return event
 }
 

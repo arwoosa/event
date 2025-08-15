@@ -7,8 +7,8 @@
 ## 權限檢查原則
 
 - **統一驗證**: 所有權限檢查由 API Gateway 統一處理
-- **Brand 隔離**: 確保用戶只能存取所屬 Brand 的資源
-- **請求傳遞**: 經過驗證的請求會包含用戶和 Brand 資訊
+- **Merchant 隔離**: 確保用戶只能存取所屬 Merchant 的資源
+- **請求傳遞**: 經過驗證的請求會包含用戶和 Merchant 資訊
 
 ## Console 管理 API 權限需求
 
@@ -19,10 +19,10 @@
    - 檢查用戶是否已登入
    - 驗證 JWT Token 有效性
 
-2. **Brand 成員驗證**  
-   - 驗證用戶是否為指定 Brand 的成員
-   - 從請求路徑或參數中取得 Brand ID
-   - 確認用戶有存取該 Brand 資源的權限
+2. **Merchant 成員驗證**  
+   - 驗證用戶是否為指定 Merchant 的成員
+   - 從請求路徑或參數中取得 Merchant ID
+   - 確認用戶有存取該 Merchant 資源的權限
 
 3. **Header 傳遞**
    - 驗證通過後，傳遞以下 Headers 給微服務：
@@ -30,38 +30,38 @@
      - `X-User-Email`: 用戶 Email  
      - `X-User-Name`: 用戶名稱
      - `X-User-Avatar`: 用戶頭像 URL
-     - `X-Brand-Id`: Brand ID
+     - `X-Merchant-Id`: Merchant ID
 
 ### 具體 API 權限
 
 #### 1. 建立 Event
 - **端點**: `POST /console/events`
-- **權限**: 用戶為 Brand 成員
-- **額外檢查**: 從請求 body 中的 `brand_id` 進行 Brand 成員驗證
+- **權限**: 用戶為 Merchant 成員
+- **額外檢查**: 從請求 body 中的 `merchant_id` 進行 Merchant 成員驗證
 
 #### 2. 查看 Event 列表
 - **端點**: `GET /console/events`
-- **權限**: 用戶為 Brand 成員
-- **範圍**: 只返回該 Brand 下的 Events
+- **權限**: 用戶為 Merchant 成員
+- **範圍**: 只返回該 Merchant 下的 Events
 
 #### 3. 查看單一 Event
 - **端點**: `GET /console/events/{id}`
-- **權限**: 用戶為 Brand 成員 + Event 屬於該 Brand
-- **檢查方式**: 需先查詢 Event 的 brand_id，再驗證權限
+- **權限**: 用戶為 Merchant 成員 + Event 屬於該 Merchant
+- **檢查方式**: 需先查詢 Event 的 merchant_id，再驗證權限
 
 #### 4. 更新 Event
 - **端點**: `PUT /console/events/{id}`, `PATCH /console/events/{id}`
-- **權限**: 用戶為 Brand 成員 + Event 屬於該 Brand
+- **權限**: 用戶為 Merchant 成員 + Event 屬於該 Merchant
 - **額外規則**: published 狀態的 Event 不可修改（由微服務處理）
 
 #### 5. 刪除 Event
 - **端點**: `DELETE /console/events/{id}`
-- **權限**: 用戶為 Brand 成員 + Event 屬於該 Brand
+- **權限**: 用戶為 Merchant 成員 + Event 屬於該 Merchant
 - **額外規則**: published 狀態的 Event 不可刪除（由微服務處理）
 
 #### 6. 變更 Event 狀態
 - **端點**: `PUT /console/events/{id}/status`
-- **權限**: 用戶為 Brand 成員 + Event 屬於該 Brand
+- **權限**: 用戶為 Merchant 成員 + Event 屬於該 Merchant
 
 ## Public API 權限需求
 
@@ -77,16 +77,16 @@
 
 ## 實作建議
 
-### 1. Brand 成員驗證邏輯
+### 1. Merchant 成員驗證邏輯
 ```
-IF user_id NOT IN brand_members(brand_id) THEN
+IF user_id NOT IN merchant_members(merchant_id) THEN
     RETURN 403 PermissionDenied
 END IF
 ```
 
 ### 2. 資源隔離檢查
 ```
-IF event.brand_id != user.brand_id THEN
+IF event.merchant_id != user.merchant_id THEN
     RETURN 403 PermissionDenied  
 END IF
 ```
@@ -101,7 +101,7 @@ END IF
 
 ### 新增 AllowedHeaders
 需要在 API Gateway 的 CORS 設定中新增：
-- `X-Brand-Id`
+- `X-Merchant-Id`
 
 ### Headers 傳遞映射
 ```
@@ -109,7 +109,7 @@ x-user-id → X-User-Id
 x-user-email → X-User-Email  
 x-user-name → X-User-Name
 x-user-avatar → X-User-Avatar
-x-brand-id → X-Brand-Id
+x-merchant-id → X-Merchant-Id
 ```
 
 ## 權限檢查流程圖
@@ -119,7 +119,7 @@ x-brand-id → X-Brand-Id
     ↓
 身份驗證（JWT）
     ↓
-Brand 成員驗證
+Merchant 成員驗證
     ↓  
 設定 Headers
     ↓
@@ -130,7 +130,7 @@ Brand 成員驗證
 
 ## 注意事項
 
-1. **不需要角色細分**: 目前所有 Brand 成員都有相同權限
+1. **不需要角色細分**: 目前所有 Merchant 成員都有相同權限
 2. **業務規則檢查**: 狀態轉換等業務規則由微服務處理
-3. **快取考量**: 未來可考慮快取 Brand 成員資訊以提升效能
+3. **快取考量**: 未來可考慮快取 Merchant 成員資訊以提升效能
 4. **錯誤處理**: 統一錯誤格式，避免洩露內部資訊

@@ -130,7 +130,7 @@ event/
 {
   "_id": ObjectId,
   "title": String,
-  "brand_id": ObjectId,
+  "merchant_id": ObjectId,
   "summary": String,
   "status": String,              // "draft", "published", "archived"
   "visibility": String,          // "public", "private"
@@ -180,7 +180,7 @@ var migrations = []Migration{
       // 基本查詢索引
       {
         Keys: bson.D{
-          {Key: "brand_id", Value: 1},
+          {Key: "merchant_id", Value: 1},
           {Key: "status", Value: 1},
           {Key: "visibility", Value: 1},
         },
@@ -188,7 +188,7 @@ var migrations = []Migration{
       // 時間範圍查詢索引
       {
         Keys: bson.D{
-          {Key: "brand_id", Value: 1},
+          {Key: "merchant_id", Value: 1},
           {Key: "sessions.start_time", Value: 1},
         },
       },
@@ -203,7 +203,7 @@ var migrations = []Migration{
       // 排序索引
       {
         Keys: bson.D{
-          {Key: "brand_id", Value: 1},
+          {Key: "merchant_id", Value: 1},
           {Key: "created_at", Value: -1},
         },
       },
@@ -278,7 +278,7 @@ type InternalService interface {
 type EventRepository interface {
     Create(ctx context.Context, event *Event) (*Event, error)
     FindByID(ctx context.Context, id string) (*Event, error)
-    FindByBrandID(ctx context.Context, brandID string, filter *EventFilter) ([]*Event, *Pagination, error)
+    FindByMerchantID(ctx context.Context, merchantID string, filter *EventFilter) ([]*Event, *Pagination, error)
     Update(ctx context.Context, id string, event *Event) (*Event, error)
     Delete(ctx context.Context, id string) error
     FindPublic(ctx context.Context, filter *PublicEventFilter) ([]*Event, *Pagination, error)
@@ -432,7 +432,7 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 
     // 3. 建立 Sessions（如果失敗則 Rollback Event）
     if len(req.Sessions) > 0 {
-        _, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.BrandID, req.Sessions)
+        _, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.MerchantID, req.Sessions)
         if err != nil {
             // Rollback: 刪除已建立的 Event
             s.eventRepo.Delete(ctx, createdEvent.ID.Hex())
@@ -570,7 +570,7 @@ service PublicEventService {
 
 // Internal Service for inter-service communication
 service InternalService {
-  // Get event by ID without brand validation (for internal services)
+  // Get event by ID without merchant validation (for internal services)
   rpc GetEventById(api.ID) returns (Event);
 }
 ```
@@ -585,12 +585,12 @@ service InternalService {
 
 2. **Header 處理**：
    - 現有 Header 映射：x-user-id, x-user-email, x-user-name 等
-   - **需要新增 x-brand-id 到 `headerTransMap`** 以支援權限檢查
+   - **需要新增 x-merchant-id 到 `headerTransMap`** 以支援權限檢查
 
 3. **權限驗證機制**：
-   - API Gateway 負責統一的身份驗證和 Brand 成員驗證
+   - API Gateway 負責統一的身份驗證和 Merchant 成員驗證
    - 微服務接收經過驗證的 Headers，無需再次驗證權限
-   - 所有 Console API 的請求都會包含驗證過的 user_id 和 brand_id
+   - 所有 Console API 的請求都會包含驗證過的 user_id 和 merchant_id
 
 4. **用戶資訊提取**：
 ```go
@@ -600,16 +600,16 @@ if err != nil {
     return nil, status.Error(codes.Unauthenticated, "user not authenticated")
 }
 
-// 需要擴展以支援 Brand ID
-func GetBrandID(ctx context.Context) (string, error) {
+// 需要擴展以支援 Merchant ID
+func GetMerchantID(ctx context.Context) (string, error) {
     md, ok := metadata.FromIncomingContext(ctx)
     if !ok {
         return "", fmt.Errorf("failed to get metadata from context")
     }
-    if len(md.Get("brand-id")) == 0 {
-        return "", fmt.Errorf("brand-id not found in metadata")
+    if len(md.Get("merchant-id")) == 0 {
+        return "", fmt.Errorf("merchant-id not found in metadata")
     }
-    return md.Get("brand-id")[0], nil
+    return md.Get("merchant-id")[0], nil
 }
 ```
 
@@ -657,7 +657,7 @@ func (s *OrderService) ValidateEventExists(ctx context.Context, eventID string) 
     }
     
     // 可以存取任何狀態的 Event
-    log.Info("Event found", "id", event.Id, "status", event.Status, "brand", event.BrandId)
+    log.Info("Event found", "id", event.Id, "status", event.Status, "merchant", event.MerchantId)
     return nil
 }
 ```
@@ -671,8 +671,8 @@ func (s *OrderService) ValidateEventExists(ctx context.Context, eventID string) 
 
 | 功能 | Console API | Public API | Internal API |
 |------|-------------|------------|--------------|
-| 權限驗證 | 需要 User + Brand | 無需驗證 | 無需驗證 |
-| 品牌隔離 | 僅限所屬Brand | 公開Event | **無限制** |
+| 權限驗證 | 需要 User + Merchant | 無需驗證 | 無需驗證 |
+| 品牌隔離 | 僅限所屬Merchant | 公開Event | **無限制** |
 | 狀態限制 | 無限制 | 僅Published | **無限制** |
 | 協議支援 | gRPC + HTTP | gRPC + HTTP | **僅gRPC** |
 | 使用對象 | 管理後台 | 前台用戶 | **內部服務** |
@@ -862,7 +862,7 @@ import vulpeslog "github.com/arwoosa/vulpes/log"
 vulpeslog.Info("Event created successfully", 
     vulpeslog.String("event_id", eventID),
     vulpeslog.String("user_id", userID),
-    vulpeslog.String("brand_id", brandID),
+    vulpeslog.String("merchant_id", merchantID),
     vulpeslog.String("action", "create_event"),
     vulpeslog.Duration("duration", duration),
 )
@@ -902,7 +902,7 @@ var (
             Name: "events_created_total",
             Help: "Total number of events created",
         },
-        []string{"brand_id", "status"},
+        []string{"merchant_id", "status"},
     )
     
     eventQueryDuration = prometheus.NewHistogramVec(
@@ -971,7 +971,7 @@ func (s *Server) HealthCheck(ctx context.Context, req *empty.Empty) (*api.Respon
 - 檔案上傳路徑驗證
 
 ### 11.2 權限控制
-- Brand 隔離確保資料安全
+- Merchant 隔離確保資料安全
 - Header 驗證防止偽造請求
 - 狀態轉換權限檢查
 

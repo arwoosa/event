@@ -29,7 +29,7 @@ func NewInternalServiceServer(eventRepo repository.EventRepository) *InternalSer
 
 // GetEventById implements the gRPC GetEventById method for internal services
 func (s *InternalServiceServer) GetEventById(ctx context.Context, req *api.ID) (*pb.Event, error) {
-	// Get event without brand validation (for internal service use)
+	// Get event without merchant validation (for internal service use)
 	event, err := s.eventRepo.FindByID(ctx, req.Id)
 	if err != nil {
 		return nil, s.handleServiceError(err)

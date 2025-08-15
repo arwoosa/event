@@ -7,7 +7,7 @@ A Go-based event management microservice built with gRPC and gRPC-Gateway, provi
 This microservice follows Clean Architecture principles with:
 - **gRPC + HTTP REST APIs**: Dual protocol support via gRPC-Gateway
 - **MongoDB**: Document storage with geospatial indexing
-- **Brand Isolation**: Multi-tenant architecture with brand-level data separation
+- **Merchant Isolation**: Multi-tenant architecture with merchant-level data separation
 - **Vulpes Framework**: Shared utilities and middleware
 
 ## Environment Requirements
@@ -209,7 +209,7 @@ Both services expect these headers from the API Gateway:
 X-User-Id: user-uuid
 X-User-Email: user@example.com  
 X-User-Name: User Name
-X-Brand-Id: brand-uuid           # Required for brand isolation
+X-Merchant-Id: merchant-uuid           # Required for merchant isolation
 ```
 
 ### Service Monitoring
@@ -375,5 +375,5 @@ top -p $(pgrep event-server)
 
 - `dao/mongodb/migration` can define collections and indexes, which will be created during initialization
 - The service uses the Vulpes framework for shared utilities and middleware
-- Brand isolation is implemented at the service layer - ensure all operations include brand filtering
+- Merchant isolation is implemented at the service layer - ensure all operations include merchant filtering
 - For production deployment, consider using a process manager like systemd or supervisord

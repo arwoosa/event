@@ -32,12 +32,12 @@ func TestPublicService_SearchEvents_Success(t *testing.T) {
 	ctx := context.Background()
 
 	// Create search request
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 	titleSearch := "test event"
 	pageSize := int32(20)
 
 	req := &SearchEventsRequest{
-		BrandID:     &brandID,
+		MerchantID:  &merchantID,
 		TitleSearch: &titleSearch,
 		PageSize:    &pageSize,
 	}
@@ -260,9 +260,9 @@ func TestPublicService_SearchEvents_FilterValidation(t *testing.T) {
 		req  *SearchEventsRequest
 	}{
 		{
-			name: "With brand filter",
+			name: "With merchant filter",
 			req: &SearchEventsRequest{
-				BrandID: testutils.StringPtr(testutils.ValidObjectIDString()),
+				MerchantID: testutils.StringPtr(testutils.ValidObjectIDString()),
 			},
 		},
 		{

@@ -7,7 +7,7 @@ import (
 type Event struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Title         string             `bson:"title" json:"title"`
-	BrandID       primitive.ObjectID `bson:"brand_id" json:"brand_id"`
+	MerchantID    primitive.ObjectID `bson:"merchant_id" json:"merchant_id"`
 	Summary       string             `bson:"summary" json:"summary"`
 	Status        string             `bson:"status" json:"status"`                   // 狀態: "draft", "published", "archived"
 	Visibility    string             `bson:"visibility" json:"visibility"`           // 可見性: "public", "private"

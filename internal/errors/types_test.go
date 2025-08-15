@@ -216,7 +216,7 @@ func TestCommonErrors(t *testing.T) {
 		{"ErrNoSessions", ErrNoSessions, "event must have at least one session"},
 		{"ErrHasOrders", ErrHasOrders, "event has existing orders"},
 		{"ErrUnauthorized", ErrUnauthorized, "unauthorized access"},
-		{"ErrInvalidBrandID", ErrInvalidBrandID, "invalid brand_id"},
+		{"ErrInvalidMerchantID", ErrInvalidMerchantID, "invalid merchant_id"},
 	}
 
 	for _, tt := range tests {

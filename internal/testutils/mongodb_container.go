@@ -108,12 +108,12 @@ func (mc *MongoContainer) CreateIndexes(ctx context.Context, t *testing.T) {
 	// Event collection indexes
 	eventCollection := mc.Database.Collection("events")
 
-	// Brand ID index
+	// Merchant ID index
 	_, err := eventCollection.Indexes().CreateOne(ctx, mongo.IndexModel{
-		Keys: map[string]interface{}{"brand_id": 1},
+		Keys: map[string]interface{}{"merchant_id": 1},
 	})
 	if err != nil {
-		t.Fatalf("Failed to create brand_id index: %v", err)
+		t.Fatalf("Failed to create merchant_id index: %v", err)
 	}
 
 	// Status index
@@ -132,29 +132,29 @@ func (mc *MongoContainer) CreateIndexes(ctx context.Context, t *testing.T) {
 		t.Fatalf("Failed to create geospatial index: %v", err)
 	}
 
-	// Compound index for brand_id and status
+	// Compound index for merchant_id and status
 	_, err = eventCollection.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: map[string]interface{}{
-			"brand_id": 1,
-			"status":   1,
+			"merchant_id": 1,
+			"status":      1,
 		},
 	})
 	if err != nil {
-		t.Fatalf("Failed to create compound brand_id+status index: %v", err)
+		t.Fatalf("Failed to create compound merchant_id+status index: %v", err)
 	}
 
 	// Session collection indexes
 	sessionCollection := mc.Database.Collection("sessions")
 
-	// Event ID and Brand ID compound index
+	// Event ID and Merchant ID compound index
 	_, err = sessionCollection.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: map[string]interface{}{
-			"event_id": 1,
-			"brand_id": 1,
+			"event_id":    1,
+			"merchant_id": 1,
 		},
 	})
 	if err != nil {
-		t.Fatalf("Failed to create event_id+brand_id index: %v", err)
+		t.Fatalf("Failed to create event_id+merchant_id index: %v", err)
 	}
 
 	// Start time index for time-based queries

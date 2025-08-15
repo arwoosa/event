@@ -4,8 +4,11 @@ go 1.23.3
 
 toolchain go1.24.1
 
+// Replace vulpes submodule with local path
+// replace github.com/arwoosa/vulpes => ./pkg/vulpes
+
 require (
-	github.com/arwoosa/vulpes v0.0.0
+	github.com/arwoosa/vulpes v0.2.5-dev
 	github.com/envoyproxy/protoc-gen-validate v1.2.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/spf13/viper v1.20.1
@@ -112,6 +115,3 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250715232539-7130f93afb79 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// Replace vulpes submodule with local path
-replace github.com/arwoosa/vulpes => ./pkg/vulpes

@@ -23,7 +23,7 @@ func TestSessionService_CreateSessionsForEvent_Success(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 
 	// Create session requests
 	sessionReqs := []*SessionRequest{
@@ -39,7 +39,7 @@ func TestSessionService_CreateSessionsForEvent_Success(t *testing.T) {
 
 	// Mock event validation
 	event := testutils.TestEvent()
-	event.BrandID, _ = primitive.ObjectIDFromHex(brandID)
+	event.MerchantID, _ = primitive.ObjectIDFromHex(merchantID)
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 
 	// Mock successful session creation
@@ -47,7 +47,7 @@ func TestSessionService_CreateSessionsForEvent_Success(t *testing.T) {
 	sessionRepo.On("CreateBatch", ctx, testutils.MatchAnySessionSlice()).Return(createdSessions, nil)
 
 	// Execute
-	result, err := sessionService.CreateSessionsForEvent(ctx, eventID, brandID, sessionReqs)
+	result, err := sessionService.CreateSessionsForEvent(ctx, eventID, merchantID, sessionReqs)
 
 	// Assert
 	require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestSessionService_CreateSessionsForEvent_EventNotFound(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 
 	sessionReqs := []*SessionRequest{
 		{
@@ -81,7 +81,7 @@ func TestSessionService_CreateSessionsForEvent_EventNotFound(t *testing.T) {
 	eventRepo.On("FindByID", ctx, eventID).Return(nil, errors.ErrEventNotFound)
 
 	// Execute
-	result, err := sessionService.CreateSessionsForEvent(ctx, eventID, brandID, sessionReqs)
+	result, err := sessionService.CreateSessionsForEvent(ctx, eventID, merchantID, sessionReqs)
 
 	// Assert
 	require.Error(t, err)
@@ -91,7 +91,7 @@ func TestSessionService_CreateSessionsForEvent_EventNotFound(t *testing.T) {
 	eventRepo.AssertExpectations(t)
 }
 
-func TestSessionService_CreateSessionsForEvent_WrongBrand(t *testing.T) {
+func TestSessionService_CreateSessionsForEvent_WrongMerchant(t *testing.T) {
 	// Setup
 	eventRepo := &mocks.MockEventRepository{}
 	sessionRepo := &mocks.MockSessionRepository{}
@@ -100,8 +100,8 @@ func TestSessionService_CreateSessionsForEvent_WrongBrand(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	brandID := testutils.ValidObjectIDString()
-	wrongBrandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
+	wrongMerchantID := testutils.ValidObjectIDString()
 
 	sessionReqs := []*SessionRequest{
 		{
@@ -110,13 +110,13 @@ func TestSessionService_CreateSessionsForEvent_WrongBrand(t *testing.T) {
 		},
 	}
 
-	// Mock event with different brand
+	// Mock event with different merchant
 	event := testutils.TestEvent()
-	event.BrandID, _ = primitive.ObjectIDFromHex(wrongBrandID) // Different brand
+	event.MerchantID, _ = primitive.ObjectIDFromHex(wrongMerchantID) // Different merchant
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 
 	// Execute
-	result, err := sessionService.CreateSessionsForEvent(ctx, eventID, brandID, sessionReqs)
+	result, err := sessionService.CreateSessionsForEvent(ctx, eventID, merchantID, sessionReqs)
 
 	// Assert
 	require.Error(t, err)
@@ -135,17 +135,17 @@ func TestSessionService_GetSessionsForEvent_Success(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 
 	// Mock existence check
-	eventRepo.On("ExistsByBrandAndID", ctx, brandID, eventID).Return(true, nil)
+	eventRepo.On("ExistsByMerchantAndID", ctx, merchantID, eventID).Return(true, nil)
 
 	// Mock sessions retrieval
 	sessions := testutils.TestSessionsForEvent(primitive.NewObjectID(), 3)
 	sessionRepo.On("FindByEventID", ctx, eventID).Return(sessions, nil)
 
 	// Execute
-	result, err := sessionService.GetSessionsForEvent(ctx, eventID, brandID)
+	result, err := sessionService.GetSessionsForEvent(ctx, eventID, merchantID)
 
 	// Assert
 	require.NoError(t, err)
@@ -165,13 +165,13 @@ func TestSessionService_GetSessionsForEvent_EventNotExists(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 
 	// Mock existence check returns false
-	eventRepo.On("ExistsByBrandAndID", ctx, brandID, eventID).Return(false, nil)
+	eventRepo.On("ExistsByMerchantAndID", ctx, merchantID, eventID).Return(false, nil)
 
 	// Execute
-	result, err := sessionService.GetSessionsForEvent(ctx, eventID, brandID)
+	result, err := sessionService.GetSessionsForEvent(ctx, eventID, merchantID)
 
 	// Assert
 	require.Error(t, err)
@@ -190,21 +190,21 @@ func TestSessionService_GetSession_Success(t *testing.T) {
 
 	ctx := context.Background()
 	sessionID := testutils.ValidObjectIDString()
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 
 	// Create session and matching event
 	session := testutils.TestSession()
 	event := testutils.TestEvent()
 	event.ID = session.EventID
-	event.BrandID, _ = primitive.ObjectIDFromHex(brandID) // Set matching brand
+	event.MerchantID, _ = primitive.ObjectIDFromHex(merchantID) // Set matching merchant
 
 	// Mock session retrieval
 	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
-	// Mock event retrieval for brand validation (new requirement)
+	// Mock event retrieval for merchant validation (new requirement)
 	eventRepo.On("FindByID", ctx, session.EventID.Hex()).Return(event, nil)
 
 	// Execute
-	result, err := sessionService.GetSession(ctx, sessionID, brandID)
+	result, err := sessionService.GetSession(ctx, sessionID, merchantID)
 
 	// Assert
 	require.NoError(t, err)
@@ -215,7 +215,7 @@ func TestSessionService_GetSession_Success(t *testing.T) {
 	eventRepo.AssertExpectations(t)
 }
 
-func TestSessionService_GetSession_UnauthorizedBrand(t *testing.T) {
+func TestSessionService_GetSession_UnauthorizedMerchant(t *testing.T) {
 	// Setup
 	sessionRepo := &mocks.MockSessionRepository{}
 	eventRepo := &mocks.MockEventRepository{}
@@ -224,22 +224,22 @@ func TestSessionService_GetSession_UnauthorizedBrand(t *testing.T) {
 
 	ctx := context.Background()
 	sessionID := testutils.ValidObjectIDString()
-	brandID := testutils.ValidObjectIDString()
-	differentBrandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
+	differentMerchantID := testutils.ValidObjectIDString()
 
-	// Create session and event with different brand
+	// Create session and event with different merchant
 	session := testutils.TestSession()
 	event := testutils.TestEvent()
 	event.ID = session.EventID
-	event.BrandID, _ = primitive.ObjectIDFromHex(differentBrandID) // Different brand
+	event.MerchantID, _ = primitive.ObjectIDFromHex(differentMerchantID) // Different merchant
 
 	// Mock session retrieval
 	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
-	// Mock event retrieval for brand validation
+	// Mock event retrieval for merchant validation
 	eventRepo.On("FindByID", ctx, session.EventID.Hex()).Return(event, nil)
 
 	// Execute
-	result, err := sessionService.GetSession(ctx, sessionID, brandID)
+	result, err := sessionService.GetSession(ctx, sessionID, merchantID)
 
 	// Assert
 	require.Error(t, err)
@@ -259,7 +259,7 @@ func TestSessionService_ValidateSessionsForEvent_Success(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 
 	// Create valid session requests
 	sessionReqs := []*SessionRequest{
@@ -275,11 +275,11 @@ func TestSessionService_ValidateSessionsForEvent_Success(t *testing.T) {
 
 	// Mock event validation
 	event := testutils.TestEvent()
-	event.BrandID, _ = primitive.ObjectIDFromHex(brandID)
+	event.MerchantID, _ = primitive.ObjectIDFromHex(merchantID)
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 
 	// Execute
-	err := sessionService.ValidateSessionsForEvent(ctx, eventID, brandID, sessionReqs)
+	err := sessionService.ValidateSessionsForEvent(ctx, eventID, merchantID, sessionReqs)
 
 	// Assert
 	require.NoError(t, err)
@@ -296,7 +296,7 @@ func TestSessionService_ValidateSessionsForEvent_DuplicateTimes(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	brandID := testutils.ValidObjectIDString()
+	merchantID := testutils.ValidObjectIDString()
 
 	// Create duplicate session requests (same times)
 	sameTime := time.Now().Add(time.Hour * 24)
@@ -313,11 +313,11 @@ func TestSessionService_ValidateSessionsForEvent_DuplicateTimes(t *testing.T) {
 
 	// Mock event validation
 	event := testutils.TestEvent()
-	event.BrandID, _ = primitive.ObjectIDFromHex(brandID)
+	event.MerchantID, _ = primitive.ObjectIDFromHex(merchantID)
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 
 	// Execute
-	err := sessionService.ValidateSessionsForEvent(ctx, eventID, brandID, sessionReqs)
+	err := sessionService.ValidateSessionsForEvent(ctx, eventID, merchantID, sessionReqs)
 
 	// Assert
 	require.Error(t, err)

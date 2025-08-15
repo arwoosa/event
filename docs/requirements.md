@@ -5,21 +5,21 @@
 ### 1. 權限管理和角色定義
 
 **Event CRUD 權限：**
-- 建立：登入使用者且為該 Brand 成員（API Gateway 會驗證並傳遞 user_id, brand_id 等 header 資訊）
-- 編輯：該 Brand 的成員即可編輯
-- 刪除：該 Brand 的成員即可刪除
-- 狀態轉換權限：該 Brand 的成員，但受狀態規則限制
+- 建立：登入使用者且為該 Merchant 成員（API Gateway 會驗證並傳遞 user_id, merchant_id 等 header 資訊）
+- 編輯：該 Merchant 的成員即可編輯
+- 刪除：該 Merchant 的成員即可刪除
+- 狀態轉換權限：該 Merchant 的成員，但受狀態規則限制
 
 **角色系統：**
 - 目前為 Console 端（業主管理後台）
-- 角色分類：一般用戶、Brand 管理成員
+- 角色分類：一般用戶、Merchant 管理成員
 - 暫無系統管理員角色
-- BrandID 用途：區分不同企業群組，只有該 Brand 成員才能存取資源
+- MerchantID 用途：區分不同企業群組，只有該 Merchant 成員才能存取資源
 - 注意：前台使用者與後台用戶分開管理
 
 **跨服務權限：**
 - API Gateway 負責身份驗證和權限檢查
-- 微服務接收 header 中的 user_id, brand_id 等資訊
+- 微服務接收 header 中的 user_id, merchant_id 等資訊
 - 不需調用其他微服務驗證權限
 - CreatedBy/UpdatedBy 直接使用傳入的 user_id
 
@@ -34,7 +34,7 @@
 - `public`（公開）：可透過搜尋功能找到
 - `private`（私人）：只能透過分享連結查看，不會出現在搜尋結果中
 - 預設值：`private`
-- 管理權限：Brand 成員可修改（**備註：需考量用戶在 Brand 中的細分權限**）
+- 管理權限：Merchant 成員可修改（**備註：需考量用戶在 Merchant 中的細分權限**）
 
 **狀態轉換規則（重要更新）：**
 - **單向流程**：`Draft → Published → Archived`（不可逆轉）
@@ -75,14 +75,14 @@
 - 一個 Event 可以有多個 Session
 - 每個 Event 至少需要一個 Session
 - Session 透過 Event 管理，不獨立存在
-- **重要變更**：Session 不再儲存 brand_id，透過 Event 繼承權限範圍
+- **重要變更**：Session 不再儲存 merchant_id，透過 Event 繼承權限範圍
 
 **Session 資料結構更新：**
 - **新增欄位**：
   - `name`：場次名稱（可選，可空白）
   - `capacity`：容量限制（可選，可不限制）
 - **移除欄位**：
-  - `brand_id`：改由 Event 統一管理
+  - `merchant_id`：改由 Event 統一管理
 
 **Session 時間驗證規則：**
 - 同一 Event 的 Session 時間不可重疊
@@ -110,11 +110,11 @@
   - PATCH：部分欄位更新（支援前端自動儲存，減少資料傳輸）
 - 刪除 Event
 - 變更 Event 狀態（獨立端點）
-- 必填欄位：title, brand_id, sessions（至少一個）, cover_image_url, detail.content, location, visibility
+- 必填欄位：title, merchant_id, sessions（至少一個）, cover_image_url, detail.content, location, visibility
 
 **前台用戶 API：**
 - GET /events：公開搜尋（只返回 published + public 的 Event）
-  - 支援 brand_id 參數篩選
+  - 支援 merchant_id 參數篩選
   - 支援 title 全文搜尋
   - 支援地理位置範圍搜尋
   - 支援 Session 時間範圍篩選
@@ -139,7 +139,7 @@
 ### 5. 資料驗證規則
 
 **必填欄位驗證：**
-- Event 必填欄位：title, brand_id, sessions（至少一個）, cover_image_url, detail.content, location, visibility
+- Event 必填欄位：title, merchant_id, sessions（至少一個）, cover_image_url, detail.content, location, visibility
 - **Session 必填欄位**：start_time, end_time
 - **Session 可選欄位**：name（場次名稱，可空白）, capacity（容量限制，可空值表示不限制）
 - Location 必填欄位：name, address, place_id, coordinates（支援 Google Maps 整合和地理位置搜尋）
@@ -242,7 +242,7 @@
 **待 PO 確認的項目：**
 - 欄位長度限制規格
 - 草稿轉發布的完整性驗證規則
-- Brand 成員的細分權限控制
+- Merchant 成員的細分權限控制
 - 分享連結的具體實作方式
 
 **公司範本設計規範：**
@@ -254,7 +254,7 @@
 - **成功回應碼**：使用 `1000` 作為成功狀態碼
 
 **需要新增到 Header 管理的欄位：**
-- X-Brand-Id：Brand 識別（需新增到 AllowedHeaders）
+- X-Merchant-Id：Merchant 識別（需新增到 AllowedHeaders）
 
 **技術實作注意事項：**
 - MongoDB 索引策略：地理空間索引、複合索引支援時間範圍查詢
