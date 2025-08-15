@@ -1,6 +1,8 @@
 package service
 
 import (
+	"io"
+
 	"google.golang.org/grpc"
 
 	pb "event/api/event"
@@ -15,10 +17,11 @@ import (
 // This file registers the services with the Vulpes framework
 
 // RegisterConsoleServices registers only the console (management) services
-func RegisterConsoleServices(appConfig *conf.AppConfig) {
+// It now accepts a slice of io.Closer to register resources for graceful shutdown.
+func RegisterConsoleServices(appConfig *conf.AppConfig, closers *[]io.Closer) {
 	// Register console gRPC services
 	ezgrpc.InjectGrpcService(func(s grpc.ServiceRegistrar) {
-		registerConsoleServices(s, appConfig)
+		registerConsoleServices(s, appConfig, closers)
 	})
 
 	// Register console gRPC-Gateway handlers
@@ -37,7 +40,7 @@ func RegisterPublicServices(appConfig *conf.AppConfig) {
 }
 
 // registerConsoleServices sets up and registers only console (EventService) related gRPC services
-func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) {
+func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig, closers *[]io.Closer) {
 	if appConfig == nil {
 		log.Warn("Console services initialized with nil config - using mock services")
 		mockOrderService := NewMockOrderServiceClient(false, nil)
@@ -68,6 +71,8 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 	if appConfig.ExternalConfig != nil {
 		log.Info("Console services using real order service")
 		orderService = NewOrderServiceClient(appConfig.ExternalConfig.OrderService)
+		// Add the order service client to the list of closers for graceful shutdown
+		*closers = append(*closers, orderService)
 	} else {
 		log.Warn("Console services initialized without external config - using mock order service")
 		orderService = NewMockOrderServiceClient(false, nil)

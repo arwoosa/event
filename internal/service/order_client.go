@@ -119,3 +119,9 @@ func (m *MockOrderServiceClient) HasOrders(ctx context.Context, eventID string) 
 	}
 	return m.hasOrders, nil
 }
+
+// Close is the mock implementation for io.Closer, does nothing.
+func (m *MockOrderServiceClient) Close() error {
+	// The mock client doesn't hold any real connections, so nothing to do.
+	return nil
+}

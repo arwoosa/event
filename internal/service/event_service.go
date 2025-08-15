@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"time"
 
 	vulpeslog "github.com/arwoosa/vulpes/log"
@@ -101,6 +102,7 @@ type FAQRequest struct {
 // OrderServiceClient interface for external order service
 type OrderServiceClient interface {
 	HasOrders(ctx context.Context, eventID string) (bool, error)
+	io.Closer
 }
 
 // CreateEvent creates a new event

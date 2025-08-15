@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"os/signal"
 	"syscall"
 
@@ -38,14 +39,18 @@ func runConsoleServer(cmd *cobra.Command, args []string) {
 
 	appConfig := GetAppConfig()
 
+	// A slice to hold all resources that need to be closed gracefully.
+	var closers []io.Closer
+
 	// Initialize MongoDB singleton first - Console service requires database
+	// Note: We could also add the mongo client to the closers list if its client has a Close method.
 	if _, err := mongodb.InitMongoDB(ctx, appConfig.MongodbConfig); err != nil {
 		vulpeslog.Error("Failed to initialize MongoDB", vulpeslog.Err(err))
 		vulpeslog.Fatal("Console service requires MongoDB connection - cannot start without database")
 	}
 
-	// Register only console services
-	service.RegisterConsoleServices(appConfig)
+	// Register only console services and collect closers
+	service.RegisterConsoleServices(appConfig, &closers)
 
 	// Channel to listen for server errors
 	errChan := make(chan error, 1)
@@ -61,9 +66,12 @@ func runConsoleServer(cmd *cobra.Command, args []string) {
 	select {
 	case <-ctx.Done():
 		vulpeslog.Info("Shutdown signal received, shutting down server gracefully...")
-		// The context is canceled, the server will shut down.
-		// We can add a timeout for graceful shutdown if ezgrpc supports it.
-		// For now, relying on context cancellation.
+		// Close all registered resources.
+		for _, closer := range closers {
+			if err := closer.Close(); err != nil {
+				vulpeslog.Error("error closing resource during shutdown", vulpeslog.Err(err))
+			}
+		}
 	case err := <-errChan:
 		vulpeslog.Fatal("failed to run console server", vulpeslog.Err(err))
 	}

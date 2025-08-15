@@ -18,6 +18,14 @@ func (m *MockOrderService) HasOrders(ctx context.Context, eventID string) (bool,
 	return args.Bool(0), args.Error(1)
 }
 
+// Close implements io.Closer interface for graceful shutdown
+func (m *MockOrderService) Close() error {
+	// For the mock, we don't need to do anything, just fulfill the interface.
+	// We can, if needed, add mock expectations for this call as well.
+	args := m.Called()
+	return args.Error(0)
+}
+
 // Helper methods for common test scenarios
 
 // SetHasOrders sets up the mock to return specific values for HasOrders calls
