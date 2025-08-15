@@ -1,0 +1,52 @@
+when:
+  - event: [push, manual]
+
+steps:
+  build-and-push-dev:
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      # build_args:
+      #   APP_VERSION: ${CI_COMMIT_SHA:0:8}
+      repo: sjc.vultrcr.com/oosa/event
+      dockerfile: ./Dockerfile
+      platforms: linux/amd64,linux/arm64
+      registry: https://sjc.vultrcr.com/oosa
+      tag: dev
+      username:
+        from_secret: REGISTRY_USER
+      password:
+        from_secret: REGISTRY_TOKEN
+  notify-with-webhook:
+    image: 94peter/woodpecker-webhook:v0.0.3
+    settings:
+      webhooks:
+        # - webhook:
+        #     from_secret: PORTAINER_WEBHOOK_URL
+        #   provider: portainer
+        - webhook:
+            from_secret: GOOGLE_WEBHOOK_URL
+          provider: google_chat
+      debug: false
+  # wait-for-deployment:
+  #   image: alpine:latest
+  #   commands:
+  #   - echo "Waiting for 30 seconds"
+  #   - sleep 30
+  # api-testing:
+  #   image: 94peter/oosa-apidog-cli-testing:v1.0.0
+  #   environment:
+  #     APIDOG_ACCESS_TOKEN:
+  #       from_secret: APIDOG_ACCESS_TOKEN
+  #   commands:
+  #   - apidog run --access-token $APIDOG_ACCESS_TOKEN -f 1014781 -r cli --upload-report | tee /dev/stderr | grep -o 'https://app.apidog.com/link/[^ ]*' | sed 's/^/API測試報告連結：/' >> api-testing-msg
+  # notify-apitesting-result-webhook:
+  #   image: 94peter/woodpecker-webhook:v0.0.6
+  #   settings:
+  #     webhooks:
+  #       - webhook:
+  #           from_secret: GOOGLE_WEBHOOK_URL
+  #         provider: google_chat
+  #         configs:
+  #           msg_file: api-testing-msg
+  #     debug: false
+

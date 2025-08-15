@@ -9,7 +9,7 @@ toolchain go1.24.1
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250717185734-6c6e0d3c608e.1
-	github.com/arwoosa/vulpes v0.2.5-dev
+	github.com/arwoosa/vulpes v0.2.6-dev
 	github.com/envoyproxy/protoc-gen-validate v1.2.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/spf13/cobra v1.9.1

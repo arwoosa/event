@@ -1,4 +1,4 @@
-FROM golang:alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # 設置環境變數
 ENV GO111MODULE=on \
@@ -17,10 +17,7 @@ RUN go build -o partivo_event ./cmd/event-server/
 ###################
 # multi-stage build
 ###################
-FROM debian:stable-slim
-
-RUN apt update
-RUN apt install ca-certificates -y
+FROM scratch
 
 #COPY ./templates /templates
 WORKDIR /app

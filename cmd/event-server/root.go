@@ -79,6 +79,8 @@ func initConfig() {
 	log.SetConfig(
 		log.WithDev(isDev),
 		log.WithLevel(appConfig.LogConfig.Level),
+		log.WithServiceName(appConfig.Name),
+		log.WithEnv(appConfig.Mode),
 	)
 
 	log.Info("Configuration loaded successfully", log.String("config_file", viper.ConfigFileUsed()))
