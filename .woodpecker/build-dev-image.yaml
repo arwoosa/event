@@ -20,9 +20,9 @@ steps:
     image: 94peter/woodpecker-webhook:v0.0.3
     settings:
       webhooks:
-        # - webhook:
-        #     from_secret: PORTAINER_WEBHOOK_URL
-        #   provider: portainer
+        - webhook:
+            from_secret: PORTAINER_WEBHOOK_URL
+          provider: portainer
         - webhook:
             from_secret: GOOGLE_WEBHOOK_URL
           provider: google_chat
