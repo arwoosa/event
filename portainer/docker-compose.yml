@@ -17,4 +17,7 @@ services:
     command: ["public", "--config", "/etc/config.yaml"]
     environment:
       - SERVICE_NAME=partivo_event_public
-    
+networks:
+  default:
+    name: oosa-network
+    external: true
