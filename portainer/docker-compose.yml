@@ -1,9 +1,20 @@
 services:
-  media:
+  event-console:
     image: sjc.vultrcr.com/oosa/event:dev
-    container_name: event
+    container_name: event-console
     restart: always
     volumes:
       - ${CONFIG_FILE}:/etc/config.yaml:ro
-    command: ["serve","--config","/etc/config.yaml"]
+    command: ["console", "--config", "/etc/config.yaml"]
+    environment:
+      - SERVICE_NAME=partivo_event_console
+  event-public:
+    image: sjc.vultrcr.com/oosa/event:dev
+    container_name: event-public
+    restart: always
+    volumes:
+      - ${CONFIG_FILE}:/etc/config.yaml:ro
+    command: ["public", "--config", "/etc/config.yaml"]
+    environment:
+      - SERVICE_NAME=partivo_event_public
     
