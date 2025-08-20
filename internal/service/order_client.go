@@ -2,24 +2,21 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/encoding/protojson"
 
-	orderpb "event/api/order"
-	"event/conf"
+	"github.com/arwoosa/event/conf"
 
 	"github.com/arwoosa/vulpes/log"
 )
 
 // OrderServiceClientImpl implements OrderServiceClient interface
 type OrderServiceClientImpl struct {
-	conn    *grpc.ClientConn
-	client  orderpb.OrdersAdminServiceClient
+	conn *grpc.ClientConn
+	// client  orderpb.OrdersAdminServiceClient
 	timeout time.Duration
 }
 
@@ -31,11 +28,11 @@ func NewOrderServiceClient(config conf.ServiceConfig) OrderServiceClient {
 		return NewMockOrderServiceClient(false, fmt.Errorf("failed to connect to order service: %w", err))
 	}
 
-	client := orderpb.NewOrdersAdminServiceClient(conn)
+	// client := orderpb.NewOrdersAdminServiceClient(conn)
 
 	return &OrderServiceClientImpl{
-		conn:    conn,
-		client:  client,
+		conn: conn,
+		// client:  client,
 		timeout: config.Timeout,
 	}
 }
@@ -43,42 +40,43 @@ func NewOrderServiceClient(config conf.ServiceConfig) OrderServiceClient {
 // HasOrders checks if an event has any orders using gRPC
 func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) (bool, error) {
 	// Create timeout context
-	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
-	defer cancel()
+	// timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	// defer cancel()
 
-	// Create request
-	req := &orderpb.IsEventHasOrdersRequest{
-		Event: eventID,
-	}
+	// // Create request
+	// req := &orderpb.IsEventHasOrdersRequest{
+	// 	Event: eventID,
+	// }
 
-	// Call gRPC service
-	resp, err := c.client.IsEventHasOpenOrders(timeoutCtx, req)
-	if err != nil {
-		return false, fmt.Errorf("failed to call order service: %w", err)
-	}
+	// // Call gRPC service
+	// resp, err := c.client.IsEventHasOpenOrders(timeoutCtx, req)
+	// if err != nil {
+	// 	return false, fmt.Errorf("failed to call order service: %w", err)
+	// }
 
-	// Parse response data to get has_orders boolean
-	if resp.Data == nil {
-		return false, nil
-	}
+	// // Parse response data to get has_orders boolean
+	// if resp.Data == nil {
+	// 	return false, nil
+	// }
 
-	// Convert Any to JSON and parse
-	jsonBytes, err := protojson.Marshal(resp.Data)
-	if err != nil {
-		return false, fmt.Errorf("failed to marshal response data: %w", err)
-	}
+	// // Convert Any to JSON and parse
+	// jsonBytes, err := protojson.Marshal(resp.Data)
+	// if err != nil {
+	// 	return false, fmt.Errorf("failed to marshal response data: %w", err)
+	// }
 
-	var data map[string]interface{}
-	if err := json.Unmarshal(jsonBytes, &data); err != nil {
-		return false, fmt.Errorf("failed to unmarshal response data: %w", err)
-	}
+	// var data map[string]interface{}
+	// if err := json.Unmarshal(jsonBytes, &data); err != nil {
+	// 	return false, fmt.Errorf("failed to unmarshal response data: %w", err)
+	// }
 
-	hasOrders, ok := data["value"].(bool)
-	if !ok {
-		return false, nil
-	}
+	// hasOrders, ok := data["value"].(bool)
+	// if !ok {
+	// 	return false, nil
+	// }
 
-	return hasOrders, nil
+	// return hasOrders, nil
+	return false, nil
 }
 
 // Close closes the gRPC connection

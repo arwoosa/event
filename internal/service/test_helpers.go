@@ -4,9 +4,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"event/internal/dao/repository"
-	"event/internal/models"
-	"event/internal/testutils"
+	"github.com/arwoosa/event/internal/dao/repository"
+	"github.com/arwoosa/event/internal/models"
+	"github.com/arwoosa/event/internal/testutils"
 )
 
 // Conversion functions to avoid circular imports

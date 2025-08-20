@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"event/internal/errors"
-	"event/internal/service/mocks"
-	"event/internal/testutils"
+	"github.com/arwoosa/event/internal/errors"
+	"github.com/arwoosa/event/internal/service/mocks"
+	"github.com/arwoosa/event/internal/testutils"
 )
 
 func TestSessionService_CreateSessionsForEvent_Success(t *testing.T) {

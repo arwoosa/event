@@ -12,9 +12,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"event/conf"
-	"event/internal/errors"
-	"event/internal/models"
+	"github.com/arwoosa/event/conf"
+	"github.com/arwoosa/event/internal/errors"
+	"github.com/arwoosa/event/internal/models"
 )
 
 // MongoEventRepository implements EventRepository using MongoDB

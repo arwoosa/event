@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"event/internal/errors"
-	"event/internal/models"
+	"github.com/arwoosa/event/internal/errors"
+	"github.com/arwoosa/event/internal/models"
 )
 
 // AssertError checks that the error matches expected error type and message

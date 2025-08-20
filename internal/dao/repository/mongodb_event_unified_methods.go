@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"event/internal/models"
+	"github.com/arwoosa/event/internal/models"
 )
 
 // hasSessionTimeFilter checks if session time filtering is needed

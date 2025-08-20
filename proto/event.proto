@@ -4,10 +4,11 @@ package event;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
-import "api/common.proto";
-import "third_party/validate/validate.proto";
+import "proto/common.proto";
+import "validate/validate.proto";
 
-option go_package = "event/api/event";
+option go_package = "github.com/arwoosa/event/gen/pb/event";
+
 
 // Console Event Service for merchant management
 service EventService {
@@ -27,7 +28,7 @@ service EventService {
   }
   
   // Get a single event by ID
-  rpc GetEvent(api.ID) returns (Event) {
+  rpc GetEvent(common.ID) returns (Event) {
     option (google.api.http) = {
       get: "/console/events/{id}"
     };
@@ -42,7 +43,7 @@ service EventService {
   }
   
   // Delete an event
-  rpc DeleteEvent(api.ID) returns (google.protobuf.Empty) {
+  rpc DeleteEvent(common.ID) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/console/events/{id}"
     };
@@ -74,7 +75,7 @@ service PublicEventService {
   }
   
   // Get a public event by ID (for sharing links)
-  rpc GetEvent(api.ID) returns (Event) {
+  rpc GetEvent(common.ID) returns (Event) {
     option (google.api.http) = {
       get: "/events/{id}"
     };
@@ -85,7 +86,7 @@ service PublicEventService {
 // Internal Service for inter-service communication
 service InternalService {
   // Get event by ID without merchant validation (for internal services)
-  rpc GetEventById(api.ID) returns (Event);
+  rpc GetEventById(common.ID) returns (Event);
 }
 
 // Core Event message

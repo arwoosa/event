@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"event/conf"
-	"event/internal/dao/repository"
-	"event/internal/models"
+	"github.com/arwoosa/event/conf"
+	"github.com/arwoosa/event/internal/dao/repository"
+	"github.com/arwoosa/event/internal/models"
 )
 
 // PublicService implements the business logic for public event access

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"event/internal/constants"
+	"github.com/arwoosa/event/internal/constants"
 )
 
 type ResCode int64

@@ -10,10 +10,10 @@ mongodb:
   port: 27017
   db: "partivo_event"
 
-external:
-  order_service:
-    endpoint: "192.168.1.134:8081"
-    timeout: "10s"
+# external:
+#   order_service:
+#     endpoint: "192.168.1.134:8081"
+#     timeout: "10s"
 
 pagination:
   default_page_size: 20

@@ -7,9 +7,9 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"event/internal/dao/repository"
-	"event/internal/errors"
-	"event/internal/models"
+	"github.com/arwoosa/event/internal/dao/repository"
+	"github.com/arwoosa/event/internal/errors"
+	"github.com/arwoosa/event/internal/models"
 )
 
 // SessionService implements the business logic for session management

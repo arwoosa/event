@@ -2,11 +2,12 @@ package mongodb
 
 import (
 	"context"
-	"event/conf"
 	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/arwoosa/event/conf"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

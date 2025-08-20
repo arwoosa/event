@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "event/api";
+option go_package = "github.com/arwoosa/event/gen/pb/common";
 
-package api;
+package common;
 
 import "google/protobuf/any.proto";
 

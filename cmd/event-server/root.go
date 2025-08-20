@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"event/conf"
+	"github.com/arwoosa/event/conf"
 
 	"github.com/arwoosa/vulpes/log"
 )
@@ -81,6 +81,7 @@ func initConfig() {
 		log.WithLevel(appConfig.LogConfig.Level),
 		log.WithServiceName(appConfig.Name),
 		log.WithEnv(appConfig.Mode),
+		log.WithCallerSkip(1),
 	)
 
 	log.Info("Configuration loaded successfully", log.String("config_file", viper.ConfigFileUsed()))

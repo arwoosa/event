@@ -11,8 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"event/internal/errors"
-	"event/internal/models"
+	"github.com/arwoosa/event/internal/errors"
+	"github.com/arwoosa/event/internal/models"
 )
 
 // MongoSessionRepository implements SessionRepository using MongoDB

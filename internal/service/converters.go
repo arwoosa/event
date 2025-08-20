@@ -3,9 +3,9 @@ package service
 import (
 	"time"
 
-	pb "event/api/event"
-	"event/internal/dao/repository"
-	"event/internal/models"
+	pb "github.com/arwoosa/event/gen/pb/event"
+	"github.com/arwoosa/event/internal/dao/repository"
+	"github.com/arwoosa/event/internal/models"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

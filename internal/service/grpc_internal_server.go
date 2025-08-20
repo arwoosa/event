@@ -6,10 +6,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"event/api"
-	pb "event/api/event"
-	"event/internal/dao/repository"
-	"event/internal/errors"
+	"github.com/arwoosa/event/gen/pb/common"
+	pb "github.com/arwoosa/event/gen/pb/event"
+	"github.com/arwoosa/event/internal/dao/repository"
+	"github.com/arwoosa/event/internal/errors"
 )
 
 // InternalServiceServer implements the generated gRPC InternalService interface
@@ -28,7 +28,7 @@ func NewInternalServiceServer(eventRepo repository.EventRepository) *InternalSer
 }
 
 // GetEventById implements the gRPC GetEventById method for internal services
-func (s *InternalServiceServer) GetEventById(ctx context.Context, req *api.ID) (*pb.Event, error) {
+func (s *InternalServiceServer) GetEventById(ctx context.Context, req *common.ID) (*pb.Event, error) {
 	// Get event without merchant validation (for internal service use)
 	event, err := s.eventRepo.FindByID(ctx, req.Id)
 	if err != nil {

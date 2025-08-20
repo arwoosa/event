@@ -14,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"event/internal/models"
+	"github.com/arwoosa/event/internal/models"
 )
 
 type SessionRepositoryIntegrationTestSuite struct {

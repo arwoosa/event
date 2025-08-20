@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"event/internal/models"
 	"time"
+
+	"github.com/arwoosa/event/internal/models"
 )
 
 // EventFilter represents filtering options for event queries

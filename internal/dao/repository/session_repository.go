@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"event/internal/models"
+	"github.com/arwoosa/event/internal/models"
 )
 
 // SessionRepository defines the interface for session data access

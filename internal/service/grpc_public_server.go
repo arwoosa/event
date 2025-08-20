@@ -6,9 +6,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"event/api"
-	pb "event/api/event"
-	"event/internal/errors"
+	"github.com/arwoosa/event/gen/pb/common"
+	pb "github.com/arwoosa/event/gen/pb/event"
+	"github.com/arwoosa/event/internal/errors"
 )
 
 // PublicEventServiceServer implements the generated gRPC PublicEventService interface
@@ -95,7 +95,7 @@ func (s *PublicEventServiceServer) SearchEvents(ctx context.Context, req *pb.Sea
 }
 
 // GetEvent implements the gRPC GetEvent method for public access
-func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *api.ID) (*pb.Event, error) {
+func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *common.ID) (*pb.Event, error) {
 	// Get event
 	event, err := s.publicService.GetEvent(ctx, req.Id)
 	if err != nil {

@@ -2,8 +2,9 @@ package mongodb
 
 import (
 	"context"
-	"event/conf"
 	"fmt"
+
+	"github.com/arwoosa/event/conf"
 
 	"github.com/arwoosa/vulpes/log"
 	"go.mongodb.org/mongo-driver/bson"

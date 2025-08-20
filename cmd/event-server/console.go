@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"event/internal/dao/mongodb"
-	"event/internal/service"
+	"github.com/arwoosa/event/internal/dao/mongodb"
+	"github.com/arwoosa/event/internal/service"
 
 	"github.com/arwoosa/vulpes/ezgrpc"
 	vulpeslog "github.com/arwoosa/vulpes/log"
@@ -46,6 +46,11 @@ func runConsoleServer(cmd *cobra.Command, args []string) {
 
 	// Register only console services
 	service.RegisterConsoleServices(appConfig)
+
+	ezgrpc.SetServeMuxOpts(
+		ezgrpc.DefaultHeaderMatcher,
+		ezgrpc.OutgoingHeaderMatcher,
+	)
 
 	// Channel to listen for server errors
 	errChan := make(chan error, 1)

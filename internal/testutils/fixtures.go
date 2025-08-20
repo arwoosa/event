@@ -6,7 +6,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"event/internal/models"
+	"github.com/arwoosa/event/internal/models"
 )
 
 // TestEvent creates a test event with default values

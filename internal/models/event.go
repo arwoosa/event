@@ -5,7 +5,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"event/internal/errors"
+	"github.com/arwoosa/event/internal/errors"
 )
 
 // Event represents the main event entity

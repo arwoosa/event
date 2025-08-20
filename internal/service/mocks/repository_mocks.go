@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"event/internal/dao/repository"
-	"event/internal/errors"
-	"event/internal/models"
+	"github.com/arwoosa/event/internal/dao/repository"
+	"github.com/arwoosa/event/internal/errors"
+	"github.com/arwoosa/event/internal/models"
 )
 
 // MockEventRepository is a mock implementation of EventRepository

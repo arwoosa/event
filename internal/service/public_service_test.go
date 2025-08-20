@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"event/internal/dao/repository"
-	"event/internal/errors"
-	"event/internal/models"
-	"event/internal/service/mocks"
-	"event/internal/testutils"
+	"github.com/arwoosa/event/internal/dao/repository"
+	"github.com/arwoosa/event/internal/errors"
+	"github.com/arwoosa/event/internal/models"
+	"github.com/arwoosa/event/internal/service/mocks"
+	"github.com/arwoosa/event/internal/testutils"
 )
 
 // Local matcher for PublicEventFilter to avoid circular dependency

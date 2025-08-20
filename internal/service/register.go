@@ -3,10 +3,10 @@ package service
 import (
 	"google.golang.org/grpc"
 
-	pb "event/api/event"
-	"event/conf"
-	"event/internal/dao/mongodb"
-	"event/internal/dao/repository"
+	"github.com/arwoosa/event/conf"
+	pb "github.com/arwoosa/event/gen/pb/event"
+	"github.com/arwoosa/event/internal/dao/mongodb"
+	"github.com/arwoosa/event/internal/dao/repository"
 
 	"github.com/arwoosa/vulpes/ezgrpc"
 	"github.com/arwoosa/vulpes/log"

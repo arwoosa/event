@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"event/internal/models"
-	"event/internal/service/mocks"
-	"event/internal/testutils"
+	"github.com/arwoosa/event/internal/models"
+	"github.com/arwoosa/event/internal/service/mocks"
+	"github.com/arwoosa/event/internal/testutils"
 )
 
 func TestEventService_ValidatePublishedEventChanges(t *testing.T) {

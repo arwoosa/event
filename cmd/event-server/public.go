@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"event/internal/dao/mongodb"
-	"event/internal/service"
+	"github.com/arwoosa/event/internal/dao/mongodb"
+	"github.com/arwoosa/event/internal/service"
 
 	"github.com/arwoosa/vulpes/ezgrpc"
 	vulpeslog "github.com/arwoosa/vulpes/log"
