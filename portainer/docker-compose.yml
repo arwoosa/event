@@ -8,12 +8,28 @@ services:
     command: ["console", "--config", "/etc/config.yaml"]
     environment:
       - SERVICE_NAME=partivo_event_console
+    ports:
+      - "3081:8081"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.event-console-grpc.rule=Host(`192.168.1.123`) && PathPrefix(`/grpc/event/console`)"
+      - "traefik.http.routers.event-console-grpc.entrypoints=web"
+      - "traefik.http.routers.event-console-grpc.service=event-console-grpc"
+      - "traefik.http.services.event-console-grpc.loadbalancer.server.port=8081"
+      - "traefik.http.services.event-console-grpc.loadbalancer.server.scheme=h2c"
   event-public:
     image: sjc.vultrcr.com/oosa/event:dev
     container_name: event-public
     restart: always
     volumes:
       - ${CONFIG_FILE}:/etc/config.yaml:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.event-public-grpc.rule=Host(`192.168.1.123`) && PathPrefix(`/grpc/event/public`)"
+      - "traefik.http.routers.event-public-grpc.entrypoints=web"
+      - "traefik.http.routers.event-public-grpc.service=event-public-grpc"
+      - "traefik.http.services.event-public-grpc.loadbalancer.server.port=8081"
+      - "traefik.http.services.event-public-grpc.loadbalancer.server.scheme=h2c"
     command: ["public", "--config", "/etc/config.yaml"]
     environment:
       - SERVICE_NAME=partivo_event_public
