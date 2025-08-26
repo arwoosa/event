@@ -11,6 +11,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Code Quality
 - `make gotool` - Format code and run vet
+- `make lint` - Run golangci-lint checks
+- `make lint-fix` - Run golangci-lint with automatic fixes
 - `go fmt ./...` - Format Go code
 - `go vet ./...` - Run Go vet
 

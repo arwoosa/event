@@ -21,6 +21,12 @@ gotool:
 	go fmt ./...
 	go vet ./...
 
+lint:
+	golangci-lint run
+
+lint-fix:
+	golangci-lint run --fix
+
 # Testing
 test:
 	go test ./... -v
@@ -71,6 +77,8 @@ help:
 	@echo "make run - 啟動 console 服務 (向後兼容)"
 	@echo "make clean - 移除二進制檔案"
 	@echo "make gotool - Go tool 'fmt' and 'vet'"
+	@echo "make lint - 運行 golangci-lint 檢查"
+	@echo "make lint-fix - 運行 golangci-lint 並自動修復"
 	@echo ""
 	@echo "Services:"
 	@echo "console - 內部管理 API (/console/events/*)"
