@@ -14,7 +14,7 @@ func TestEvent() *models.Event {
 	return &models.Event{
 		ID:            primitive.NewObjectID(),
 		Title:         "Test Event",
-		MerchantID:    primitive.NewObjectID(),
+		MerchantID:    "test-merchant-id",
 		Summary:       "Test event summary",
 		Status:        models.StatusDraft,
 		Visibility:    models.VisibilityPrivate,
@@ -221,7 +221,7 @@ func CreateTestCreateEventRequest() *TestCreateEventRequest {
 				Answer:   "This is a test event for testing purposes.",
 			},
 		},
-		MerchantID: primitive.NewObjectID().Hex(),
+		MerchantID: "test-merchant-id",
 		UserID:     primitive.NewObjectID().Hex(),
 	}
 }
@@ -241,7 +241,7 @@ func CreateTestPatchEventRequest(eventID string) *TestPatchEventRequest {
 
 // CreateTestSearchEventsRequest creates a test search events request
 func CreateTestSearchEventsRequest() *TestSearchEventsRequest {
-	merchantID := primitive.NewObjectID().Hex()
+	merchantID := "test-merchant-id"
 	titleSearch := "test"
 	pageSize := int32(20)
 
@@ -258,8 +258,8 @@ func TestUserID() primitive.ObjectID {
 }
 
 // TestMerchantID creates a test merchant ID
-func TestMerchantID() primitive.ObjectID {
-	return primitive.NewObjectID()
+func TestMerchantID() string {
+	return "test-merchant-id"
 }
 
 // InvalidObjectID returns an invalid ObjectID string for testing

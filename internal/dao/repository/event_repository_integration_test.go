@@ -86,7 +86,7 @@ func (suite *EventRepositoryIntegrationTestSuite) SetupTest() {
 
 // testEvent creates a test event for integration tests
 func testEvent() *models.Event {
-	merchantID := primitive.NewObjectID()
+	merchantID := "test-merchant-id"
 	createdBy := primitive.NewObjectID()
 
 	return &models.Event{
@@ -198,8 +198,7 @@ func (suite *EventRepositoryIntegrationTestSuite) TestDelete() {
 }
 
 func (suite *EventRepositoryIntegrationTestSuite) TestFindByMerchantID() {
-	merchantID := primitive.NewObjectID()
-	merchantIDStr := merchantID.Hex()
+	merchantID := "test-merchant-id"
 
 	// Create multiple events for the merchant
 	event1 := testEvent()
@@ -214,7 +213,7 @@ func (suite *EventRepositoryIntegrationTestSuite) TestFindByMerchantID() {
 
 	// Create event for different merchant
 	event3 := testEvent()
-	event3.MerchantID = primitive.NewObjectID()
+	event3.MerchantID = "other-merchant-id"
 	event3.Title = "Other Event"
 
 	_, err := suite.repository.Create(suite.ctx, event1)
@@ -226,12 +225,12 @@ func (suite *EventRepositoryIntegrationTestSuite) TestFindByMerchantID() {
 
 	// Test finding by merchant ID
 	filter := &EventFilter{
-		MerchantID: &merchantIDStr,
+		MerchantID: &merchantID,
 		Limit:      10,
 		Offset:     0,
 	}
 
-	result, err := suite.repository.FindByMerchantID(suite.ctx, merchantIDStr, filter)
+	result, err := suite.repository.FindByMerchantID(suite.ctx, merchantID, filter)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
@@ -244,8 +243,7 @@ func (suite *EventRepositoryIntegrationTestSuite) TestFindByMerchantID() {
 }
 
 func (suite *EventRepositoryIntegrationTestSuite) TestFindByMerchantIDWithStatusFilter() {
-	merchantID := primitive.NewObjectID()
-	merchantIDStr := merchantID.Hex()
+	merchantID := "test-merchant-id"
 	status := "published"
 
 	// Create events with different statuses
@@ -264,13 +262,13 @@ func (suite *EventRepositoryIntegrationTestSuite) TestFindByMerchantIDWithStatus
 
 	// Test filtering by status
 	filter := &EventFilter{
-		MerchantID: &merchantIDStr,
+		MerchantID: &merchantID,
 		Status:     &status,
 		Limit:      10,
 		Offset:     0,
 	}
 
-	result, err := suite.repository.FindByMerchantID(suite.ctx, merchantIDStr, filter)
+	result, err := suite.repository.FindByMerchantID(suite.ctx, merchantID, filter)
 
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
@@ -347,8 +345,7 @@ func (suite *EventRepositoryIntegrationTestSuite) TestExistsByID() {
 }
 
 func (suite *EventRepositoryIntegrationTestSuite) TestExistsByMerchantAndID() {
-	merchantID := primitive.NewObjectID()
-	merchantIDStr := merchantID.Hex()
+	merchantID := "test-merchant-id"
 
 	// Create an event
 	event := testEvent()
@@ -357,7 +354,7 @@ func (suite *EventRepositoryIntegrationTestSuite) TestExistsByMerchantAndID() {
 	suite.Require().NoError(err)
 
 	// Test existence check for correct merchant and ID
-	exists, err := suite.repository.ExistsByMerchantAndID(suite.ctx, merchantIDStr, created.ID.Hex())
+	exists, err := suite.repository.ExistsByMerchantAndID(suite.ctx, merchantID, created.ID.Hex())
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), exists)
 
@@ -368,7 +365,7 @@ func (suite *EventRepositoryIntegrationTestSuite) TestExistsByMerchantAndID() {
 
 	// Test existence check for non-existent event
 	objectID := primitive.NewObjectID()
-	exists, err = suite.repository.ExistsByMerchantAndID(suite.ctx, merchantIDStr, objectID.Hex())
+	exists, err = suite.repository.ExistsByMerchantAndID(suite.ctx, merchantID, objectID.Hex())
 	assert.NoError(suite.T(), err)
 	assert.False(suite.T(), exists)
 }

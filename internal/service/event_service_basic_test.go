@@ -25,7 +25,7 @@ func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test request without sessions to avoid complexity
-	merchantID := testutils.ValidObjectIDString()
+	merchantID := "test-merchant-id"
 	userID := testutils.ValidObjectIDString()
 
 	req := &CreateEventRequest{
@@ -62,7 +62,7 @@ func TestEventService_GetEvent_Success(t *testing.T) {
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
-	merchantID := testutils.ValidObjectIDString()
+	merchantID := "test-merchant-id"
 	eventID := testutils.ValidObjectIDString()
 
 	event := testutils.TestEvent()
@@ -91,7 +91,7 @@ func TestEventService_GetEvent_NotFound(t *testing.T) {
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
-	merchantID := testutils.ValidObjectIDString()
+	merchantID := "test-merchant-id"
 	eventID := testutils.ValidObjectIDString()
 
 	// Mock existence check returns false
@@ -108,28 +108,4 @@ func TestEventService_GetEvent_NotFound(t *testing.T) {
 	eventRepo.AssertExpectations(t)
 }
 
-func TestEventService_CreateEvent_InvalidMerchantID(t *testing.T) {
-	// Setup
-	eventRepo := &mocks.MockEventRepository{}
-	sessionRepo := &mocks.MockSessionRepository{}
-	orderService := &mocks.MockOrderService{}
 
-	sessionService := NewSessionService(sessionRepo, eventRepo)
-	eventService := NewEventService(eventRepo, sessionService, orderService)
-
-	ctx := context.Background()
-
-	req := &CreateEventRequest{
-		Title:      "Test Event",
-		MerchantID: "invalid_id", // Invalid ObjectID
-		UserID:     testutils.ValidObjectIDString(),
-	}
-
-	// Execute
-	result, err := eventService.CreateEvent(ctx, req)
-
-	// Assert
-	require.Error(t, err)
-	assert.Nil(t, result)
-	testutils.AssertError(t, err, errors.ErrorCodeValidationError, "invalid merchant_id")
-}

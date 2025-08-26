@@ -136,12 +136,7 @@ func (r *MongoEventRepository) Delete(ctx context.Context, id string) error {
 
 // FindByMerchantID finds events by merchant ID with sessions populated and filtering
 func (r *MongoEventRepository) FindByMerchantID(ctx context.Context, merchantID string, filter *EventFilter) (*EventListResult, error) {
-	merchantObjectID, err := primitive.ObjectIDFromHex(merchantID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid merchant ID: %w", err)
-	}
-
-	baseQuery := bson.M{"merchant_id": merchantObjectID}
+	baseQuery := bson.M{"merchant_id": merchantID}
 
 	// Apply filters
 	if filter.Status != nil {
@@ -167,11 +162,7 @@ func (r *MongoEventRepository) FindPublic(ctx context.Context, filter *PublicEve
 
 	// Apply filters
 	if filter.MerchantID != nil {
-		merchantObjectID, err := primitive.ObjectIDFromHex(*filter.MerchantID)
-		if err != nil {
-			return nil, fmt.Errorf("invalid merchant ID: %w", err)
-		}
-		baseQuery["merchant_id"] = merchantObjectID
+		baseQuery["merchant_id"] = *filter.MerchantID
 	}
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
 		baseQuery["$text"] = bson.M{"$search": *filter.TitleSearch}
@@ -244,13 +235,8 @@ func (r *MongoEventRepository) FindPublicByID(ctx context.Context, id string) (*
 
 // CountByMerchantAndStatus counts events by merchant and status
 func (r *MongoEventRepository) CountByMerchantAndStatus(ctx context.Context, merchantID, status string) (int64, error) {
-	merchantObjectID, err := primitive.ObjectIDFromHex(merchantID)
-	if err != nil {
-		return 0, fmt.Errorf("invalid merchant ID: %w", err)
-	}
-
 	query := bson.M{
-		"merchant_id": merchantObjectID,
+		"merchant_id": merchantID,
 		"status":      status,
 	}
 
@@ -279,11 +265,6 @@ func (r *MongoEventRepository) ExistsByID(ctx context.Context, id string) (bool,
 
 // ExistsByMerchantAndID checks if an event exists for a specific merchant
 func (r *MongoEventRepository) ExistsByMerchantAndID(ctx context.Context, merchantID, id string) (bool, error) {
-	merchantObjectID, err := primitive.ObjectIDFromHex(merchantID)
-	if err != nil {
-		return false, fmt.Errorf("invalid merchant ID: %w", err)
-	}
-
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return false, fmt.Errorf("invalid event ID: %w", err)
@@ -291,7 +272,7 @@ func (r *MongoEventRepository) ExistsByMerchantAndID(ctx context.Context, mercha
 
 	count, err := r.collection.CountDocuments(ctx, bson.M{
 		"_id":         objectID,
-		"merchant_id": merchantObjectID,
+		"merchant_id": merchantID,
 	})
 	if err != nil {
 		return false, fmt.Errorf("failed to check event existence: %w", err)

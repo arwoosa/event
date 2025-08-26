@@ -2,7 +2,6 @@ package service
 
 import (
 	"github.com/stretchr/testify/mock"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/arwoosa/event/internal/dao/repository"
 	"github.com/arwoosa/event/internal/models"
@@ -105,8 +104,7 @@ func ConvertTestSearchEventsRequest(req *testutils.TestSearchEventsRequest) *Sea
 // CreateTestEventForMerchant creates a test event with specific merchant ID
 func CreateTestEventForMerchant(merchantID string) *models.Event {
 	event := testutils.TestEvent()
-	merchant, _ := primitive.ObjectIDFromHex(merchantID)
-	event.MerchantID = merchant
+	event.MerchantID = merchantID
 	return event
 }
 

@@ -23,7 +23,7 @@ func TestSessionService_CreateSessionsForEvent_Success(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	merchantID := testutils.ValidObjectIDString()
+	merchantID := "test-merchant-id"
 
 	// Create session requests
 	sessionReqs := []*SessionRequest{
@@ -39,7 +39,7 @@ func TestSessionService_CreateSessionsForEvent_Success(t *testing.T) {
 
 	// Mock event validation
 	event := testutils.TestEvent()
-	event.MerchantID, _ = primitive.ObjectIDFromHex(merchantID)
+	event.MerchantID = merchantID
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 
 	// Mock successful session creation
@@ -100,8 +100,8 @@ func TestSessionService_CreateSessionsForEvent_WrongMerchant(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	merchantID := testutils.ValidObjectIDString()
-	wrongMerchantID := testutils.ValidObjectIDString()
+	merchantID := "test-merchant-id"
+	wrongMerchantID := "wrong-merchant-id"
 
 	sessionReqs := []*SessionRequest{
 		{
@@ -112,7 +112,7 @@ func TestSessionService_CreateSessionsForEvent_WrongMerchant(t *testing.T) {
 
 	// Mock event with different merchant
 	event := testutils.TestEvent()
-	event.MerchantID, _ = primitive.ObjectIDFromHex(wrongMerchantID) // Different merchant
+	event.MerchantID = wrongMerchantID // Different merchant
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 
 	// Execute
@@ -190,13 +190,13 @@ func TestSessionService_GetSession_Success(t *testing.T) {
 
 	ctx := context.Background()
 	sessionID := testutils.ValidObjectIDString()
-	merchantID := testutils.ValidObjectIDString()
+	merchantID := "test-merchant-id"
 
 	// Create session and matching event
 	session := testutils.TestSession()
 	event := testutils.TestEvent()
 	event.ID = session.EventID
-	event.MerchantID, _ = primitive.ObjectIDFromHex(merchantID) // Set matching merchant
+	event.MerchantID = merchantID // Set matching merchant
 
 	// Mock session retrieval
 	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
@@ -224,14 +224,14 @@ func TestSessionService_GetSession_UnauthorizedMerchant(t *testing.T) {
 
 	ctx := context.Background()
 	sessionID := testutils.ValidObjectIDString()
-	merchantID := testutils.ValidObjectIDString()
-	differentMerchantID := testutils.ValidObjectIDString()
+	merchantID := "test-merchant-id"
+	differentMerchantID := "different-merchant-id"
 
 	// Create session and event with different merchant
 	session := testutils.TestSession()
 	event := testutils.TestEvent()
 	event.ID = session.EventID
-	event.MerchantID, _ = primitive.ObjectIDFromHex(differentMerchantID) // Different merchant
+	event.MerchantID = differentMerchantID // Different merchant
 
 	// Mock session retrieval
 	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
@@ -259,7 +259,7 @@ func TestSessionService_ValidateSessionsForEvent_Success(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	merchantID := testutils.ValidObjectIDString()
+	merchantID := "test-merchant-id"
 
 	// Create valid session requests
 	sessionReqs := []*SessionRequest{
@@ -275,7 +275,7 @@ func TestSessionService_ValidateSessionsForEvent_Success(t *testing.T) {
 
 	// Mock event validation
 	event := testutils.TestEvent()
-	event.MerchantID, _ = primitive.ObjectIDFromHex(merchantID)
+	event.MerchantID = merchantID
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 
 	// Execute
@@ -296,7 +296,7 @@ func TestSessionService_ValidateSessionsForEvent_DuplicateTimes(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	merchantID := testutils.ValidObjectIDString()
+	merchantID := "test-merchant-id"
 
 	// Create duplicate session requests (same times)
 	sameTime := time.Now().Add(time.Hour * 24)
@@ -313,7 +313,7 @@ func TestSessionService_ValidateSessionsForEvent_DuplicateTimes(t *testing.T) {
 
 	// Mock event validation
 	event := testutils.TestEvent()
-	event.MerchantID, _ = primitive.ObjectIDFromHex(merchantID)
+	event.MerchantID = merchantID
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 
 	// Execute

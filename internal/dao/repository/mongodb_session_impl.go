@@ -181,12 +181,7 @@ func (r *MongoSessionRepository) FindByEventIDs(ctx context.Context, eventIDs []
 
 // FindByMerchantID finds sessions by merchant ID with filtering
 func (r *MongoSessionRepository) FindByMerchantID(ctx context.Context, merchantID string, filter *SessionFilter) ([]*models.Session, error) {
-	merchantObjectID, err := primitive.ObjectIDFromHex(merchantID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid merchant ID: %w", err)
-	}
-
-	query := bson.M{"merchant_id": merchantObjectID}
+	query := bson.M{"merchant_id": merchantID}
 
 	// Apply filters
 	if filter.EventID != nil {
@@ -375,14 +370,9 @@ func (r *MongoSessionRepository) ExistsByEventAndMerchant(ctx context.Context, e
 		return false, fmt.Errorf("invalid event ID: %w", err)
 	}
 
-	merchantObjectID, err := primitive.ObjectIDFromHex(merchantID)
-	if err != nil {
-		return false, fmt.Errorf("invalid merchant ID: %w", err)
-	}
-
 	count, err := r.collection.CountDocuments(ctx, bson.M{
 		"event_id":    eventObjectID,
-		"merchant_id": merchantObjectID,
+		"merchant_id": merchantID,
 	})
 	if err != nil {
 		return false, fmt.Errorf("failed to check session existence: %w", err)

@@ -36,7 +36,7 @@ func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID, me
 	if err != nil {
 		return nil, err
 	}
-	if event.MerchantID.Hex() != merchantID {
+	if event.MerchantID != merchantID {
 		return nil, errors.ErrUnauthorized
 	}
 
@@ -94,7 +94,7 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, me
 	}
 
 	// Validate merchant ownership
-	if event.MerchantID.Hex() != merchantID {
+	if event.MerchantID != merchantID {
 		return nil, errors.ErrUnauthorized
 	}
 
@@ -201,7 +201,7 @@ func (s *SessionService) GetSession(ctx context.Context, sessionID, merchantID s
 	if err != nil {
 		return nil, err
 	}
-	if event.MerchantID.Hex() != merchantID {
+	if event.MerchantID != merchantID {
 		return nil, errors.ErrUnauthorized
 	}
 
@@ -215,7 +215,7 @@ func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, session
 	if err != nil {
 		return err
 	}
-	if event.MerchantID.Hex() != merchantID {
+	if event.MerchantID != merchantID {
 		return errors.ErrUnauthorized
 	}
 
@@ -249,7 +249,7 @@ func (s *SessionService) ValidateSessionsForEvent(ctx context.Context, eventID, 
 	if err != nil {
 		return err
 	}
-	if event.MerchantID.Hex() != merchantID {
+	if event.MerchantID != merchantID {
 		return errors.ErrUnauthorized
 	}
 

@@ -379,11 +379,6 @@ func (s *EventService) validatePublishRequirements(ctx context.Context, event *m
 // Conversion methods
 
 func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*models.Event, error) {
-	merchantID, err := primitive.ObjectIDFromHex(req.MerchantID)
-	if err != nil {
-		return nil, errors.NewValidationError("merchant_id", "invalid merchant_id")
-	}
-
 	userID, err := primitive.ObjectIDFromHex(req.UserID)
 	if err != nil {
 		return nil, errors.NewValidationError("user_id", "invalid user_id")
@@ -458,7 +453,7 @@ func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*mo
 
 	return &models.Event{
 		Title:         req.Title,
-		MerchantID:    merchantID,
+		MerchantID:    req.MerchantID,
 		Summary:       req.Summary,
 		Status:        status,
 		Visibility:    visibility,
