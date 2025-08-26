@@ -5,6 +5,7 @@ import (
 
 	"github.com/arwoosa/event/gen/pb/common"
 	"github.com/arwoosa/event/internal/dao/repository"
+	"github.com/arwoosa/event/internal/helper"
 	"github.com/arwoosa/event/internal/models"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -67,9 +68,9 @@ func (c *ProtobufConverter) ConvertSessionsToPB(sessions []models.Session) []*co
 			StartTime: session.StartTime.Format(time.RFC3339),
 			EndTime:   session.EndTime.Format(time.RFC3339),
 		}
-		// Convert capacity - handle nil pointer
+		// Convert capacity - handle nil pointer with safe conversion
 		if session.Capacity != nil {
-			capacity := int32(*session.Capacity)
+			capacity := helper.SafeInt32FromInt(*session.Capacity)
 			sessionPB.Capacity = &capacity
 		}
 		sessionsPB[i] = sessionPB
@@ -156,7 +157,7 @@ func (c *ProtobufConverter) ConvertPaginationToPB(pagination *repository.Paginat
 		paginationPB.PrevPageToken = pagination.PrevPageToken
 	}
 	if pagination.TotalCount != nil {
-		count := int32(*pagination.TotalCount)
+		count := helper.SafeInt32FromInt64(*pagination.TotalCount)
 		paginationPB.TotalCount = &count
 	}
 	if pagination.CurrentPage != nil {

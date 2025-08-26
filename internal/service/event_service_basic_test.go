@@ -13,6 +13,10 @@ import (
 	"github.com/arwoosa/event/internal/testutils"
 )
 
+const (
+	testMerchantID = "test-merchant-id"
+)
+
 func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
 	// Setup
 	eventRepo := &mocks.MockEventRepository{}
@@ -25,7 +29,7 @@ func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test request without sessions to avoid complexity
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 	userID := testutils.ValidObjectIDString()
 
 	req := &CreateEventRequest{
@@ -62,7 +66,7 @@ func TestEventService_GetEvent_Success(t *testing.T) {
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 	eventID := testutils.ValidObjectIDString()
 
 	event := testutils.TestEvent()
@@ -91,7 +95,7 @@ func TestEventService_GetEvent_NotFound(t *testing.T) {
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 	eventID := testutils.ValidObjectIDString()
 
 	// Mock existence check returns false
@@ -107,5 +111,3 @@ func TestEventService_GetEvent_NotFound(t *testing.T) {
 
 	eventRepo.AssertExpectations(t)
 }
-
-

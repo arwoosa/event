@@ -9,7 +9,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"github.com/arwoosa/event/internal/helper"
 	"github.com/arwoosa/event/internal/models"
+)
+
+const (
+	sortOrderAsc = "asc"
 )
 
 // hasSessionTimeFilter checks if session time filtering is needed
@@ -21,12 +26,12 @@ func hasSessionTimeFilter(sessionStartTimeFrom, sessionStartTimeTo *time.Time) b
 // This method properly handles session time filtering and returns only matching sessions
 func (r *MongoEventRepository) buildUnifiedPipeline(ctx context.Context, baseQuery bson.M,
 	sessionStartTimeFrom, sessionStartTimeTo *time.Time, sortBy, sortOrder *string,
-	limit, offset int, pageToken *string) (*EventListResult, error) {
-
+	limit, offset int, pageToken *string,
+) (*EventListResult, error) {
 	pipeline := []bson.M{}
 
 	// Determine sort direction (default is desc for created_at)
-	isDescending := sortOrder == nil || *sortOrder != "asc"
+	isDescending := sortOrder == nil || *sortOrder != sortOrderAsc
 
 	// Step 1: Match base query conditions and cursor pagination
 	matchConditions := bson.M{}
@@ -130,7 +135,7 @@ func (r *MongoEventRepository) buildUnifiedPipeline(ctx context.Context, baseQue
 		sortField = *sortBy
 	}
 
-	if sortOrder != nil && *sortOrder == "asc" {
+	if sortOrder != nil && *sortOrder == sortOrderAsc {
 		sortDirection = 1
 	}
 
@@ -153,8 +158,8 @@ func (r *MongoEventRepository) buildUnifiedPipeline(ctx context.Context, baseQue
 
 // executeUnifiedQuery executes the unified aggregation pipeline and returns EventListResult
 func (r *MongoEventRepository) executeUnifiedQuery(ctx context.Context, pipeline []bson.M,
-	limit, offset int, pageToken *string) (*EventListResult, error) {
-
+	limit, offset int, pageToken *string,
+) (*EventListResult, error) {
 	cursor, err := r.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute unified aggregation: %w", err)
@@ -225,11 +230,14 @@ func (r *MongoEventRepository) executeUnifiedQuery(ctx context.Context, pipeline
 					totalCount := int64(total)
 					pagination.TotalCount = &totalCount
 
-					// Calculate current page and total pages
-					currentPage := int32((offset / limit) + 1)
+					// Calculate current page and total pages using int64 then safe conversion
+					currentPage64 := int64(offset/limit) + 1
+					currentPage := helper.SafeInt32FromInt64(currentPage64)
 					pagination.CurrentPage = &currentPage
 
-					totalPages := int32((totalCount + int64(limit) - 1) / int64(limit)) // Ceiling division
+					// Ceiling division: (totalCount + limit - 1) / limit
+					totalPages64 := (totalCount + int64(limit) - 1) / int64(limit)
+					totalPages := helper.SafeInt32FromInt64(totalPages64)
 					pagination.TotalPages = &totalPages
 				}
 			}

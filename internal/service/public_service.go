@@ -105,8 +105,10 @@ func (s *PublicService) SearchEvents(ctx context.Context, req *SearchEventsReque
 		}
 	}
 	if req.Page != nil && *req.Page > 0 {
-		filter.Offset = int((*req.Page - 1) * int32(filter.Limit))
-		filter.PageToken = nil // Don't use cursor pagination if page is specified
+		// Safe calculation: use int64 to avoid overflow, then convert to int
+		offset64 := int64(*req.Page-1) * int64(filter.Limit)
+		filter.Offset = int(offset64) // Note: assumes Offset won't exceed int range
+		filter.PageToken = nil        // Don't use cursor pagination if page is specified
 	}
 
 	// All searches now use the unified FindPublic method

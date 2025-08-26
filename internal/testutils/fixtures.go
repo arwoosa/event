@@ -9,12 +9,16 @@ import (
 	"github.com/arwoosa/event/internal/models"
 )
 
+const (
+	TestMerchantIDValue = "test-merchant-id"
+)
+
 // TestEvent creates a test event with default values
 func TestEvent() *models.Event {
 	return &models.Event{
 		ID:            primitive.NewObjectID(),
 		Title:         "Test Event",
-		MerchantID:    "test-merchant-id",
+		MerchantID:    TestMerchantIDValue,
 		Summary:       "Test event summary",
 		Status:        models.StatusDraft,
 		Visibility:    models.VisibilityPrivate,
@@ -221,7 +225,7 @@ func CreateTestCreateEventRequest() *TestCreateEventRequest {
 				Answer:   "This is a test event for testing purposes.",
 			},
 		},
-		MerchantID: "test-merchant-id",
+		MerchantID: TestMerchantIDValue,
 		UserID:     primitive.NewObjectID().Hex(),
 	}
 }
@@ -241,7 +245,7 @@ func CreateTestPatchEventRequest(eventID string) *TestPatchEventRequest {
 
 // CreateTestSearchEventsRequest creates a test search events request
 func CreateTestSearchEventsRequest() *TestSearchEventsRequest {
-	merchantID := "test-merchant-id"
+	merchantID := TestMerchantIDValue
 	titleSearch := "test"
 	pageSize := int32(20)
 
@@ -259,7 +263,7 @@ func TestUserID() primitive.ObjectID {
 
 // TestMerchantID creates a test merchant ID
 func TestMerchantID() string {
-	return "test-merchant-id"
+	return TestMerchantIDValue
 }
 
 // InvalidObjectID returns an invalid ObjectID string for testing

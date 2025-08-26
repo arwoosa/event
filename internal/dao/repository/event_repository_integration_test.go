@@ -17,6 +17,13 @@ import (
 	"github.com/arwoosa/event/internal/models"
 )
 
+const (
+	testMerchantID   = "test-merchant-id"
+	statusPublished  = "published"
+	statusDraft      = "draft"
+	visibilityPublic = "public"
+)
+
 type EventRepositoryIntegrationTestSuite struct {
 	suite.Suite
 	container  testcontainers.Container
@@ -86,7 +93,7 @@ func (suite *EventRepositoryIntegrationTestSuite) SetupTest() {
 
 // testEvent creates a test event for integration tests
 func testEvent() *models.Event {
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 	createdBy := primitive.NewObjectID()
 
 	return &models.Event{
@@ -94,8 +101,8 @@ func testEvent() *models.Event {
 		Title:         "Test Event",
 		MerchantID:    merchantID,
 		Summary:       "Test event summary",
-		Status:        "draft",
-		Visibility:    "public",
+		Status:        statusDraft,
+		Visibility:    visibilityPublic,
 		CoverImageURL: "https://example.com/cover.jpg",
 		Location: models.Location{
 			Name:    "Test Venue",
@@ -169,7 +176,7 @@ func (suite *EventRepositoryIntegrationTestSuite) TestUpdate() {
 	// Update the event
 	created.Title = "Updated Event Title"
 	created.Summary = "Updated summary"
-	created.Status = "published"
+	created.Status = statusPublished
 
 	updated, err := suite.repository.Update(suite.ctx, created.ID.Hex(), created)
 
@@ -177,7 +184,7 @@ func (suite *EventRepositoryIntegrationTestSuite) TestUpdate() {
 	assert.NotNil(suite.T(), updated)
 	assert.Equal(suite.T(), "Updated Event Title", updated.Title)
 	assert.Equal(suite.T(), "Updated summary", updated.Summary)
-	assert.Equal(suite.T(), "published", updated.Status)
+	assert.Equal(suite.T(), statusPublished, updated.Status)
 	assert.True(suite.T(), updated.UpdatedAt.After(updated.CreatedAt))
 }
 
@@ -198,18 +205,18 @@ func (suite *EventRepositoryIntegrationTestSuite) TestDelete() {
 }
 
 func (suite *EventRepositoryIntegrationTestSuite) TestFindByMerchantID() {
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 
 	// Create multiple events for the merchant
 	event1 := testEvent()
 	event1.MerchantID = merchantID
 	event1.Title = "Event 1"
-	event1.Status = "draft"
+	event1.Status = statusDraft
 
 	event2 := testEvent()
 	event2.MerchantID = merchantID
 	event2.Title = "Event 2"
-	event2.Status = "published"
+	event2.Status = statusPublished
 
 	// Create event for different merchant
 	event3 := testEvent()
@@ -243,17 +250,17 @@ func (suite *EventRepositoryIntegrationTestSuite) TestFindByMerchantID() {
 }
 
 func (suite *EventRepositoryIntegrationTestSuite) TestFindByMerchantIDWithStatusFilter() {
-	merchantID := "test-merchant-id"
-	status := "published"
+	merchantID := testMerchantID
+	status := statusPublished
 
 	// Create events with different statuses
 	event1 := testEvent()
 	event1.MerchantID = merchantID
-	event1.Status = "draft"
+	event1.Status = statusDraft
 
 	event2 := testEvent()
 	event2.MerchantID = merchantID
-	event2.Status = "published"
+	event2.Status = statusPublished
 
 	_, err := suite.repository.Create(suite.ctx, event1)
 	suite.Require().NoError(err)
@@ -273,29 +280,29 @@ func (suite *EventRepositoryIntegrationTestSuite) TestFindByMerchantIDWithStatus
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), result)
 	assert.Len(suite.T(), result.Events, 1)
-	assert.Equal(suite.T(), "published", result.Events[0].Status)
+	assert.Equal(suite.T(), statusPublished, result.Events[0].Status)
 }
 
 func (suite *EventRepositoryIntegrationTestSuite) TestFindPublic() {
 	// Create public and private events
 	publicEvent1 := testEvent()
-	publicEvent1.Status = "published"
-	publicEvent1.Visibility = "public"
+	publicEvent1.Status = statusPublished
+	publicEvent1.Visibility = visibilityPublic
 	publicEvent1.Title = "Public Event 1"
 
 	publicEvent2 := testEvent()
-	publicEvent2.Status = "published"
-	publicEvent2.Visibility = "public"
+	publicEvent2.Status = statusPublished
+	publicEvent2.Visibility = visibilityPublic
 	publicEvent2.Title = "Public Event 2"
 
 	privateEvent := testEvent()
-	privateEvent.Status = "published"
+	privateEvent.Status = statusPublished
 	privateEvent.Visibility = "private"
 	privateEvent.Title = "Private Event"
 
 	draftEvent := testEvent()
-	draftEvent.Status = "draft"
-	draftEvent.Visibility = "public"
+	draftEvent.Status = statusDraft
+	draftEvent.Visibility = visibilityPublic
 	draftEvent.Title = "Draft Event"
 
 	_, err := suite.repository.Create(suite.ctx, publicEvent1)
@@ -321,8 +328,8 @@ func (suite *EventRepositoryIntegrationTestSuite) TestFindPublic() {
 
 	// Verify all events are public and published
 	for _, event := range result.Events {
-		assert.Equal(suite.T(), "published", event.Status)
-		assert.Equal(suite.T(), "public", event.Visibility)
+		assert.Equal(suite.T(), statusPublished, event.Status)
+		assert.Equal(suite.T(), visibilityPublic, event.Visibility)
 	}
 }
 
@@ -345,7 +352,7 @@ func (suite *EventRepositoryIntegrationTestSuite) TestExistsByID() {
 }
 
 func (suite *EventRepositoryIntegrationTestSuite) TestExistsByMerchantAndID() {
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 
 	// Create an event
 	event := testEvent()

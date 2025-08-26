@@ -78,7 +78,7 @@ func initConfig() {
 	isDev := appConfig.Mode == "dev"
 	log.SetConfig(
 		log.WithDev(isDev),
-		log.WithLevel(appConfig.LogConfig.Level),
+		log.WithLevel(appConfig.Level),
 		log.WithServiceName(appConfig.Name),
 		log.WithEnv(appConfig.Mode),
 		log.WithCallerSkip(1),

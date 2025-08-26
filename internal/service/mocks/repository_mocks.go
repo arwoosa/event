@@ -1,3 +1,4 @@
+//nolint:errcheck // Mock files use type assertions that are safe in test context
 package mocks
 
 import (

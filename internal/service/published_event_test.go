@@ -140,7 +140,7 @@ func TestEventService_PatchPublishedEvent_Integration(t *testing.T) {
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 
 	// Create a published event
 	publishedEvent := testutils.TestPublishedEvent()

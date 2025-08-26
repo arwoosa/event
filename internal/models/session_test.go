@@ -462,14 +462,14 @@ func TestValidateSessions_PerformanceWithLargeSets(t *testing.T) {
 	baseTime := time.Now()
 
 	// Create 100 unique sessions
-	sessions := make([]*Session, 100)
+	sessions := make([]*Session, 0, 100)
 	for i := 0; i < 100; i++ {
-		sessions[i] = &Session{
+		sessions = append(sessions, &Session{
 			ID:        primitive.NewObjectID(),
 			EventID:   eventID,
 			StartTime: baseTime.Add(time.Duration(i*2) * time.Hour),
 			EndTime:   baseTime.Add(time.Duration(i*2+1) * time.Hour),
-		}
+		})
 	}
 
 	// Should validate successfully

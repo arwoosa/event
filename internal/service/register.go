@@ -61,14 +61,14 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 
 	// Initialize repositories
 	log.Info("Console services initialized with MongoDB connection")
-	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB, appConfig.PaginationConfig)
-	sessionRepo := repository.NewMongoSessionRepository(mongoClient, appConfig.MongodbConfig.DB)
+	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.DB, appConfig.PaginationConfig)
+	sessionRepo := repository.NewMongoSessionRepository(mongoClient, appConfig.DB)
 
 	// Initialize external services
 	var orderService OrderServiceClient
 	if appConfig.ExternalConfig != nil {
 		log.Info("Console services using real order service")
-		orderService = NewOrderServiceClient(appConfig.ExternalConfig.OrderService)
+		orderService = NewOrderServiceClient(appConfig.OrderService)
 	} else {
 		log.Warn("Console services initialized without external config - using mock order service")
 		orderService = NewMockOrderServiceClient(false, nil)
@@ -103,8 +103,8 @@ func registerPublicServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) 
 
 	// Initialize repositories
 	log.Info("Public services initialized with MongoDB connection")
-	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.MongodbConfig.DB, appConfig.PaginationConfig)
-	sessionRepo := repository.NewMongoSessionRepository(mongoClient, appConfig.MongodbConfig.DB)
+	eventRepo := repository.NewMongoEventRepository(mongoClient, appConfig.DB, appConfig.PaginationConfig)
+	sessionRepo := repository.NewMongoSessionRepository(mongoClient, appConfig.DB)
 
 	// Initialize business services
 	sessionSvc := NewSessionService(sessionRepo, eventRepo)

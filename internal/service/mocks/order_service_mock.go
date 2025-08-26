@@ -58,12 +58,12 @@ func (m *MockOrderService) AssertExpectations(t mock.TestingT) bool {
 
 // AssertNotCalledWithEventID asserts that HasOrders was not called with specific event ID
 func (m *MockOrderService) AssertNotCalledWithEventID(t mock.TestingT, eventID string) {
-	m.Mock.AssertNotCalled(t, "HasOrders", mock.Anything, eventID)
+	m.AssertNotCalled(t, "HasOrders", mock.Anything, eventID)
 }
 
 // AssertCalledWithEventID asserts that HasOrders was called with specific event ID
 func (m *MockOrderService) AssertCalledWithEventID(t mock.TestingT, eventID string) {
-	m.Mock.AssertCalled(t, "HasOrders", mock.Anything, eventID)
+	m.AssertCalled(t, "HasOrders", mock.Anything, eventID)
 }
 
 // AssertNumberOfCalls asserts the number of times HasOrders was called

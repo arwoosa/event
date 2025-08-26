@@ -37,7 +37,7 @@ func ResponseSuccess(d any) (*Response, error) {
 	return &Response{
 		Status: "success",
 		Code:   int32(CodeSuccess),
-		//Message: CodeSuccess.Msg(),
+		// Message: CodeSuccess.Msg(),
 		Data: anyData,
 	}, nil
 }

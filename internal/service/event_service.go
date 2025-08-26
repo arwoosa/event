@@ -105,7 +105,6 @@ type OrderServiceClient interface {
 
 // CreateEvent creates a new event
 func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest) (*models.Event, error) {
-
 	// Convert request to model - will force draft status
 	event, err := s.convertCreateRequestToModel(req)
 	if err != nil {

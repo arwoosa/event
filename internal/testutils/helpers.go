@@ -138,7 +138,11 @@ func SetupTestData(ctx context.Context, t *testing.T, mongoContainer *MongoConta
 	eventResult, err := mongoContainer.GetEventCollection().InsertOne(ctx, event)
 	require.NoError(t, err, "Failed to insert test event")
 
-	event.ID = eventResult.InsertedID.(primitive.ObjectID)
+	if oid, ok := eventResult.InsertedID.(primitive.ObjectID); ok {
+		event.ID = oid
+	} else {
+		require.Fail(t, "Failed to convert InsertedID to ObjectID")
+	}
 
 	// Create test sessions for the event
 	sessions := TestSessionsForEvent(event.ID, 3)
@@ -154,7 +158,11 @@ func SetupTestData(ctx context.Context, t *testing.T, mongoContainer *MongoConta
 
 	// Update session IDs
 	for i, id := range sessionResults.InsertedIDs {
-		sessions[i].ID = id.(primitive.ObjectID)
+		if oid, ok := id.(primitive.ObjectID); ok {
+			sessions[i].ID = oid
+		} else {
+			require.Fail(t, "Failed to convert session InsertedID to ObjectID")
+		}
 	}
 
 	return event, sessions

@@ -4,15 +4,16 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	"github.com/arwoosa/event/conf"
 	"github.com/arwoosa/event/gen/pb/common"
 	consolepb "github.com/arwoosa/event/gen/pb/console"
 	"github.com/arwoosa/event/internal/dao/repository"
 	"github.com/arwoosa/event/internal/errors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // EventServiceServer implements the generated gRPC EventService interface
@@ -133,8 +134,10 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *consolepb.Ge
 		}
 	}
 	if req.Page != nil && *req.Page > 0 {
-		filter.Offset = int((*req.Page - 1) * int32(filter.Limit))
-		filter.PageToken = nil // Don't use cursor pagination if page is specified
+		// Safe calculation: use int64 to avoid overflow, then convert to int
+		offset64 := int64(*req.Page-1) * int64(filter.Limit)
+		filter.Offset = int(offset64) // Note: assumes Offset won't exceed int range
+		filter.PageToken = nil        // Don't use cursor pagination if page is specified
 	}
 
 	// Get events

@@ -23,7 +23,7 @@ func TestSessionService_CreateSessionsForEvent_Success(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 
 	// Create session requests
 	sessionReqs := []*SessionRequest{
@@ -100,7 +100,7 @@ func TestSessionService_CreateSessionsForEvent_WrongMerchant(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 	wrongMerchantID := "wrong-merchant-id"
 
 	sessionReqs := []*SessionRequest{
@@ -190,7 +190,7 @@ func TestSessionService_GetSession_Success(t *testing.T) {
 
 	ctx := context.Background()
 	sessionID := testutils.ValidObjectIDString()
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 
 	// Create session and matching event
 	session := testutils.TestSession()
@@ -224,7 +224,7 @@ func TestSessionService_GetSession_UnauthorizedMerchant(t *testing.T) {
 
 	ctx := context.Background()
 	sessionID := testutils.ValidObjectIDString()
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 	differentMerchantID := "different-merchant-id"
 
 	// Create session and event with different merchant
@@ -259,7 +259,7 @@ func TestSessionService_ValidateSessionsForEvent_Success(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 
 	// Create valid session requests
 	sessionReqs := []*SessionRequest{
@@ -296,7 +296,7 @@ func TestSessionService_ValidateSessionsForEvent_DuplicateTimes(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
-	merchantID := "test-merchant-id"
+	merchantID := testMerchantID
 
 	// Create duplicate session requests (same times)
 	sameTime := time.Now().Add(time.Hour * 24)

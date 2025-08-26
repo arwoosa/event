@@ -189,7 +189,11 @@ func (mc *MongoContainer) InsertTestEvent(ctx context.Context, t *testing.T, eve
 		t.Fatalf("Failed to insert test event: %v", err)
 	}
 
-	return result.InsertedID.(primitive.ObjectID).Hex()
+	if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
+		return oid.Hex()
+	}
+	t.Fatal("Failed to convert InsertedID to ObjectID")
+	return ""
 }
 
 // InsertTestSession inserts a test session and returns its ID
@@ -205,7 +209,11 @@ func (mc *MongoContainer) InsertTestSession(ctx context.Context, t *testing.T, s
 		t.Fatalf("Failed to insert test session: %v", err)
 	}
 
-	return result.InsertedID.(primitive.ObjectID).Hex()
+	if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
+		return oid.Hex()
+	}
+	t.Fatal("Failed to convert InsertedID to ObjectID")
+	return ""
 }
 
 // CountEvents returns the number of events in the collection
