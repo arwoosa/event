@@ -9,10 +9,10 @@
       "name": "EventService"
     },
     {
-      "name": "PublicEventService"
+      "name": "InternalService"
     },
     {
-      "name": "InternalService"
+      "name": "PublicEventService"
     }
   ],
   "consumes": [
@@ -30,7 +30,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/eventEventListResponse"
+              "$ref": "#/definitions/commonEventListResponse"
             }
           },
           "default": {
@@ -125,7 +125,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/eventCreateEventResponse"
+              "$ref": "#/definitions/consoleCreateEventResponse"
             }
           },
           "default": {
@@ -141,7 +141,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/eventCreateEventRequest"
+              "$ref": "#/definitions/consoleCreateEventRequest"
             }
           }
         ],
@@ -196,7 +196,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/eventEvent"
+              "$ref": "#/definitions/commonEvent"
             }
           },
           "default": {
@@ -255,7 +255,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/eventEvent"
+              "$ref": "#/definitions/commonEvent"
             }
           },
           "default": {
@@ -294,7 +294,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/eventEvent"
+              "$ref": "#/definitions/commonEvent"
             }
           },
           "default": {
@@ -333,7 +333,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/eventEventListResponse"
+              "$ref": "#/definitions/commonEventListResponse"
             }
           },
           "default": {
@@ -442,7 +442,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/eventEvent"
+              "$ref": "#/definitions/commonEvent"
             }
           },
           "default": {
@@ -483,13 +483,13 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/eventLocation"
+          "$ref": "#/definitions/commonLocation"
         },
         "sessions": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/eventSession"
+            "$ref": "#/definitions/commonSession"
           },
           "title": "Replace all sessions if provided"
         },
@@ -497,7 +497,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/eventDetailBlock"
+            "$ref": "#/definitions/commonDetailBlock"
           },
           "title": "Replace all detail blocks if provided"
         },
@@ -505,7 +505,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/eventFAQ"
+            "$ref": "#/definitions/commonFAQ"
           },
           "title": "Replace all FAQ if provided"
         }
@@ -520,77 +520,22 @@
         }
       }
     },
-    "eventCreateEventRequest": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string"
-        },
-        "summary": {
-          "type": "string"
-        },
-        "visibility": {
-          "type": "string",
-          "title": "status field removed - events are always created as draft"
-        },
-        "cover_image_url": {
-          "type": "string"
-        },
-        "location": {
-          "$ref": "#/definitions/eventLocation"
-        },
-        "sessions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/eventSession"
-          }
-        },
-        "detail": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/eventDetailBlock"
-          }
-        },
-        "faq": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/eventFAQ"
-          }
-        }
-      },
-      "title": "Request messages"
-    },
-    "eventCreateEventResponse": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "created_at": {
-          "type": "string"
-        }
-      },
-      "title": "Response messages"
-    },
-    "eventDetailBlock": {
+    "commonDetailBlock": {
       "type": "object",
       "properties": {
         "type": {
           "type": "string"
         },
         "text_data": {
-          "$ref": "#/definitions/eventTextData"
+          "$ref": "#/definitions/commonTextData"
         },
         "image_data": {
-          "$ref": "#/definitions/eventImageData"
+          "$ref": "#/definitions/commonImageData"
         }
       },
       "title": "Detail block for structured content"
     },
-    "eventEvent": {
+    "commonEvent": {
       "type": "object",
       "properties": {
         "id": {
@@ -617,27 +562,27 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/eventLocation"
+          "$ref": "#/definitions/commonLocation"
         },
         "sessions": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/eventSession"
+            "$ref": "#/definitions/commonSession"
           }
         },
         "detail": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/eventDetailBlock"
+            "$ref": "#/definitions/commonDetailBlock"
           }
         },
         "faq": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/eventFAQ"
+            "$ref": "#/definitions/commonFAQ"
           }
         },
         "created_at": {
@@ -653,24 +598,25 @@
           "type": "string"
         }
       },
-      "title": "Core Event message"
+      "title": "Core Event message - shared across all services"
     },
-    "eventEventListResponse": {
+    "commonEventListResponse": {
       "type": "object",
       "properties": {
         "events": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/eventEvent"
+            "$ref": "#/definitions/commonEvent"
           }
         },
         "pagination": {
-          "$ref": "#/definitions/eventPagination"
+          "$ref": "#/definitions/commonPagination"
         }
-      }
+      },
+      "title": "Common response messages"
     },
-    "eventFAQ": {
+    "commonFAQ": {
       "type": "object",
       "properties": {
         "question": {
@@ -682,7 +628,7 @@
       },
       "title": "FAQ entry"
     },
-    "eventGeoJSONPoint": {
+    "commonGeoJSONPoint": {
       "type": "object",
       "properties": {
         "type": {
@@ -699,7 +645,7 @@
         }
       }
     },
-    "eventImageData": {
+    "commonImageData": {
       "type": "object",
       "properties": {
         "url": {
@@ -714,7 +660,7 @@
       },
       "title": "Image block data"
     },
-    "eventLocation": {
+    "commonLocation": {
       "type": "object",
       "properties": {
         "name": {
@@ -727,12 +673,12 @@
           "type": "string"
         },
         "coordinates": {
-          "$ref": "#/definitions/eventGeoJSONPoint"
+          "$ref": "#/definitions/commonGeoJSONPoint"
         }
       },
       "title": "Location with GeoJSON Point structure"
     },
-    "eventPagination": {
+    "commonPagination": {
       "type": "object",
       "properties": {
         "next_page_token": {
@@ -765,7 +711,7 @@
         }
       }
     },
-    "eventSession": {
+    "commonSession": {
       "type": "object",
       "properties": {
         "id": {
@@ -791,7 +737,7 @@
       },
       "title": "Session for time-based event scheduling"
     },
-    "eventTextData": {
+    "commonTextData": {
       "type": "object",
       "properties": {
         "content": {
@@ -799,6 +745,61 @@
         }
       },
       "title": "Text block data"
+    },
+    "consoleCreateEventRequest": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "visibility": {
+          "type": "string",
+          "title": "status field removed - events are always created as draft"
+        },
+        "cover_image_url": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/commonLocation"
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/commonSession"
+          }
+        },
+        "detail": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/commonDetailBlock"
+          }
+        },
+        "faq": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/commonFAQ"
+          }
+        }
+      },
+      "title": "Request messages"
+    },
+    "consoleCreateEventResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        }
+      },
+      "title": "Response messages"
     },
     "protobufAny": {
       "type": "object",

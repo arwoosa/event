@@ -3,7 +3,7 @@ package service
 import (
 	"time"
 
-	pb "github.com/arwoosa/event/gen/pb/event"
+	"github.com/arwoosa/event/gen/pb/common"
 	"github.com/arwoosa/event/internal/dao/repository"
 	"github.com/arwoosa/event/internal/models"
 
@@ -20,8 +20,8 @@ func NewProtobufConverter() *ProtobufConverter {
 
 // ConvertEventToPB converts a domain Event to protobuf Event
 // Sessions are now embedded in the Event model, so no separate sessions parameter needed
-func (c *ProtobufConverter) ConvertEventToPB(event *models.Event) *pb.Event {
-	return &pb.Event{
+func (c *ProtobufConverter) ConvertEventToPB(event *models.Event) *common.Event {
+	return &common.Event{
 		Id:            event.ID.Hex(),
 		Title:         event.Title,
 		MerchantId:    event.MerchantID.Hex(),
@@ -41,12 +41,12 @@ func (c *ProtobufConverter) ConvertEventToPB(event *models.Event) *pb.Event {
 }
 
 // ConvertLocationToPB converts a domain Location to protobuf Location
-func (c *ProtobufConverter) ConvertLocationToPB(location *models.Location) *pb.Location {
-	return &pb.Location{
+func (c *ProtobufConverter) ConvertLocationToPB(location *models.Location) *common.Location {
+	return &common.Location{
 		Name:    location.Name,
 		Address: location.Address,
 		PlaceId: location.PlaceID,
-		Coordinates: &pb.GeoJSONPoint{
+		Coordinates: &common.GeoJSONPoint{
 			Type:        location.Coordinates.Type,
 			Coordinates: []float64{location.Coordinates.Coordinates[0], location.Coordinates.Coordinates[1]},
 		},
@@ -54,14 +54,14 @@ func (c *ProtobufConverter) ConvertLocationToPB(location *models.Location) *pb.L
 }
 
 // ConvertSessionsToPB converts domain Sessions to protobuf Sessions
-func (c *ProtobufConverter) ConvertSessionsToPB(sessions []models.Session) []*pb.Session {
+func (c *ProtobufConverter) ConvertSessionsToPB(sessions []models.Session) []*common.Session {
 	if sessions == nil {
-		return []*pb.Session{}
+		return []*common.Session{}
 	}
 
-	sessionsPB := make([]*pb.Session, len(sessions))
+	sessionsPB := make([]*common.Session, len(sessions))
 	for i, session := range sessions {
-		sessionPB := &pb.Session{
+		sessionPB := &common.Session{
 			Id:        session.ID.Hex(),
 			Name:      session.Name,
 			StartTime: session.StartTime.Format(time.RFC3339),
@@ -78,10 +78,10 @@ func (c *ProtobufConverter) ConvertSessionsToPB(sessions []models.Session) []*pb
 }
 
 // ConvertDetailToPB converts domain DetailBlocks to protobuf DetailBlocks
-func (c *ProtobufConverter) ConvertDetailToPB(detail []models.DetailBlock) []*pb.DetailBlock {
-	blocks := make([]*pb.DetailBlock, len(detail))
+func (c *ProtobufConverter) ConvertDetailToPB(detail []models.DetailBlock) []*common.DetailBlock {
+	blocks := make([]*common.DetailBlock, len(detail))
 	for i, block := range detail {
-		pbBlock := &pb.DetailBlock{
+		pbBlock := &common.DetailBlock{
 			Type: block.Type,
 		}
 
@@ -89,16 +89,16 @@ func (c *ProtobufConverter) ConvertDetailToPB(detail []models.DetailBlock) []*pb
 		switch block.Type {
 		case models.BlockTypeText:
 			if textData, ok := block.Data.(models.TextData); ok {
-				pbBlock.Data = &pb.DetailBlock_TextData{
-					TextData: &pb.TextData{
+				pbBlock.Data = &common.DetailBlock_TextData{
+					TextData: &common.TextData{
 						Content: textData.Content,
 					},
 				}
 			} else if primitiveD, ok := block.Data.(primitive.D); ok {
 				// Handle primitive.D from MongoDB
 				if content := extractStringFromPrimitiveD(primitiveD, "content"); content != "" {
-					pbBlock.Data = &pb.DetailBlock_TextData{
-						TextData: &pb.TextData{
+					pbBlock.Data = &common.DetailBlock_TextData{
+						TextData: &common.TextData{
 							Content: content,
 						},
 					}
@@ -106,8 +106,8 @@ func (c *ProtobufConverter) ConvertDetailToPB(detail []models.DetailBlock) []*pb
 			}
 		case models.BlockTypeImage:
 			if imageData, ok := block.Data.(models.ImageData); ok {
-				pbBlock.Data = &pb.DetailBlock_ImageData{
-					ImageData: &pb.ImageData{
+				pbBlock.Data = &common.DetailBlock_ImageData{
+					ImageData: &common.ImageData{
 						Url:     imageData.URL,
 						Alt:     imageData.Alt,
 						Caption: imageData.Caption,
@@ -115,8 +115,8 @@ func (c *ProtobufConverter) ConvertDetailToPB(detail []models.DetailBlock) []*pb
 				}
 			} else if primitiveD, ok := block.Data.(primitive.D); ok {
 				// Handle primitive.D from MongoDB
-				pbBlock.Data = &pb.DetailBlock_ImageData{
-					ImageData: &pb.ImageData{
+				pbBlock.Data = &common.DetailBlock_ImageData{
+					ImageData: &common.ImageData{
 						Url:     extractStringFromPrimitiveD(primitiveD, "url"),
 						Alt:     extractStringFromPrimitiveD(primitiveD, "alt"),
 						Caption: extractStringFromPrimitiveD(primitiveD, "caption"),
@@ -131,10 +131,10 @@ func (c *ProtobufConverter) ConvertDetailToPB(detail []models.DetailBlock) []*pb
 }
 
 // ConvertFAQToPB converts domain FAQ to protobuf FAQ
-func (c *ProtobufConverter) ConvertFAQToPB(faqs []models.FAQ) []*pb.FAQ {
-	faqsPB := make([]*pb.FAQ, len(faqs))
+func (c *ProtobufConverter) ConvertFAQToPB(faqs []models.FAQ) []*common.FAQ {
+	faqsPB := make([]*common.FAQ, len(faqs))
 	for i, faq := range faqs {
-		faqsPB[i] = &pb.FAQ{
+		faqsPB[i] = &common.FAQ{
 			Question: faq.Question,
 			Answer:   faq.Answer,
 		}
@@ -143,8 +143,8 @@ func (c *ProtobufConverter) ConvertFAQToPB(faqs []models.FAQ) []*pb.FAQ {
 }
 
 // ConvertPaginationToPB converts repository Pagination to protobuf Pagination
-func (c *ProtobufConverter) ConvertPaginationToPB(pagination *repository.Pagination) *pb.Pagination {
-	paginationPB := &pb.Pagination{
+func (c *ProtobufConverter) ConvertPaginationToPB(pagination *repository.Pagination) *common.Pagination {
+	paginationPB := &common.Pagination{
 		HasNext: &pagination.HasNext,
 		HasPrev: &pagination.HasPrev,
 	}
@@ -170,7 +170,7 @@ func (c *ProtobufConverter) ConvertPaginationToPB(pagination *repository.Paginat
 }
 
 // ConvertLocationFromPB converts protobuf Location to service LocationRequest
-func (c *ProtobufConverter) ConvertLocationFromPB(location *pb.Location) *LocationRequest {
+func (c *ProtobufConverter) ConvertLocationFromPB(location *common.Location) *LocationRequest {
 	if location == nil {
 		return nil
 	}
@@ -192,7 +192,7 @@ func (c *ProtobufConverter) ConvertLocationFromPB(location *pb.Location) *Locati
 }
 
 // ConvertSessionsFromPB converts protobuf Sessions to service SessionRequest
-func (c *ProtobufConverter) ConvertSessionsFromPB(sessions []*pb.Session) []*SessionRequest {
+func (c *ProtobufConverter) ConvertSessionsFromPB(sessions []*common.Session) []*SessionRequest {
 	sessionReqs := make([]*SessionRequest, len(sessions))
 	for i, session := range sessions {
 		sessionReq := &SessionRequest{
@@ -212,7 +212,7 @@ func (c *ProtobufConverter) ConvertSessionsFromPB(sessions []*pb.Session) []*Ses
 }
 
 // ConvertDetailFromPB converts protobuf DetailBlocks to service DetailBlockRequest slice
-func (c *ProtobufConverter) ConvertDetailFromPB(detail []*pb.DetailBlock) []DetailBlockRequest {
+func (c *ProtobufConverter) ConvertDetailFromPB(detail []*common.DetailBlock) []DetailBlockRequest {
 	if detail == nil {
 		return nil
 	}
@@ -247,7 +247,7 @@ func (c *ProtobufConverter) ConvertDetailFromPB(detail []*pb.DetailBlock) []Deta
 }
 
 // ConvertFAQFromPB converts protobuf FAQ to service FAQRequest
-func (c *ProtobufConverter) ConvertFAQFromPB(faqs []*pb.FAQ) []*FAQRequest {
+func (c *ProtobufConverter) ConvertFAQFromPB(faqs []*common.FAQ) []*FAQRequest {
 	faqReqs := make([]*FAQRequest, len(faqs))
 	for i, faq := range faqs {
 		faqReqs[i] = &FAQRequest{

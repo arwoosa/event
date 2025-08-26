@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package event.public;
+
+import "google/api/annotations.proto";
+import "proto/common.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/arwoosa/event/gen/pb/public";
+
+// Public Event Service for front-end users
+service PublicEventService {
+  // Search public events
+  rpc SearchEvents(SearchEventsRequest) returns (common.EventListResponse) {
+    option (google.api.http) = {
+      get: "/events"
+    };
+  }
+  
+  // Get a public event by ID (for sharing links)
+  rpc GetEvent(common.ID) returns (common.Event) {
+    option (google.api.http) = {
+      get: "/events/{id}"
+    };
+  }
+}
+
+// Request messages for public service
+message SearchEventsRequest {
+  // Pagination
+  optional string page_token = 1;
+  optional int32 page = 2 [(validate.rules).int32.gte = 1];
+  optional int32 page_size = 3 [(validate.rules).int32 = {gte: 1, lte: 100}];
+  
+  // Filters
+  optional string merchant_id = 4;     // filter by specific merchant
+  optional string title_search = 5; // full-text search
+  optional string session_start_time_from = 6;
+  optional string session_start_time_to = 7;
+  
+  // Location-based search
+  optional double location_lat = 8 [(validate.rules).double = {gte: -90, lte: 90}];
+  optional double location_lng = 9 [(validate.rules).double = {gte: -180, lte: 180}];
+  optional int32 location_radius = 10 [(validate.rules).int32.gte = 1]; // in meters, default 1000
+  
+  // Sorting
+  optional string sort_by = 11 [(validate.rules).string = {ignore_empty: true, in: ["session_start_time", "created_at"]}];    // session_start_time|created_at
+  optional string sort_order = 12 [(validate.rules).string = {ignore_empty: true, in: ["asc", "desc"]}]; // asc|desc
+}

@@ -4,7 +4,8 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/arwoosa/event/conf"
-	pb "github.com/arwoosa/event/gen/pb/event"
+	consolepb "github.com/arwoosa/event/gen/pb/console"
+	publicpb "github.com/arwoosa/event/gen/pb/public"
 	"github.com/arwoosa/event/internal/dao/mongodb"
 	"github.com/arwoosa/event/internal/dao/repository"
 
@@ -22,7 +23,7 @@ func RegisterConsoleServices(appConfig *conf.AppConfig) {
 	})
 
 	// Register console gRPC-Gateway handlers
-	ezgrpc.RegisterHandlerFromEndpoint(pb.RegisterEventServiceHandlerFromEndpoint)
+	ezgrpc.RegisterHandlerFromEndpoint(consolepb.RegisterEventServiceHandlerFromEndpoint)
 }
 
 // RegisterPublicServices registers only the public services
@@ -33,7 +34,7 @@ func RegisterPublicServices(appConfig *conf.AppConfig) {
 	})
 
 	// Register public gRPC-Gateway handlers
-	ezgrpc.RegisterHandlerFromEndpoint(pb.RegisterPublicEventServiceHandlerFromEndpoint)
+	ezgrpc.RegisterHandlerFromEndpoint(publicpb.RegisterPublicEventServiceHandlerFromEndpoint)
 }
 
 // registerConsoleServices sets up and registers only console (EventService) related gRPC services
@@ -42,8 +43,8 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 		log.Warn("Console services initialized with nil config - using mock services")
 		mockOrderService := NewMockOrderServiceClient(false, nil)
 		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
-		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, nil))
-		pb.RegisterInternalServiceServer(s, NewInternalServiceServer(nil))
+		consolepb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, nil))
+		consolepb.RegisterInternalServiceServer(s, NewInternalServiceServer(nil))
 		return
 	}
 
@@ -53,8 +54,8 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 		log.Warn("Console services initialized without MongoDB - using mock services")
 		mockOrderService := NewMockOrderServiceClient(false, nil)
 		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
-		pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, appConfig.PaginationConfig))
-		pb.RegisterInternalServiceServer(s, NewInternalServiceServer(nil))
+		consolepb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, appConfig.PaginationConfig))
+		consolepb.RegisterInternalServiceServer(s, NewInternalServiceServer(nil))
 		return
 	}
 
@@ -78,8 +79,8 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 	eventSvc := NewEventService(eventRepo, sessionSvc, orderService)
 
 	// Register console services
-	pb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, appConfig.PaginationConfig))
-	pb.RegisterInternalServiceServer(s, NewInternalServiceServer(eventRepo))
+	consolepb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, appConfig.PaginationConfig))
+	consolepb.RegisterInternalServiceServer(s, NewInternalServiceServer(eventRepo))
 }
 
 // registerPublicServices sets up and registers only public (PublicEventService) related gRPC services
@@ -87,7 +88,7 @@ func registerPublicServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) 
 	if appConfig == nil {
 		log.Warn("Public services initialized with nil config - using mock services")
 		publicSvc := &PublicService{eventRepo: nil, sessionService: nil, paginationConfig: nil}
-		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
+		publicpb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
 		return
 	}
 
@@ -96,7 +97,7 @@ func registerPublicServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) 
 	if mongoClient == nil {
 		log.Warn("Public services initialized without MongoDB - using mock services")
 		publicSvc := &PublicService{eventRepo: nil, sessionService: nil, paginationConfig: appConfig.PaginationConfig}
-		pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
+		publicpb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
 		return
 	}
 
@@ -110,5 +111,5 @@ func registerPublicServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig) 
 	publicSvc := NewPublicService(eventRepo, sessionSvc, appConfig.PaginationConfig)
 
 	// Register only PublicEventService (public API)
-	pb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
+	publicpb.RegisterPublicEventServiceServer(s, NewPublicEventServiceServer(publicSvc))
 }

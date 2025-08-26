@@ -7,13 +7,13 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/arwoosa/event/gen/pb/common"
-	pb "github.com/arwoosa/event/gen/pb/event"
+	publicpb "github.com/arwoosa/event/gen/pb/public"
 	"github.com/arwoosa/event/internal/errors"
 )
 
 // PublicEventServiceServer implements the generated gRPC PublicEventService interface
 type PublicEventServiceServer struct {
-	pb.UnimplementedPublicEventServiceServer
+	publicpb.UnimplementedPublicEventServiceServer
 	publicService *PublicService
 	converter     *ProtobufConverter
 }
@@ -27,7 +27,7 @@ func NewPublicEventServiceServer(publicService *PublicService) *PublicEventServi
 }
 
 // SearchEvents implements the gRPC SearchEvents method
-func (s *PublicEventServiceServer) SearchEvents(ctx context.Context, req *pb.SearchEventsRequest) (*pb.EventListResponse, error) {
+func (s *PublicEventServiceServer) SearchEvents(ctx context.Context, req *publicpb.SearchEventsRequest) (*common.EventListResponse, error) {
 	// Convert gRPC request to service request
 	serviceReq := &SearchEventsRequest{}
 
@@ -81,21 +81,21 @@ func (s *PublicEventServiceServer) SearchEvents(ctx context.Context, req *pb.Sea
 	}
 
 	// Convert to protobuf response (sessions are now embedded in events)
-	eventsPB := make([]*pb.Event, len(result.Events))
+	eventsPB := make([]*common.Event, len(result.Events))
 	for i, event := range result.Events {
 		eventsPB[i] = s.converter.ConvertEventToPB(event)
 	}
 
 	paginationPB := s.converter.ConvertPaginationToPB(result.Pagination)
 
-	return &pb.EventListResponse{
+	return &common.EventListResponse{
 		Events:     eventsPB,
 		Pagination: paginationPB,
 	}, nil
 }
 
 // GetEvent implements the gRPC GetEvent method for public access
-func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *common.ID) (*pb.Event, error) {
+func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *common.ID) (*common.Event, error) {
 	// Get event
 	event, err := s.publicService.GetEvent(ctx, req.Id)
 	if err != nil {

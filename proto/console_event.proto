@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package event.console;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "proto/common.proto";
+import "validate/validate.proto";
+
+option go_package = "github.com/arwoosa/event/gen/pb/console";
+
+
+// Console Event Service for merchant management
+service EventService {
+  // Create a new event
+  rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse) {
+    option (google.api.http) = {
+      post: "/console/events"
+      body: "*"
+    };
+  }
+  
+  // Get list of events with filtering and pagination
+  rpc GetEventList(GetEventListRequest) returns (common.EventListResponse) {
+    option (google.api.http) = {
+      get: "/console/events"
+    };
+  }
+  
+  // Get a single event by ID
+  rpc GetEvent(common.ID) returns (common.Event) {
+    option (google.api.http) = {
+      get: "/console/events/{id}"
+    };
+  }
+  
+  // Patch event (partial update)
+  rpc PatchEvent(PatchEventRequest) returns (common.Event) {
+    option (google.api.http) = {
+      patch: "/console/events/{id}"
+      body: "*"
+    };
+  }
+  
+  // Delete an event
+  rpc DeleteEvent(common.ID) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/console/events/{id}"
+    };
+  }
+  
+  // Update event status
+  rpc UpdateEventStatus(UpdateEventStatusRequest) returns (common.Event) {
+    option (google.api.http) = {
+      put: "/console/events/{id}/status"
+      body: "*"
+    };
+  }
+  
+  // Delete a specific session by ID
+  rpc DeleteSession(DeleteSessionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/console/events/{event_id}/sessions/{session_id}"
+    };
+  }
+}
+
+// Internal Service for inter-service communication
+service InternalService {
+  // Get event by ID without merchant validation (for internal services)
+  rpc GetEventById(common.ID) returns (common.Event);
+}
+
+
+// Request messages
+message CreateEventRequest {
+  string title = 1 [(validate.rules).string = {min_len: 1, max_len: 60}];
+  string summary = 2 [(validate.rules).string.max_len = 160];
+  // status field removed - events are always created as draft
+  string visibility = 3 [(validate.rules).string = {ignore_empty: true, in: ["public", "private"]}];
+  string cover_image_url = 4 [(validate.rules).string = {ignore_empty: true, uri: true}];
+  optional common.Location location = 5;
+  repeated common.Session sessions = 6;
+  repeated common.DetailBlock detail = 7 [(validate.rules).repeated = {min_items: 0, max_items: 50}];
+  repeated common.FAQ faq = 8 [(validate.rules).repeated = {min_items: 0, max_items: 20}];
+}
+
+message GetEventListRequest {
+  // Pagination
+  optional string page_token = 1; // for cursor-based pagination
+  optional int32 page = 2 [(validate.rules).int32.gte = 1];        // for page-based pagination
+  optional int32 page_size = 3 [(validate.rules).int32 = {gte: 1, lte: 100}];   // default 20, max 100
+  
+  // Filters
+  optional string status = 4 [(validate.rules).string = {ignore_empty: true, in: ["draft", "published", "archived"]}];     // draft|published|archived
+  optional string visibility = 5 [(validate.rules).string = {ignore_empty: true, in: ["public", "private"]}]; // public|private
+  optional string session_start_time_from = 6; // RFC3339
+  optional string session_start_time_to = 7;   // RFC3339
+  optional string title_search = 8;           // full-text search
+  
+  // Sorting
+  optional string sort_by = 9 [(validate.rules).string = {ignore_empty: true, in: ["created_at", "updated_at", "session_start_time"]}];    // created_at|updated_at|session_start_time
+  optional string sort_order = 10 [(validate.rules).string = {ignore_empty: true, in: ["asc", "desc"]}]; // asc|desc, default desc
+}
+
+
+message PatchEventRequest {
+  string id = 1 [(validate.rules).string.min_len = 1];
+  optional string title = 2 [(validate.rules).string = {ignore_empty: true, min_len: 1, max_len: 60}];
+  optional string summary = 3 [(validate.rules).string = {ignore_empty: true, max_len: 160}];
+  optional string visibility = 4 [(validate.rules).string = {ignore_empty: true, in: ["public", "private"]}];
+  optional string cover_image_url = 5 [(validate.rules).string = {ignore_empty: true, uri: true}];
+  optional common.Location location = 6;
+  repeated common.Session sessions = 7; // Replace all sessions if provided
+  repeated common.DetailBlock detail = 8 [(validate.rules).repeated = {min_items: 0, max_items: 50}]; // Replace all detail blocks if provided
+  repeated common.FAQ faq = 9 [(validate.rules).repeated = {min_items: 0, max_items: 20}]; // Replace all FAQ if provided
+}
+
+message UpdateEventStatusRequest {
+  string id = 1 [(validate.rules).string.min_len = 1];
+  string status = 2 [(validate.rules).string = {in: ["draft", "published", "archived"]}]; // draft|published|archived
+}
+
+message DeleteSessionRequest {
+  string event_id = 1 [(validate.rules).string.min_len = 1];
+  string session_id = 2 [(validate.rules).string.min_len = 1];
+}
+
+// Response messages
+message CreateEventResponse {
+  string id = 1;
+  string created_at = 2;
+}
+

@@ -5,6 +5,7 @@ option go_package = "github.com/arwoosa/event/gen/pb/common";
 package common;
 
 import "google/protobuf/any.proto";
+import "validate/validate.proto";
 
 message User {
   string user_id = 1;
@@ -22,4 +23,88 @@ message Response {
   int32 code = 2;
   optional string message = 3;
   google.protobuf.Any data = 4;
+}
+
+// Core Event message - shared across all services
+message Event {
+  string id = 1;
+  string title = 2;
+  string merchant_id = 3;
+  string summary = 4;
+  string status = 5; // draft, published, archived
+  string visibility = 6; // public, private
+  string cover_image_url = 7;
+  Location location = 8;
+  repeated Session sessions = 9;
+  repeated DetailBlock detail = 10 [(validate.rules).repeated = {min_items: 0, max_items: 50}];
+  repeated FAQ faq = 11;
+  string created_at = 12;
+  string created_by = 13;
+  string updated_at = 14;
+  string updated_by = 15;
+}
+
+// Location with GeoJSON Point structure
+message Location {
+  string name = 1 [(validate.rules).string.min_len = 1];
+  string address = 2 [(validate.rules).string.min_len = 1];
+  string place_id = 3 [(validate.rules).string.min_len = 1];
+  GeoJSONPoint coordinates = 4 [(validate.rules).message.required = true];
+}
+
+message GeoJSONPoint {
+  string type = 1 [(validate.rules).string.const = "Point"]; // Always "Point"
+  repeated double coordinates = 2 [(validate.rules).repeated = {min_items: 2, max_items: 2}]; // [longitude, latitude]
+}
+
+// Session for time-based event scheduling
+message Session {
+  string id = 1;
+  string name = 2;                                      // Session name (optional)
+  optional int32 capacity = 3;                          // Capacity limit (optional, null means unlimited)
+  string start_time = 4; // RFC3339 format
+  string end_time = 5;   // RFC3339 format
+}
+
+// Detail block for structured content
+message DetailBlock {
+  string type = 1 [(validate.rules).string = {in: ["text", "image"]}];
+  oneof data {
+    TextData text_data = 2;
+    ImageData image_data = 3;
+  }
+}
+
+// Text block data
+message TextData {
+  string content = 1 [(validate.rules).string.max_len = 10000];
+}
+
+// Image block data
+message ImageData {
+  string url = 1 [(validate.rules).string = {min_len: 1, uri: true}];
+  string alt = 2 [(validate.rules).string.max_len = 200];
+  string caption = 3 [(validate.rules).string.max_len = 500];
+}
+
+// FAQ entry
+message FAQ {
+  string question = 1 [(validate.rules).string = {min_len: 1, max_len: 100}];
+  string answer = 2 [(validate.rules).string = {min_len: 1, max_len: 300}];
+}
+
+// Common response messages
+message EventListResponse {
+  repeated Event events = 1;
+  Pagination pagination = 2;
+}
+
+message Pagination {
+  optional string next_page_token = 1; // for cursor-based
+  optional string prev_page_token = 2; // for cursor-based
+  optional bool has_next = 3;
+  optional bool has_prev = 4;
+  optional int32 total_count = 5;
+  optional int32 current_page = 6;     // for page-based
+  optional int32 total_pages = 7;      // for page-based
 }

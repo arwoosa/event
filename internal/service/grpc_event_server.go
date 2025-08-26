@@ -6,7 +6,7 @@ import (
 
 	"github.com/arwoosa/event/conf"
 	"github.com/arwoosa/event/gen/pb/common"
-	pb "github.com/arwoosa/event/gen/pb/event"
+	consolepb "github.com/arwoosa/event/gen/pb/console"
 	"github.com/arwoosa/event/internal/dao/repository"
 	"github.com/arwoosa/event/internal/errors"
 	"google.golang.org/grpc/codes"
@@ -17,7 +17,7 @@ import (
 
 // EventServiceServer implements the generated gRPC EventService interface
 type EventServiceServer struct {
-	pb.UnimplementedEventServiceServer
+	consolepb.UnimplementedEventServiceServer
 	eventService     *EventService
 	converter        *ProtobufConverter
 	paginationConfig *conf.PaginationConfig
@@ -33,7 +33,7 @@ func NewEventServiceServer(eventService *EventService, paginationConfig *conf.Pa
 }
 
 // CreateEvent implements the gRPC CreateEvent method
-func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEventRequest) (*pb.CreateEventResponse, error) {
+func (s *EventServiceServer) CreateEvent(ctx context.Context, req *consolepb.CreateEventRequest) (*consolepb.CreateEventResponse, error) {
 	// Extract user and merchant information from context
 	userID, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
@@ -61,14 +61,14 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *pb.CreateEven
 		return nil, s.handleServiceError(err)
 	}
 
-	return &pb.CreateEventResponse{
+	return &consolepb.CreateEventResponse{
 		Id:        event.ID.Hex(),
 		CreatedAt: event.CreatedAt.Format(time.RFC3339),
 	}, nil
 }
 
 // GetEventList implements the gRPC GetEventList method
-func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventListRequest) (*pb.EventListResponse, error) {
+func (s *EventServiceServer) GetEventList(ctx context.Context, req *consolepb.GetEventListRequest) (*common.EventListResponse, error) {
 	// Extract merchant information from context
 	_, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
@@ -144,20 +144,20 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *pb.GetEventL
 	}
 
 	// Convert to protobuf response (sessions are now embedded in events)
-	eventsPB := make([]*pb.Event, len(result.Events))
+	eventsPB := make([]*common.Event, len(result.Events))
 	for i, event := range result.Events {
 		eventsPB[i] = s.converter.ConvertEventToPB(event)
 	}
 
 	paginationPB := s.converter.ConvertPaginationToPB(result.Pagination)
-	return &pb.EventListResponse{
+	return &common.EventListResponse{
 		Events:     eventsPB,
 		Pagination: paginationPB,
 	}, nil
 }
 
 // GetEvent implements the gRPC GetEvent method
-func (s *EventServiceServer) GetEvent(ctx context.Context, req *common.ID) (*pb.Event, error) {
+func (s *EventServiceServer) GetEvent(ctx context.Context, req *common.ID) (*common.Event, error) {
 	// Extract merchant information from context
 	_, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
@@ -174,7 +174,7 @@ func (s *EventServiceServer) GetEvent(ctx context.Context, req *common.ID) (*pb.
 }
 
 // PatchEvent implements the gRPC PatchEvent method
-func (s *EventServiceServer) PatchEvent(ctx context.Context, req *pb.PatchEventRequest) (*pb.Event, error) {
+func (s *EventServiceServer) PatchEvent(ctx context.Context, req *consolepb.PatchEventRequest) (*common.Event, error) {
 	// Extract user and merchant information from context
 	userID, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
@@ -242,7 +242,7 @@ func (s *EventServiceServer) DeleteEvent(ctx context.Context, req *common.ID) (*
 }
 
 // UpdateEventStatus implements the gRPC UpdateEventStatus method
-func (s *EventServiceServer) UpdateEventStatus(ctx context.Context, req *pb.UpdateEventStatusRequest) (*pb.Event, error) {
+func (s *EventServiceServer) UpdateEventStatus(ctx context.Context, req *consolepb.UpdateEventStatusRequest) (*common.Event, error) {
 	// Extract user and merchant information from context
 	userID, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {
@@ -314,7 +314,7 @@ func (s *EventServiceServer) handleServiceError(err error) error {
 }
 
 // DeleteSession implements the gRPC DeleteSession method
-func (s *EventServiceServer) DeleteSession(ctx context.Context, req *pb.DeleteSessionRequest) (*emptypb.Empty, error) {
+func (s *EventServiceServer) DeleteSession(ctx context.Context, req *consolepb.DeleteSessionRequest) (*emptypb.Empty, error) {
 	// Extract user and merchant information from context
 	_, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
 	if err != nil {

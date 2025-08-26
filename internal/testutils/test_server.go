@@ -6,7 +6,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 
-	"github.com/arwoosa/event/gen/pb/event"
+	consolepb "github.com/arwoosa/event/gen/pb/console"
+	publicpb "github.com/arwoosa/event/gen/pb/public"
 )
 
 // TestServer wraps gRPC test server with bufconn for in-memory testing
@@ -16,8 +17,8 @@ type TestServer struct {
 	Connection *grpc.ClientConn
 
 	// Service clients
-	EventClient  event.EventServiceClient
-	PublicClient event.PublicEventServiceClient
+	EventClient  consolepb.EventServiceClient
+	PublicClient publicpb.PublicEventServiceClient
 }
 
 // NOTE: SetupTestServer implementation moved to avoid circular dependency
