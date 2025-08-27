@@ -12,7 +12,6 @@ import (
 	"github.com/arwoosa/event/conf"
 	"github.com/arwoosa/event/gen/pb/common"
 	consolepb "github.com/arwoosa/event/gen/pb/console"
-	"github.com/arwoosa/event/internal/dao/repository"
 	"github.com/arwoosa/event/internal/errors"
 )
 
@@ -76,87 +75,19 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *consolepb.Ge
 		return nil, err
 	}
 
-	// Build filter - only set non-empty string values
-	filter := &repository.EventFilter{
-		Limit:  20, // Default
-		Offset: 0,
-	}
+	// Process request parameters into filter
+	processor := NewRequestParameterProcessor()
+	filter := processor.ProcessAllFilters(req, s.paginationConfig)
 
-	// Only set filter values if they are non-empty
-	if req.Status != nil && *req.Status != "" {
-		filter.Status = req.Status
-	}
-	if req.Visibility != nil && *req.Visibility != "" {
-		filter.Visibility = req.Visibility
-	}
-	if req.TitleSearch != nil && *req.TitleSearch != "" {
-		filter.TitleSearch = req.TitleSearch
-	}
-	if req.SortBy != nil && *req.SortBy != "" {
-		filter.SortBy = req.SortBy
-	}
-	if req.SortOrder != nil && *req.SortOrder != "" {
-		filter.SortOrder = req.SortOrder
-	}
-	if req.PageToken != nil && *req.PageToken != "" {
-		filter.PageToken = req.PageToken
-	}
-
-	// Handle time filters
-	if req.SessionStartTimeFrom != nil && *req.SessionStartTimeFrom != "" {
-		if t, err := time.Parse(time.RFC3339, *req.SessionStartTimeFrom); err == nil {
-			filter.SessionStartTimeFrom = &t
-		}
-	}
-	if req.SessionStartTimeTo != nil && *req.SessionStartTimeTo != "" {
-		if t, err := time.Parse(time.RFC3339, *req.SessionStartTimeTo); err == nil {
-			filter.SessionStartTimeTo = &t
-		}
-	}
-
-	// Handle pagination with fallback to hardcoded defaults if config is not available
-	defaultPageSize := 20 // Default fallback
-	maxPageSize := 100    // Default fallback
-	if s.paginationConfig != nil {
-		if s.paginationConfig.DefaultPageSize > 0 {
-			defaultPageSize = s.paginationConfig.DefaultPageSize
-		}
-		if s.paginationConfig.MaxPageSize > 0 {
-			maxPageSize = s.paginationConfig.MaxPageSize
-		}
-	}
-
-	filter.Limit = defaultPageSize
-	if req.PageSize != nil {
-		pageSize := int(*req.PageSize)
-		if pageSize > 0 && pageSize <= maxPageSize {
-			filter.Limit = pageSize
-		}
-	}
-	if req.Page != nil && *req.Page > 0 {
-		// Safe calculation: use int64 to avoid overflow, then convert to int
-		offset64 := int64(*req.Page-1) * int64(filter.Limit)
-		filter.Offset = int(offset64) // Note: assumes Offset won't exceed int range
-		filter.PageToken = nil        // Don't use cursor pagination if page is specified
-	}
-
-	// Get events
+	// Get events from service
 	result, err := s.eventService.GetEventList(ctx, merchantID, filter)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
 
-	// Convert to protobuf response (sessions are now embedded in events)
-	eventsPB := make([]*common.Event, len(result.Events))
-	for i, event := range result.Events {
-		eventsPB[i] = s.converter.ConvertEventToPB(event)
-	}
-
-	paginationPB := s.converter.ConvertPaginationToPB(result.Pagination)
-	return &common.EventListResponse{
-		Events:     eventsPB,
-		Pagination: paginationPB,
-	}, nil
+	// Build response
+	responseBuilder := NewResponseBuilder(s.converter)
+	return responseBuilder.BuildEventListResponse(result), nil
 }
 
 // GetEvent implements the gRPC GetEvent method
