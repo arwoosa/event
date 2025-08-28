@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -13,6 +12,8 @@ import (
 	"github.com/arwoosa/event/gen/pb/common"
 	consolepb "github.com/arwoosa/event/gen/pb/console"
 	"github.com/arwoosa/event/internal/errors"
+
+	"github.com/arwoosa/vulpes/ezgrpc"
 )
 
 // EventServiceServer implements the generated gRPC EventService interface
@@ -35,7 +36,7 @@ func NewEventServiceServer(eventService *EventService, paginationConfig *conf.Pa
 // CreateEvent implements the gRPC CreateEvent method
 func (s *EventServiceServer) CreateEvent(ctx context.Context, req *consolepb.CreateEventRequest) (*consolepb.CreateEventResponse, error) {
 	// Extract user information from context
-	userID, err := s.extractUserFromContext(ctx)
+	user, err := ezgrpc.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +52,7 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *consolepb.Cre
 		Sessions:      s.converter.ConvertSessionsFromPB(req.Sessions),
 		Detail:        s.converter.ConvertDetailFromPB(req.Detail),
 		FAQ:           s.converter.ConvertFAQFromPB(req.Faq),
-		UserID:        userID,
+		UserID:        user.ID,
 	}
 
 	// Create event
@@ -97,7 +98,7 @@ func (s *EventServiceServer) GetEvent(ctx context.Context, req *common.ID) (*com
 // PatchEvent implements the gRPC PatchEvent method
 func (s *EventServiceServer) PatchEvent(ctx context.Context, req *consolepb.PatchEventRequest) (*common.Event, error) {
 	// Extract user information from context
-	userID, err := s.extractUserFromContext(ctx)
+	user, err := ezgrpc.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +106,7 @@ func (s *EventServiceServer) PatchEvent(ctx context.Context, req *consolepb.Patc
 	// Convert gRPC request to service request
 	serviceReq := &PatchEventRequest{
 		ID:     req.Id,
-		UserID: userID,
+		UserID: user.ID,
 	}
 
 	// Only set optional fields if they are provided and non-empty
@@ -147,13 +148,12 @@ func (s *EventServiceServer) PatchEvent(ctx context.Context, req *consolepb.Patc
 // DeleteEvent implements the gRPC DeleteEvent method
 func (s *EventServiceServer) DeleteEvent(ctx context.Context, req *common.ID) (*emptypb.Empty, error) {
 	// Extract user information from context
-	userID, err := s.extractUserFromContext(ctx)
+	user, err := ezgrpc.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	// Delete event
-	err = s.eventService.DeleteEvent(ctx, req.Id, userID)
+	err = s.eventService.DeleteEvent(ctx, req.Id, user.ID)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -165,13 +165,12 @@ func (s *EventServiceServer) DeleteEvent(ctx context.Context, req *common.ID) (*
 // UpdateEventStatus implements the gRPC UpdateEventStatus method
 func (s *EventServiceServer) UpdateEventStatus(ctx context.Context, req *consolepb.UpdateEventStatusRequest) (*common.Event, error) {
 	// Extract user information from context
-	userID, err := s.extractUserFromContext(ctx)
+	user, err := ezgrpc.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	// Update status
-	event, err := s.eventService.UpdateEventStatus(ctx, req.Id, req.Status, userID)
+	event, err := s.eventService.UpdateEventStatus(ctx, req.Id, req.Status, user.ID)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -180,22 +179,6 @@ func (s *EventServiceServer) UpdateEventStatus(ctx context.Context, req *console
 }
 
 // Helper methods
-
-func (s *EventServiceServer) extractUserFromContext(ctx context.Context) (userID string, err error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return "", status.Error(codes.Unauthenticated, "missing metadata")
-	}
-
-	// Extract user ID
-	userIDValues := md.Get("user-id")
-	if len(userIDValues) == 0 {
-		return "", status.Error(codes.Unauthenticated, "missing user-id header")
-	}
-	userID = userIDValues[0]
-
-	return userID, nil
-}
 
 func (s *EventServiceServer) handleServiceError(err error) error {
 	switch e := err.(type) {
