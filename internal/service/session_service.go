@@ -30,14 +30,12 @@ func NewSessionService(
 }
 
 // CreateSessionsForEvent creates sessions for an event
+// Authorization is handled by API Gateway before reaching this service
 func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID, merchantID string, sessionReqs []*SessionRequest) ([]*models.Session, error) {
-	// Validate event exists and belongs to merchant
-	event, err := s.eventRepo.FindByID(ctx, eventID)
+	// Validate event exists
+	_, err := s.eventRepo.FindByID(ctx, eventID)
 	if err != nil {
 		return nil, err
-	}
-	if event.MerchantID != merchantID {
-		return nil, errors.ErrUnauthorized
 	}
 
 	// Convert session requests to models
@@ -57,15 +55,6 @@ func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID, me
 
 // GetSessionsForEvent retrieves all sessions for an event
 func (s *SessionService) GetSessionsForEvent(ctx context.Context, eventID, merchantID string) ([]*models.Session, error) {
-	// Verify event belongs to merchant
-	exists, err := s.eventRepo.ExistsByMerchantAndID(ctx, merchantID, eventID)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.ErrEventNotFound
-	}
-
 	return s.sessionRepo.FindByEventID(ctx, eventID)
 }
 
@@ -79,24 +68,10 @@ func (s *SessionService) GetSessionsForEvents(ctx context.Context, eventIDs []st
 // existingEvent and existingSessions are optional - if provided, skips database queries for better performance
 func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, merchantID string, sessionReqs []*SessionRequest, existingEvent *models.Event, existingSessions []*models.Session) ([]*models.Session, error) {
 	// Use provided data or fetch from database
-	var event *models.Event
 	var sessions []*models.Session
 	var err error
 
-	if existingEvent != nil {
-		event = existingEvent
-	} else {
-		// Validate event exists and belongs to merchant
-		event, err = s.eventRepo.FindByID(ctx, eventID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Validate merchant ownership
-	if event.MerchantID != merchantID {
-		return nil, errors.ErrUnauthorized
-	}
+	// Authorization is handled by API Gateway
 
 	if existingSessions != nil {
 		sessions = existingSessions
@@ -177,15 +152,7 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, me
 
 // DeleteSessionsForEvent removes all sessions for an event
 func (s *SessionService) DeleteSessionsForEvent(ctx context.Context, eventID, merchantID string) error {
-	// Verify event belongs to merchant
-	exists, err := s.eventRepo.ExistsByMerchantAndID(ctx, merchantID, eventID)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return errors.ErrEventNotFound
-	}
-
+	// Authorization is handled by API Gateway
 	return s.sessionRepo.DeleteByEventID(ctx, eventID)
 }
 
@@ -196,29 +163,13 @@ func (s *SessionService) GetSession(ctx context.Context, sessionID, merchantID s
 		return nil, err
 	}
 
-	// Verify session belongs to merchant through parent event
-	event, err := s.eventRepo.FindByID(ctx, session.EventID.Hex())
-	if err != nil {
-		return nil, err
-	}
-	if event.MerchantID != merchantID {
-		return nil, errors.ErrUnauthorized
-	}
-
+	// Authorization is handled by API Gateway
 	return session, nil
 }
 
 // DeleteSessionById removes a session by session ID for a specific event
 func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, sessionID, merchantID string) error {
-	// Validate event exists and belongs to merchant
-	event, err := s.eventRepo.FindByID(ctx, eventID)
-	if err != nil {
-		return err
-	}
-	if event.MerchantID != merchantID {
-		return errors.ErrUnauthorized
-	}
-
+	// Authorization is handled by API Gateway
 	// Get the specific session
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
@@ -228,6 +179,12 @@ func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, session
 	// Verify session belongs to the specified event
 	if session.EventID.Hex() != eventID {
 		return errors.NewBusinessError(errors.ErrorCodeSessionNotFound, "session does not belong to this event", errors.ErrSessionNotFound)
+	}
+
+	// Get event to check status (still needed for business logic)
+	event, err := s.eventRepo.FindByID(ctx, eventID)
+	if err != nil {
+		return err
 	}
 
 	if event.Status != models.StatusDraft {
@@ -243,16 +200,8 @@ func (s *SessionService) GetSessionsByMerchant(ctx context.Context, merchantID s
 }
 
 // ValidateSessionsForEvent validates sessions without creating them
+// Authorization is handled by API Gateway before reaching this service
 func (s *SessionService) ValidateSessionsForEvent(ctx context.Context, eventID, merchantID string, sessionReqs []*SessionRequest) error {
-	// Validate event exists and belongs to merchant
-	event, err := s.eventRepo.FindByID(ctx, eventID)
-	if err != nil {
-		return err
-	}
-	if event.MerchantID != merchantID {
-		return errors.ErrUnauthorized
-	}
-
 	// Convert and validate sessions
 	sessions, err := s.convertSessionRequestsToModels(sessionReqs, eventID)
 	if err != nil {

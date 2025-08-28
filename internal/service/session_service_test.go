@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/arwoosa/event/internal/errors"
+	"github.com/arwoosa/event/internal/models"
 	"github.com/arwoosa/event/internal/service/mocks"
 	"github.com/arwoosa/event/internal/testutils"
 )
@@ -110,20 +111,25 @@ func TestSessionService_CreateSessionsForEvent_WrongMerchant(t *testing.T) {
 		},
 	}
 
-	// Mock event with different merchant
+	// Mock event exists (authorization is handled by API Gateway)
 	event := testutils.TestEvent()
-	event.MerchantID = wrongMerchantID // Different merchant
+	event.MerchantID = wrongMerchantID
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
+
+	// Mock successful session creation
+	createdSessions := testutils.TestSessionsForEvent(event.ID, 1)
+	sessionRepo.On("CreateBatch", ctx, testutils.MatchAnySessionSlice()).Return(createdSessions, nil)
 
 	// Execute
 	result, err := sessionService.CreateSessionsForEvent(ctx, eventID, merchantID, sessionReqs)
 
-	// Assert
-	require.Error(t, err)
-	assert.Nil(t, result)
-	assert.Equal(t, errors.ErrUnauthorized, err)
+	// Assert - should succeed since authorization is handled by API Gateway
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 1)
 
 	eventRepo.AssertExpectations(t)
+	sessionRepo.AssertExpectations(t)
 }
 
 func TestSessionService_GetSessionsForEvent_Success(t *testing.T) {
@@ -137,8 +143,7 @@ func TestSessionService_GetSessionsForEvent_Success(t *testing.T) {
 	eventID := testutils.ValidObjectIDString()
 	merchantID := testutils.ValidObjectIDString()
 
-	// Mock existence check
-	eventRepo.On("ExistsByMerchantAndID", ctx, merchantID, eventID).Return(true, nil)
+	// No permission check in service layer anymore - authorization handled by API Gateway
 
 	// Mock sessions retrieval
 	sessions := testutils.TestSessionsForEvent(primitive.NewObjectID(), 3)
@@ -167,16 +172,16 @@ func TestSessionService_GetSessionsForEvent_EventNotExists(t *testing.T) {
 	eventID := testutils.ValidObjectIDString()
 	merchantID := testutils.ValidObjectIDString()
 
-	// Mock existence check returns false
-	eventRepo.On("ExistsByMerchantAndID", ctx, merchantID, eventID).Return(false, nil)
+	// Mock no sessions found for event
+	sessionRepo.On("FindByEventID", ctx, eventID).Return([]*models.Session{}, nil)
 
 	// Execute
 	result, err := sessionService.GetSessionsForEvent(ctx, eventID, merchantID)
 
-	// Assert
-	require.Error(t, err)
-	assert.Nil(t, result)
-	assert.Equal(t, errors.ErrEventNotFound, err)
+	// Assert - should succeed but return empty slice
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Empty(t, result)
 
 	eventRepo.AssertExpectations(t)
 }
@@ -198,10 +203,8 @@ func TestSessionService_GetSession_Success(t *testing.T) {
 	event.ID = session.EventID
 	event.MerchantID = merchantID // Set matching merchant
 
-	// Mock session retrieval
+	// Mock session retrieval (no permission check in service layer)
 	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
-	// Mock event retrieval for merchant validation (new requirement)
-	eventRepo.On("FindByID", ctx, session.EventID.Hex()).Return(event, nil)
 
 	// Execute
 	result, err := sessionService.GetSession(ctx, sessionID, merchantID)
@@ -212,7 +215,6 @@ func TestSessionService_GetSession_Success(t *testing.T) {
 	assert.Equal(t, session.ID, result.ID)
 
 	sessionRepo.AssertExpectations(t)
-	eventRepo.AssertExpectations(t)
 }
 
 func TestSessionService_GetSession_UnauthorizedMerchant(t *testing.T) {
@@ -233,21 +235,18 @@ func TestSessionService_GetSession_UnauthorizedMerchant(t *testing.T) {
 	event.ID = session.EventID
 	event.MerchantID = differentMerchantID // Different merchant
 
-	// Mock session retrieval
+	// Mock session retrieval (authorization is handled by API Gateway)
 	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
-	// Mock event retrieval for merchant validation
-	eventRepo.On("FindByID", ctx, session.EventID.Hex()).Return(event, nil)
 
 	// Execute
 	result, err := sessionService.GetSession(ctx, sessionID, merchantID)
 
-	// Assert
-	require.Error(t, err)
-	assert.Nil(t, result)
-	assert.Equal(t, errors.ErrUnauthorized, err)
+	// Assert - should succeed since authorization is handled by API Gateway
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, session.ID, result.ID)
 
 	sessionRepo.AssertExpectations(t)
-	eventRepo.AssertExpectations(t)
 }
 
 func TestSessionService_ValidateSessionsForEvent_Success(t *testing.T) {
@@ -273,18 +272,13 @@ func TestSessionService_ValidateSessionsForEvent_Success(t *testing.T) {
 		},
 	}
 
-	// Mock event validation
-	event := testutils.TestEvent()
-	event.MerchantID = merchantID
-	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
+	// No permission check in service layer - authorization handled by API Gateway
 
 	// Execute
 	err := sessionService.ValidateSessionsForEvent(ctx, eventID, merchantID, sessionReqs)
 
 	// Assert
 	require.NoError(t, err)
-
-	eventRepo.AssertExpectations(t)
 }
 
 func TestSessionService_ValidateSessionsForEvent_DuplicateTimes(t *testing.T) {
@@ -311,10 +305,7 @@ func TestSessionService_ValidateSessionsForEvent_DuplicateTimes(t *testing.T) {
 		},
 	}
 
-	// Mock event validation
-	event := testutils.TestEvent()
-	event.MerchantID = merchantID
-	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
+	// No permission check in service layer - authorization handled by API Gateway
 
 	// Execute
 	err := sessionService.ValidateSessionsForEvent(ctx, eventID, merchantID, sessionReqs)
@@ -322,6 +313,4 @@ func TestSessionService_ValidateSessionsForEvent_DuplicateTimes(t *testing.T) {
 	// Assert
 	require.Error(t, err)
 	testutils.AssertError(t, err, errors.ErrorCodeValidationError, "have identical start and end times")
-
-	eventRepo.AssertExpectations(t)
 }

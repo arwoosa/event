@@ -8,11 +8,13 @@ package event
 
 import (
 	context "context"
-	common "github.com/arwoosa/event/gen/pb/common"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+
+	common "github.com/arwoosa/event/gen/pb/common"
 )
 
 // This is a compile-time assertion to ensure that this generated file

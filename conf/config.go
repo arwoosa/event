@@ -17,6 +17,7 @@ type AppConfig struct {
 	TimeZone          string `mapstructure:"time_zone"`
 	*LogConfig        `mapstructure:"log"`
 	*MongodbConfig    `mapstructure:"mongodb"`
+	*KetoConfig       `mapstructure:"keto"`
 	*ExternalConfig   `mapstructure:"external"`
 	*PaginationConfig `mapstructure:"pagination"`
 }
@@ -28,6 +29,12 @@ type MongodbConfig struct {
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
 	DB       string `mapstructure:"db"`
+}
+
+// KetoConfig holds the Ory Keto authorization configuration.
+type KetoConfig struct {
+	WriteAddr string `mapstructure:"write_addr"`
+	ReadAddr  string `mapstructure:"read_addr"`
 }
 
 // LogConfig holds the logger configuration.

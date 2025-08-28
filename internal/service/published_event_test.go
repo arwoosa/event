@@ -176,7 +176,7 @@ func TestEventService_PatchPublishedEvent_Integration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Mock the repository calls
-			eventRepo.On("ExistsByMerchantAndID", ctx, merchantID, eventID).Return(true, nil)
+			// No permission check in service layer - authorization handled by API Gateway
 			eventRepo.On("FindByID", ctx, eventID).Return(publishedEvent, nil)
 
 			if !tt.expectError {

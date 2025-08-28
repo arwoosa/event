@@ -12,6 +12,7 @@ import (
 
 	"github.com/arwoosa/vulpes/ezgrpc"
 	vulpeslog "github.com/arwoosa/vulpes/log"
+	"github.com/arwoosa/vulpes/relation"
 )
 
 // consoleCmd represents the console command
@@ -42,6 +43,25 @@ func runConsoleServer(cmd *cobra.Command, args []string) {
 	if _, err := mongodb.InitMongoDB(ctx, appConfig.MongodbConfig); err != nil {
 		vulpeslog.Error("Failed to initialize MongoDB", vulpeslog.Err(err))
 		vulpeslog.Fatal("Console service requires MongoDB connection - cannot start without database")
+	}
+
+	// Initialize Keto relation client
+	if appConfig.KetoConfig != nil {
+		vulpeslog.Info("Initializing Keto relation client",
+			vulpeslog.String("write_addr", appConfig.WriteAddr),
+			vulpeslog.String("read_addr", appConfig.ReadAddr))
+
+		relation.Initialize(
+			relation.WithWriteAddr(appConfig.WriteAddr),
+			relation.WithReadAddr(appConfig.ReadAddr),
+		)
+
+		// Ensure relation connection is closed when server shuts down
+		defer relation.Close()
+
+		vulpeslog.Info("Keto relation client initialized successfully")
+	} else {
+		vulpeslog.Warn("Keto configuration not found - authorization features may not work")
 	}
 
 	// Register only console services

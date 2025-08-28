@@ -9,6 +9,8 @@ import (
 	vulpeslog "github.com/arwoosa/vulpes/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"github.com/arwoosa/vulpes/relation"
+
 	"github.com/arwoosa/event/internal/dao/repository"
 	"github.com/arwoosa/event/internal/errors"
 	"github.com/arwoosa/event/internal/models"
@@ -117,17 +119,49 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 		return nil, err
 	}
 
+	// Write Keto tuple: event:{eventID} owner user:{userID}
+	tuples := relation.NewTupleBuilder()
+	tuples.AppendInsertTupleWithSubjectId("Event", createdEvent.ID.Hex(), "owner", req.UserID)
+	if err := relation.WriteTuple(ctx, tuples); err != nil {
+		vulpeslog.Error("Failed to write Keto tuple for event ownership",
+			vulpeslog.String("eventID", createdEvent.ID.Hex()),
+			vulpeslog.String("userID", req.UserID),
+			vulpeslog.Err(err))
+		// Rollback event creation - without Keto tuple, the event cannot be operated on
+		if deleteErr := s.eventRepo.Delete(ctx, createdEvent.ID.Hex()); deleteErr != nil {
+			vulpeslog.Error("Failed to rollback event creation after Keto failure",
+				vulpeslog.String("eventID", createdEvent.ID.Hex()),
+				vulpeslog.Err(deleteErr))
+		}
+		return nil, fmt.Errorf("failed to establish event ownership in authorization system: %w", err)
+	}
+
 	// Create sessions for the event if provided
 	if len(req.Sessions) > 0 {
 		_, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.MerchantID, req.Sessions)
 		if err != nil {
-			// If session creation fails, we should delete the event to maintain consistency
+			// If session creation fails, rollback both event and Keto tuple
+			vulpeslog.Error("Session creation failed, rolling back event creation",
+				vulpeslog.String("eventID", createdEvent.ID.Hex()),
+				vulpeslog.Err(err))
+
+			// Delete the event from database
 			if deleteErr := s.eventRepo.Delete(ctx, createdEvent.ID.Hex()); deleteErr != nil {
-				// Log the rollback error but return the original session creation error
 				vulpeslog.Error("Failed to rollback event creation",
 					vulpeslog.String("eventID", createdEvent.ID.Hex()),
 					vulpeslog.Err(deleteErr))
 			}
+
+			// Delete the Keto tuple to avoid orphaned authorization data
+			deleteTuples := relation.NewTupleBuilder()
+			deleteTuples.AppendDeleteTupleWithSubjectId("Event", createdEvent.ID.Hex(), "owner", req.UserID)
+			if tupleErr := relation.WriteTuple(ctx, deleteTuples); tupleErr != nil {
+				vulpeslog.Error("Failed to rollback Keto tuple after session creation failure",
+					vulpeslog.String("eventID", createdEvent.ID.Hex()),
+					vulpeslog.String("userID", req.UserID),
+					vulpeslog.Err(tupleErr))
+			}
+
 			return nil, fmt.Errorf("failed to create sessions: %w", err)
 		}
 	}
@@ -135,17 +169,9 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 	return createdEvent, nil
 }
 
-// GetEvent retrieves an event by ID for the specified merchant
+// GetEvent retrieves an event by ID
+// Authorization is handled by API Gateway before reaching this service
 func (s *EventService) GetEvent(ctx context.Context, merchantID, eventID string) (*models.Event, error) {
-	// Check if event exists for this merchant
-	exists, err := s.eventRepo.ExistsByMerchantAndID(ctx, merchantID, eventID)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.ErrEventNotFound
-	}
-
 	return s.eventRepo.FindByID(ctx, eventID)
 }
 
