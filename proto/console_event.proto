@@ -67,8 +67,9 @@ service EventService {
 
 // Internal Service for inter-service communication
 service InternalService {
-  // Get event by ID without merchant validation (for internal services)
   rpc GetEventById(common.ID) returns (common.Event);
+
+  rpc GetSessionById(common.ID) returns (common.Session);
 }
 
 

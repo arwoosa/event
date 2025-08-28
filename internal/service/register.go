@@ -44,7 +44,7 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 		mockOrderService := NewMockOrderServiceClient(false, nil)
 		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
 		consolepb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, nil))
-		consolepb.RegisterInternalServiceServer(s, NewInternalServiceServer(nil))
+		consolepb.RegisterInternalServiceServer(s, NewInternalServiceServer(nil, nil))
 		return
 	}
 
@@ -55,7 +55,7 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 		mockOrderService := NewMockOrderServiceClient(false, nil)
 		eventSvc := &EventService{eventRepo: nil, sessionService: nil, orderService: mockOrderService}
 		consolepb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, appConfig.PaginationConfig))
-		consolepb.RegisterInternalServiceServer(s, NewInternalServiceServer(nil))
+		consolepb.RegisterInternalServiceServer(s, NewInternalServiceServer(nil, nil))
 		return
 	}
 
@@ -80,7 +80,7 @@ func registerConsoleServices(s grpc.ServiceRegistrar, appConfig *conf.AppConfig)
 
 	// Register console services
 	consolepb.RegisterEventServiceServer(s, NewEventServiceServer(eventSvc, appConfig.PaginationConfig))
-	consolepb.RegisterInternalServiceServer(s, NewInternalServiceServer(eventRepo))
+	consolepb.RegisterInternalServiceServer(s, NewInternalServiceServer(eventRepo, sessionRepo))
 }
 
 // registerPublicServices sets up and registers only public (PublicEventService) related gRPC services

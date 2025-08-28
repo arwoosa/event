@@ -347,15 +347,16 @@ var EventService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	InternalService_GetEventById_FullMethodName = "/event.console.InternalService/GetEventById"
+	InternalService_GetEventById_FullMethodName   = "/event.console.InternalService/GetEventById"
+	InternalService_GetSessionById_FullMethodName = "/event.console.InternalService/GetSessionById"
 )
 
 // InternalServiceClient is the client API for InternalService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InternalServiceClient interface {
-	// Get event by ID without merchant validation (for internal services)
 	GetEventById(ctx context.Context, in *common.ID, opts ...grpc.CallOption) (*common.Event, error)
+	GetSessionById(ctx context.Context, in *common.ID, opts ...grpc.CallOption) (*common.Session, error)
 }
 
 type internalServiceClient struct {
@@ -375,12 +376,21 @@ func (c *internalServiceClient) GetEventById(ctx context.Context, in *common.ID,
 	return out, nil
 }
 
+func (c *internalServiceClient) GetSessionById(ctx context.Context, in *common.ID, opts ...grpc.CallOption) (*common.Session, error) {
+	out := new(common.Session)
+	err := c.cc.Invoke(ctx, InternalService_GetSessionById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InternalServiceServer is the server API for InternalService service.
 // All implementations must embed UnimplementedInternalServiceServer
 // for forward compatibility
 type InternalServiceServer interface {
-	// Get event by ID without merchant validation (for internal services)
 	GetEventById(context.Context, *common.ID) (*common.Event, error)
+	GetSessionById(context.Context, *common.ID) (*common.Session, error)
 	mustEmbedUnimplementedInternalServiceServer()
 }
 
@@ -390,6 +400,9 @@ type UnimplementedInternalServiceServer struct {
 
 func (UnimplementedInternalServiceServer) GetEventById(context.Context, *common.ID) (*common.Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEventById not implemented")
+}
+func (UnimplementedInternalServiceServer) GetSessionById(context.Context, *common.ID) (*common.Session, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSessionById not implemented")
 }
 func (UnimplementedInternalServiceServer) mustEmbedUnimplementedInternalServiceServer() {}
 
@@ -422,6 +435,24 @@ func _InternalService_GetEventById_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InternalService_GetSessionById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.ID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InternalServiceServer).GetSessionById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InternalService_GetSessionById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InternalServiceServer).GetSessionById(ctx, req.(*common.ID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InternalService_ServiceDesc is the grpc.ServiceDesc for InternalService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -432,6 +463,10 @@ var InternalService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetEventById",
 			Handler:    _InternalService_GetEventById_Handler,
+		},
+		{
+			MethodName: "GetSessionById",
+			Handler:    _InternalService_GetSessionById_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

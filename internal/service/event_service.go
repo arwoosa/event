@@ -47,7 +47,6 @@ type CreateEventRequest struct {
 	Sessions      []*SessionRequest
 	Detail        []DetailBlockRequest
 	FAQ           []*FAQRequest
-	MerchantID    string
 	UserID        string
 }
 

@@ -77,6 +77,26 @@ func (c *ProtobufConverter) ConvertSessionsToPB(sessions []models.Session) []*co
 	return sessionsPB
 }
 
+// ConvertSessionToPB converts domain Session to protobuf Session
+func (c *ProtobufConverter) ConvertSessionToPB(session *models.Session) *common.Session {
+	if session == nil {
+		return nil
+	}
+
+	sessionPB := &common.Session{
+		Id:        session.ID.Hex(),
+		Name:      session.Name,
+		StartTime: session.StartTime.Format(time.RFC3339),
+		EndTime:   session.EndTime.Format(time.RFC3339),
+	}
+	// Convert capacity - handle nil pointer with safe conversion
+	if session.Capacity != nil {
+		capacity := helper.SafeInt32FromInt(*session.Capacity)
+		sessionPB.Capacity = &capacity
+	}
+	return sessionPB
+}
+
 // ConvertDetailToPB converts domain DetailBlocks to protobuf DetailBlocks
 func (c *ProtobufConverter) ConvertDetailToPB(detail []models.DetailBlock) []*common.DetailBlock {
 	blocks := make([]*common.DetailBlock, len(detail))

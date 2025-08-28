@@ -15,15 +15,17 @@ import (
 // InternalServiceServer implements the generated gRPC InternalService interface
 type InternalServiceServer struct {
 	consolepb.UnimplementedInternalServiceServer
-	eventRepo repository.EventRepository
-	converter *ProtobufConverter
+	eventRepo   repository.EventRepository
+	sessionRepo repository.SessionRepository
+	converter   *ProtobufConverter
 }
 
 // NewInternalServiceServer creates a new gRPC internal service server
-func NewInternalServiceServer(eventRepo repository.EventRepository) *InternalServiceServer {
+func NewInternalServiceServer(eventRepo repository.EventRepository, sessionRepo repository.SessionRepository) *InternalServiceServer {
 	return &InternalServiceServer{
-		eventRepo: eventRepo,
-		converter: NewProtobufConverter(),
+		eventRepo:   eventRepo,
+		sessionRepo: sessionRepo,
+		converter:   NewProtobufConverter(),
 	}
 }
 
@@ -36,6 +38,17 @@ func (s *InternalServiceServer) GetEventById(ctx context.Context, req *common.ID
 	}
 
 	return s.converter.ConvertEventToPB(event), nil
+}
+
+// GetSessionById implements the gRPC GetSessionById method for internal services
+func (s *InternalServiceServer) GetSessionById(ctx context.Context, req *common.ID) (*common.Session, error) {
+	// Get session without merchant validation (for internal service use)
+	session, err := s.sessionRepo.FindByID(ctx, req.Id)
+	if err != nil {
+		return nil, s.handleServiceError(err)
+	}
+
+	return s.converter.ConvertSessionToPB(session), nil
 }
 
 // Helper methods
