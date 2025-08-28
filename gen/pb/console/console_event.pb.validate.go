@@ -1120,9 +1120,9 @@ func (m *DeleteSessionRequest) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetEventId()) < 1 {
+	if utf8.RuneCountInString(m.GetId()) < 1 {
 		err := DeleteSessionRequestValidationError{
-			field:  "EventId",
+			field:  "Id",
 			reason: "value length must be at least 1 runes",
 		}
 		if !all {

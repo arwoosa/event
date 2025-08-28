@@ -150,44 +150,6 @@
         ]
       }
     },
-    "/console/events/{event_id}/sessions/{session_id}": {
-      "delete": {
-        "summary": "Delete a specific session by ID",
-        "operationId": "EventService_DeleteSession",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {}
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "event_id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "session_id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "EventService"
-        ]
-      }
-    },
     "/console/events/{id}": {
       "get": {
         "summary": "Get a single event by ID",
@@ -279,6 +241,44 @@
             "schema": {
               "$ref": "#/definitions/EventServicePatchEventBody"
             }
+          }
+        ],
+        "tags": [
+          "EventService"
+        ]
+      }
+    },
+    "/console/events/{id}/sessions/{session_id}": {
+      "delete": {
+        "summary": "Delete a specific session by ID",
+        "operationId": "EventService_DeleteSession",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [

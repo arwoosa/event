@@ -329,14 +329,14 @@ func request_EventService_DeleteSession_0(ctx context.Context, marshaler runtime
 		_   = err
 	)
 
-	val, ok = pathParams["event_id"]
+	val, ok = pathParams["id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "event_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
 
-	protoReq.EventId, err = runtime.String(val)
+	protoReq.Id, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "event_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
 	val, ok = pathParams["session_id"]
@@ -365,14 +365,14 @@ func local_request_EventService_DeleteSession_0(ctx context.Context, marshaler r
 		_   = err
 	)
 
-	val, ok = pathParams["event_id"]
+	val, ok = pathParams["id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "event_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
 
-	protoReq.EventId, err = runtime.String(val)
+	protoReq.Id, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "event_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
 	val, ok = pathParams["session_id"]
@@ -554,7 +554,7 @@ func RegisterEventServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/event.console.EventService/DeleteSession", runtime.WithHTTPPathPattern("/console/events/{event_id}/sessions/{session_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/event.console.EventService/DeleteSession", runtime.WithHTTPPathPattern("/console/events/{id}/sessions/{session_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -750,7 +750,7 @@ func RegisterEventServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/event.console.EventService/DeleteSession", runtime.WithHTTPPathPattern("/console/events/{event_id}/sessions/{session_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/event.console.EventService/DeleteSession", runtime.WithHTTPPathPattern("/console/events/{id}/sessions/{session_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -782,7 +782,7 @@ var (
 
 	pattern_EventService_UpdateEventStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"console", "events", "id", "status"}, ""))
 
-	pattern_EventService_DeleteSession_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"console", "events", "event_id", "sessions", "session_id"}, ""))
+	pattern_EventService_DeleteSession_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"console", "events", "id", "sessions", "session_id"}, ""))
 )
 
 var (

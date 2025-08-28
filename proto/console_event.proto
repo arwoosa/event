@@ -60,7 +60,7 @@ service EventService {
   // Delete a specific session by ID
   rpc DeleteSession(DeleteSessionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/console/events/{event_id}/sessions/{session_id}"
+      delete: "/console/events/{id}/sessions/{session_id}"
     };
   }
 }
@@ -122,7 +122,7 @@ message UpdateEventStatusRequest {
 }
 
 message DeleteSessionRequest {
-  string event_id = 1 [(validate.rules).string.min_len = 1];
+  string id = 1 [(validate.rules).string.min_len = 1];
   string session_id = 2 [(validate.rules).string.min_len = 1];
 }
 

@@ -5,85 +5,76 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/arwoosa/vulpes/ezgrpc"
+	"github.com/arwoosa/vulpes/log"
 
 	"github.com/arwoosa/event/conf"
-
-	"github.com/arwoosa/vulpes/log"
 )
 
 // OrderServiceClientImpl implements OrderServiceClient interface
 type OrderServiceClientImpl struct {
-	conn *grpc.ClientConn
-	// client  orderpb.OrdersAdminServiceClient
-	timeout time.Duration
+	endpoint string
+	timeout  time.Duration
+}
+
+// IsEventHasOrdersRequest represents the request to check if event has orders
+type IsEventHasOrdersRequest struct {
+	Event string `json:"event"`
+}
+
+// IsEventHasOrdersResponse represents the response containing order status
+type IsEventHasOrdersResponse struct {
+	Data *OrderData `json:"data,omitempty"`
+}
+
+// OrderData represents the order data in the response
+type OrderData struct {
+	Value bool `json:"value"`
 }
 
 // NewOrderServiceClient creates a new order service client
 func NewOrderServiceClient(config conf.ServiceConfig) OrderServiceClient {
-	conn, err := grpc.NewClient(config.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		// For development, we'll use a mock client if connection fails
-		return NewMockOrderServiceClient(false, fmt.Errorf("failed to connect to order service: %w", err))
-	}
-
-	// client := orderpb.NewOrdersAdminServiceClient(conn)
-
+	// No need to pre-establish connection with reflection-based approach
 	return &OrderServiceClientImpl{
-		conn: conn,
-		// client:  client,
-		timeout: config.Timeout,
+		endpoint: config.Endpoint,
+		timeout:  config.Timeout,
 	}
 }
 
-// HasOrders checks if an event has any orders using gRPC
+// HasOrders checks if an event has any orders using reflection-based gRPC
 func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) (bool, error) {
 	// Create timeout context
-	// timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
-	// defer cancel()
+	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
 
-	// // Create request
-	// req := &orderpb.IsEventHasOrdersRequest{
-	// 	Event: eventID,
-	// }
+	// Create request
+	req := &IsEventHasOrdersRequest{
+		Event: eventID,
+	}
 
-	// // Call gRPC service
-	// resp, err := c.client.IsEventHasOpenOrders(timeoutCtx, req)
-	// if err != nil {
-	// 	return false, fmt.Errorf("failed to call order service: %w", err)
-	// }
+	// Call gRPC service using reflection
+	resp, err := ezgrpc.Invoke[*IsEventHasOrdersRequest, *IsEventHasOrdersResponse](
+		timeoutCtx,
+		c.endpoint,                 // service endpoint
+		"order.OrdersAdminService", // service name
+		"IsEventHasOpenOrders",     // method name
+		req,
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to call order service: %w", err)
+	}
 
-	// // Parse response data to get has_orders boolean
-	// if resp.Data == nil {
-	// 	return false, nil
-	// }
+	// Parse response data
+	if resp == nil || resp.Data == nil {
+		return false, nil
+	}
 
-	// // Convert Any to JSON and parse
-	// jsonBytes, err := protojson.Marshal(resp.Data)
-	// if err != nil {
-	// 	return false, fmt.Errorf("failed to marshal response data: %w", err)
-	// }
-
-	// var data map[string]interface{}
-	// if err := json.Unmarshal(jsonBytes, &data); err != nil {
-	// 	return false, fmt.Errorf("failed to unmarshal response data: %w", err)
-	// }
-
-	// hasOrders, ok := data["value"].(bool)
-	// if !ok {
-	// 	return false, nil
-	// }
-
-	// return hasOrders, nil
-	return false, nil
+	return resp.Data.Value, nil
 }
 
-// Close closes the gRPC connection
+// Close closes the gRPC connection (no-op for reflection-based client)
 func (c *OrderServiceClientImpl) Close() error {
-	if c.conn != nil {
-		return c.conn.Close()
-	}
+	// No persistent connection to close with reflection-based approach
 	return nil
 }
 

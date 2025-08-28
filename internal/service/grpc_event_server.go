@@ -256,7 +256,7 @@ func (s *EventServiceServer) DeleteSession(ctx context.Context, req *consolepb.D
 	}
 
 	// Call session service to delete the session
-	err = s.eventService.sessionService.DeleteSessionById(ctx, req.EventId, req.SessionId, merchantID)
+	err = s.eventService.sessionService.DeleteSessionById(ctx, req.Id, req.SessionId, merchantID)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
