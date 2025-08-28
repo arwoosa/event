@@ -134,9 +134,9 @@ func (r *MongoEventRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// FindByMerchantID finds events by merchant ID with sessions populated and filtering
-func (r *MongoEventRepository) FindByMerchantID(ctx context.Context, merchantID string, filter *EventFilter) (*EventListResult, error) {
-	baseQuery := bson.M{"merchant_id": merchantID}
+// Find finds events with sessions populated and filtering
+func (r *MongoEventRepository) Find(ctx context.Context, filter *EventFilter) (*EventListResult, error) {
+	baseQuery := bson.M{}
 
 	// Apply filters
 	if filter.Status != nil {
@@ -161,9 +161,6 @@ func (r *MongoEventRepository) FindPublic(ctx context.Context, filter *PublicEve
 	}
 
 	// Apply filters
-	if filter.MerchantID != nil {
-		baseQuery["merchant_id"] = *filter.MerchantID
-	}
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
 		baseQuery["$text"] = bson.M{"$search": *filter.TitleSearch}
 	}
@@ -233,11 +230,10 @@ func (r *MongoEventRepository) FindPublicByID(ctx context.Context, id string) (*
 	return events[0], nil
 }
 
-// CountByMerchantAndStatus counts events by merchant and status
-func (r *MongoEventRepository) CountByMerchantAndStatus(ctx context.Context, merchantID, status string) (int64, error) {
+// CountByStatus counts events by status
+func (r *MongoEventRepository) CountByStatus(ctx context.Context, status string) (int64, error) {
 	query := bson.M{
-		"merchant_id": merchantID,
-		"status":      status,
+		"status": status,
 	}
 
 	count, err := r.collection.CountDocuments(ctx, query)
@@ -256,24 +252,6 @@ func (r *MongoEventRepository) ExistsByID(ctx context.Context, id string) (bool,
 	}
 
 	count, err := r.collection.CountDocuments(ctx, bson.M{"_id": objectID})
-	if err != nil {
-		return false, fmt.Errorf("failed to check event existence: %w", err)
-	}
-
-	return count > 0, nil
-}
-
-// ExistsByMerchantAndID checks if an event exists for a specific merchant
-func (r *MongoEventRepository) ExistsByMerchantAndID(ctx context.Context, merchantID, id string) (bool, error) {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return false, fmt.Errorf("invalid event ID: %w", err)
-	}
-
-	count, err := r.collection.CountDocuments(ctx, bson.M{
-		"_id":         objectID,
-		"merchant_id": merchantID,
-	})
 	if err != nil {
 		return false, fmt.Errorf("failed to check event existence: %w", err)
 	}

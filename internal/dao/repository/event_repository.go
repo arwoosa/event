@@ -9,7 +9,6 @@ import (
 
 // EventFilter represents filtering options for event queries
 type EventFilter struct {
-	MerchantID           *string
 	Status               *string
 	Visibility           *string
 	SessionStartTimeFrom *time.Time
@@ -24,7 +23,6 @@ type EventFilter struct {
 
 // PublicEventFilter represents filtering options for public event queries
 type PublicEventFilter struct {
-	MerchantID           *string
 	TitleSearch          *string
 	SessionStartTimeFrom *time.Time
 	SessionStartTimeTo   *time.Time
@@ -65,16 +63,15 @@ type EventRepository interface {
 	Delete(ctx context.Context, id string) error
 
 	// Console API queries (with sessions populated)
-	FindByMerchantID(ctx context.Context, merchantID string, filter *EventFilter) (*EventListResult, error)
+	Find(ctx context.Context, filter *EventFilter) (*EventListResult, error)
 
 	// Public API queries (with sessions populated)
 	FindPublic(ctx context.Context, filter *PublicEventFilter) (*EventListResult, error)
 	FindPublicByID(ctx context.Context, id string) (*models.Event, error)
 
 	// Specialized queries (with sessions populated)
-	CountByMerchantAndStatus(ctx context.Context, merchantID, status string) (int64, error)
+	CountByStatus(ctx context.Context, status string) (int64, error)
 
 	// Existence checks
 	ExistsByID(ctx context.Context, id string) (bool, error)
-	ExistsByMerchantAndID(ctx context.Context, merchantID, id string) (bool, error)
 }

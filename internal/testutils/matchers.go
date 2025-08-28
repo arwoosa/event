@@ -119,13 +119,6 @@ func CreateStatusMatcher(status string) func(*models.Event) bool {
 	}
 }
 
-// CreateMerchantMatcher creates a matcher for events with specific merchant ID
-func CreateMerchantMatcher(merchantID string) func(*models.Event) bool {
-	return func(e *models.Event) bool {
-		return e != nil && e.MerchantID == merchantID
-	}
-}
-
 // CreateSessionEventMatcher creates a matcher for sessions with specific event ID
 func CreateSessionEventMatcher(eventID string) func(*models.Session) bool {
 	return func(s *models.Session) bool {

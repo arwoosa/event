@@ -138,7 +138,7 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 
 	// Create sessions for the event if provided
 	if len(req.Sessions) > 0 {
-		_, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.MerchantID, req.Sessions)
+		_, err = s.sessionService.CreateSessionsForEvent(ctx, createdEvent.ID.Hex(), req.Sessions)
 		if err != nil {
 			// If session creation fails, rollback both event and Keto tuple
 			vulpeslog.Error("Session creation failed, rolling back event creation",
@@ -171,22 +171,20 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 
 // GetEvent retrieves an event by ID
 // Authorization is handled by API Gateway before reaching this service
-func (s *EventService) GetEvent(ctx context.Context, merchantID, eventID string) (*models.Event, error) {
+func (s *EventService) GetEvent(ctx context.Context, eventID string) (*models.Event, error) {
 	return s.eventRepo.FindByID(ctx, eventID)
 }
 
-// GetEventList retrieves a list of events for the specified merchant with filtering
-func (s *EventService) GetEventList(ctx context.Context, merchantID string, filter *repository.EventFilter) (*repository.EventListResult, error) {
-	// Ensure merchant ID is set in filter
-	filter.MerchantID = &merchantID
-
-	return s.eventRepo.FindByMerchantID(ctx, merchantID, filter)
+// GetEventList retrieves a list of events with filtering
+// Authorization/filtering is handled by API Gateway before reaching this service
+func (s *EventService) GetEventList(ctx context.Context, filter *repository.EventFilter) (*repository.EventListResult, error) {
+	return s.eventRepo.Find(ctx, filter)
 }
 
 // PatchEvent partially updates an event
-func (s *EventService) PatchEvent(ctx context.Context, merchantID string, req *PatchEventRequest) (*models.Event, error) {
+func (s *EventService) PatchEvent(ctx context.Context, req *PatchEventRequest) (*models.Event, error) {
 	// Get existing event
-	existingEvent, err := s.GetEvent(ctx, merchantID, req.ID)
+	existingEvent, err := s.GetEvent(ctx, req.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +215,7 @@ func (s *EventService) PatchEvent(ctx context.Context, merchantID string, req *P
 			existingSessionPtrs[i] = &existingEvent.Sessions[i]
 		}
 
-		_, err = s.sessionService.UpdateSessionsForEvent(ctx, req.ID, merchantID, req.Sessions, existingEvent, existingSessionPtrs)
+		_, err = s.sessionService.UpdateSessionsForEvent(ctx, req.ID, req.Sessions, existingEvent, existingSessionPtrs)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update sessions: %w", err)
 		}
@@ -230,9 +228,9 @@ func (s *EventService) PatchEvent(ctx context.Context, merchantID string, req *P
 }
 
 // DeleteEvent deletes an event
-func (s *EventService) DeleteEvent(ctx context.Context, merchantID, eventID, userID string) error {
+func (s *EventService) DeleteEvent(ctx context.Context, eventID, userID string) error {
 	// Get existing event
-	existingEvent, err := s.GetEvent(ctx, merchantID, eventID)
+	existingEvent, err := s.GetEvent(ctx, eventID)
 	if err != nil {
 		return err
 	}
@@ -243,7 +241,7 @@ func (s *EventService) DeleteEvent(ctx context.Context, merchantID, eventID, use
 	}
 
 	// Delete sessions first
-	if err := s.sessionService.DeleteSessionsForEvent(ctx, eventID, merchantID); err != nil {
+	if err := s.sessionService.DeleteSessionsForEvent(ctx, eventID); err != nil {
 		return fmt.Errorf("failed to delete sessions: %w", err)
 	}
 
@@ -251,9 +249,9 @@ func (s *EventService) DeleteEvent(ctx context.Context, merchantID, eventID, use
 }
 
 // UpdateEventStatus updates the status of an event
-func (s *EventService) UpdateEventStatus(ctx context.Context, merchantID, eventID, newStatus, userID string) (*models.Event, error) {
+func (s *EventService) UpdateEventStatus(ctx context.Context, eventID, newStatus, userID string) (*models.Event, error) {
 	// Get existing event
-	existingEvent, err := s.GetEvent(ctx, merchantID, eventID)
+	existingEvent, err := s.GetEvent(ctx, eventID)
 	if err != nil {
 		return nil, err
 	}

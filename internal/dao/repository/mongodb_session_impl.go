@@ -179,78 +179,6 @@ func (r *MongoSessionRepository) FindByEventIDs(ctx context.Context, eventIDs []
 	return result, nil
 }
 
-// FindByMerchantID finds sessions by merchant ID with filtering
-func (r *MongoSessionRepository) FindByMerchantID(ctx context.Context, merchantID string, filter *SessionFilter) ([]*models.Session, error) {
-	query := bson.M{"merchant_id": merchantID}
-
-	// Apply filters
-	if filter.EventID != nil {
-		eventObjectID, err := primitive.ObjectIDFromHex(*filter.EventID)
-		if err != nil {
-			return nil, fmt.Errorf("invalid event ID: %w", err)
-		}
-		query["event_id"] = eventObjectID
-	}
-	if filter.StartTimeFrom != nil || filter.StartTimeTo != nil {
-		timeFilter := bson.M{}
-		if filter.StartTimeFrom != nil {
-			timeFilter["$gte"] = *filter.StartTimeFrom
-		}
-		if filter.StartTimeTo != nil {
-			timeFilter["$lte"] = *filter.StartTimeTo
-		}
-		query["start_time"] = timeFilter
-	}
-	if filter.EndTimeFrom != nil || filter.EndTimeTo != nil {
-		timeFilter := bson.M{}
-		if filter.EndTimeFrom != nil {
-			timeFilter["$gte"] = *filter.EndTimeFrom
-		}
-		if filter.EndTimeTo != nil {
-			timeFilter["$lte"] = *filter.EndTimeTo
-		}
-		query["end_time"] = timeFilter
-	}
-
-	opts := options.Find()
-
-	// Handle sorting
-	if filter.SortBy != nil && filter.SortOrder != nil {
-		sortDirection := 1
-		if *filter.SortOrder == "desc" {
-			sortDirection = -1
-		}
-		opts.SetSort(bson.D{{Key: *filter.SortBy, Value: sortDirection}})
-	} else {
-		opts.SetSort(bson.D{{Key: "start_time", Value: 1}})
-	}
-
-	// Handle pagination
-	if filter.Offset > 0 {
-		opts.SetSkip(int64(filter.Offset))
-	}
-	if filter.Limit > 0 {
-		opts.SetLimit(int64(filter.Limit))
-	}
-
-	cursor, err := r.collection.Find(ctx, query, opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find sessions: %w", err)
-	}
-	defer func() {
-		if err := cursor.Close(ctx); err != nil {
-			log.Error("Failed to close cursor in FindByFilter", log.Err(err))
-		}
-	}()
-
-	var sessions []*models.Session
-	if err = cursor.All(ctx, &sessions); err != nil {
-		return nil, fmt.Errorf("failed to decode sessions: %w", err)
-	}
-
-	return sessions, nil
-}
-
 // Update updates an existing session
 func (r *MongoSessionRepository) Update(ctx context.Context, id string, session *models.Session) (*models.Session, error) {
 	objectID, err := primitive.ObjectIDFromHex(id)
@@ -356,24 +284,6 @@ func (r *MongoSessionRepository) ExistsByID(ctx context.Context, id string) (boo
 	}
 
 	count, err := r.collection.CountDocuments(ctx, bson.M{"_id": objectID})
-	if err != nil {
-		return false, fmt.Errorf("failed to check session existence: %w", err)
-	}
-
-	return count > 0, nil
-}
-
-// ExistsByEventAndMerchant checks if sessions exist for an event within a merchant
-func (r *MongoSessionRepository) ExistsByEventAndMerchant(ctx context.Context, eventID, merchantID string) (bool, error) {
-	eventObjectID, err := primitive.ObjectIDFromHex(eventID)
-	if err != nil {
-		return false, fmt.Errorf("invalid event ID: %w", err)
-	}
-
-	count, err := r.collection.CountDocuments(ctx, bson.M{
-		"event_id":    eventObjectID,
-		"merchant_id": merchantID,
-	})
 	if err != nil {
 		return false, fmt.Errorf("failed to check session existence: %w", err)
 	}

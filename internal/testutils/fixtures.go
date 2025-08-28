@@ -18,7 +18,6 @@ func TestEvent() *models.Event {
 	return &models.Event{
 		ID:            primitive.NewObjectID(),
 		Title:         "Test Event",
-		MerchantID:    TestMerchantIDValue,
 		Summary:       "Test event summary",
 		Status:        models.StatusDraft,
 		Visibility:    models.VisibilityPrivate,
@@ -165,7 +164,6 @@ type TestCreateEventRequest struct {
 	Sessions      []*TestSessionRequest
 	Detail        []TestDetailBlockRequest
 	FAQ           []*TestFAQRequest
-	MerchantID    string
 	UserID        string
 }
 
@@ -178,7 +176,6 @@ type TestPatchEventRequest struct {
 }
 
 type TestSearchEventsRequest struct {
-	MerchantID  *string
 	TitleSearch *string
 	PageSize    *int32
 }
@@ -225,8 +222,7 @@ func CreateTestCreateEventRequest() *TestCreateEventRequest {
 				Answer:   "This is a test event for testing purposes.",
 			},
 		},
-		MerchantID: TestMerchantIDValue,
-		UserID:     primitive.NewObjectID().Hex(),
+		UserID: primitive.NewObjectID().Hex(),
 	}
 }
 
@@ -245,12 +241,10 @@ func CreateTestPatchEventRequest(eventID string) *TestPatchEventRequest {
 
 // CreateTestSearchEventsRequest creates a test search events request
 func CreateTestSearchEventsRequest() *TestSearchEventsRequest {
-	merchantID := TestMerchantIDValue
 	titleSearch := "test"
 	pageSize := int32(20)
 
 	return &TestSearchEventsRequest{
-		MerchantID:  &merchantID,
 		TitleSearch: &titleSearch,
 		PageSize:    &pageSize,
 	}

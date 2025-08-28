@@ -4,7 +4,6 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/arwoosa/event/internal/dao/repository"
-	"github.com/arwoosa/event/internal/models"
 	"github.com/arwoosa/event/internal/testutils"
 )
 
@@ -17,7 +16,6 @@ func ConvertTestCreateEventRequest(req *testutils.TestCreateEventRequest) *Creat
 		Summary:       req.Summary,
 		Visibility:    req.Visibility,
 		CoverImageURL: req.CoverImageURL,
-		MerchantID:    req.MerchantID,
 		UserID:        req.UserID,
 	}
 
@@ -95,17 +93,9 @@ func ConvertTestPatchEventRequest(req *testutils.TestPatchEventRequest) *PatchEv
 // ConvertTestSearchEventsRequest converts testutils search request to service request
 func ConvertTestSearchEventsRequest(req *testutils.TestSearchEventsRequest) *SearchEventsRequest {
 	return &SearchEventsRequest{
-		MerchantID:  req.MerchantID,
 		TitleSearch: req.TitleSearch,
 		PageSize:    req.PageSize,
 	}
-}
-
-// CreateTestEventForMerchant creates a test event with specific merchant ID
-func CreateTestEventForMerchant(merchantID string) *models.Event {
-	event := testutils.TestEvent()
-	event.MerchantID = merchantID
-	return event
 }
 
 // Mock matchers to avoid circular imports

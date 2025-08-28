@@ -13,10 +13,6 @@ import (
 	"github.com/arwoosa/event/internal/testutils"
 )
 
-const (
-	testMerchantID = "test-merchant-id"
-)
-
 func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
 	// Setup
 	eventRepo := &mocks.MockEventRepository{}
@@ -29,13 +25,11 @@ func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test request without sessions to avoid complexity
-	merchantID := testMerchantID
 	userID := testutils.ValidObjectIDString()
 
 	req := &CreateEventRequest{
 		Title:      "Test Event",
 		Summary:    "Test Summary",
-		MerchantID: merchantID,
 		UserID:     userID,
 		Visibility: models.VisibilityPrivate,
 		// No sessions
@@ -69,7 +63,6 @@ func TestEventService_GetEvent_Success(t *testing.T) {
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
-	merchantID := testMerchantID
 	eventID := testutils.ValidObjectIDString()
 
 	event := testutils.TestEvent()
@@ -78,7 +71,7 @@ func TestEventService_GetEvent_Success(t *testing.T) {
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 
 	// Execute
-	result, err := eventService.GetEvent(ctx, merchantID, eventID)
+	result, err := eventService.GetEvent(ctx, eventID)
 
 	// Assert
 	require.NoError(t, err)
@@ -97,14 +90,13 @@ func TestEventService_GetEvent_NotFound(t *testing.T) {
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
-	merchantID := testMerchantID
 	eventID := testutils.ValidObjectIDString()
 
 	// Mock FindByID returns not found error
 	eventRepo.On("FindByID", ctx, eventID).Return(nil, errors.ErrEventNotFound)
 
 	// Execute
-	result, err := eventService.GetEvent(ctx, merchantID, eventID)
+	result, err := eventService.GetEvent(ctx, eventID)
 
 	// Assert
 	require.Error(t, err)

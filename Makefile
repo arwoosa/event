@@ -19,9 +19,7 @@ run-public:
 
 gotool:
 	@echo "Running Go formatting tools..."
-	@command -v goimports >/dev/null || { echo "Installing goimports..."; go install golang.org/x/tools/cmd/goimports@latest; }
 	@command -v gofumpt >/dev/null || { echo "Installing gofumpt..."; go install mvdan.cc/gofumpt@latest; }
-	goimports -local github.com/arwoosa/event -w .
 	gofumpt -w .
 	go vet ./...
 	@echo "Code formatting completed."

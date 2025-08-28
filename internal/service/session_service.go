@@ -31,7 +31,7 @@ func NewSessionService(
 
 // CreateSessionsForEvent creates sessions for an event
 // Authorization is handled by API Gateway before reaching this service
-func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID, merchantID string, sessionReqs []*SessionRequest) ([]*models.Session, error) {
+func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID string, sessionReqs []*SessionRequest) ([]*models.Session, error) {
 	// Validate event exists
 	_, err := s.eventRepo.FindByID(ctx, eventID)
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID, me
 }
 
 // GetSessionsForEvent retrieves all sessions for an event
-func (s *SessionService) GetSessionsForEvent(ctx context.Context, eventID, merchantID string) ([]*models.Session, error) {
+func (s *SessionService) GetSessionsForEvent(ctx context.Context, eventID string) ([]*models.Session, error) {
 	return s.sessionRepo.FindByEventID(ctx, eventID)
 }
 
@@ -66,7 +66,7 @@ func (s *SessionService) GetSessionsForEvents(ctx context.Context, eventIDs []st
 // UpdateSessionsForEvent updates sessions for an event with smart diff-based approach
 // Handles create, update operations based on session IDs in the request
 // existingEvent and existingSessions are optional - if provided, skips database queries for better performance
-func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, merchantID string, sessionReqs []*SessionRequest, existingEvent *models.Event, existingSessions []*models.Session) ([]*models.Session, error) {
+func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID string, sessionReqs []*SessionRequest, existingEvent *models.Event, existingSessions []*models.Session) ([]*models.Session, error) {
 	// Use provided data or fetch from database
 	var sessions []*models.Session
 	var err error
@@ -151,13 +151,13 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID, me
 }
 
 // DeleteSessionsForEvent removes all sessions for an event
-func (s *SessionService) DeleteSessionsForEvent(ctx context.Context, eventID, merchantID string) error {
+func (s *SessionService) DeleteSessionsForEvent(ctx context.Context, eventID string) error {
 	// Authorization is handled by API Gateway
 	return s.sessionRepo.DeleteByEventID(ctx, eventID)
 }
 
 // GetSession retrieves a single session by ID
-func (s *SessionService) GetSession(ctx context.Context, sessionID, merchantID string) (*models.Session, error) {
+func (s *SessionService) GetSession(ctx context.Context, sessionID string) (*models.Session, error) {
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (s *SessionService) GetSession(ctx context.Context, sessionID, merchantID s
 }
 
 // DeleteSessionById removes a session by session ID for a specific event
-func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, sessionID, merchantID string) error {
+func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, sessionID string) error {
 	// Authorization is handled by API Gateway
 	// Get the specific session
 	session, err := s.sessionRepo.FindByID(ctx, sessionID)
@@ -194,14 +194,9 @@ func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, session
 	return s.sessionRepo.Delete(ctx, sessionID)
 }
 
-// GetSessionsByMerchant retrieves sessions for a merchant with filtering
-func (s *SessionService) GetSessionsByMerchant(ctx context.Context, merchantID string, filter *repository.SessionFilter) ([]*models.Session, error) {
-	return s.sessionRepo.FindByMerchantID(ctx, merchantID, filter)
-}
-
 // ValidateSessionsForEvent validates sessions without creating them
 // Authorization is handled by API Gateway before reaching this service
-func (s *SessionService) ValidateSessionsForEvent(ctx context.Context, eventID, merchantID string, sessionReqs []*SessionRequest) error {
+func (s *SessionService) ValidateSessionsForEvent(ctx context.Context, eventID string, sessionReqs []*SessionRequest) error {
 	// Convert and validate sessions
 	sessions, err := s.convertSessionRequestsToModels(sessionReqs, eventID)
 	if err != nil {

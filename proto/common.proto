@@ -29,19 +29,18 @@ message Response {
 message Event {
   string id = 1;
   string title = 2;
-  string merchant_id = 3;
-  string summary = 4;
-  string status = 5; // draft, published, archived
-  string visibility = 6; // public, private
-  string cover_image_url = 7;
-  Location location = 8;
-  repeated Session sessions = 9;
-  repeated DetailBlock detail = 10 [(validate.rules).repeated = {min_items: 0, max_items: 50}];
-  repeated FAQ faq = 11;
-  string created_at = 12;
-  string created_by = 13;
-  string updated_at = 14;
-  string updated_by = 15;
+  string summary = 3;
+  string status = 4; // draft, published, archived
+  string visibility = 5; // public, private
+  string cover_image_url = 6;
+  Location location = 7;
+  repeated Session sessions = 8;
+  repeated DetailBlock detail = 9 [(validate.rules).repeated = {min_items: 0, max_items: 50}];
+  repeated FAQ faq = 10;
+  string created_at = 11;
+  string created_by = 12;
+  string updated_at = 13;
+  string updated_by = 14;
 }
 
 // Location with GeoJSON Point structure

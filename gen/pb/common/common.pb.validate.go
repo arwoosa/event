@@ -402,8 +402,6 @@ func (m *Event) validate(all bool) error {
 
 	// no validation rules for Title
 
-	// no validation rules for MerchantId
-
 	// no validation rules for Summary
 
 	// no validation rules for Status

@@ -25,7 +25,6 @@ func (c *ProtobufConverter) ConvertEventToPB(event *models.Event) *common.Event 
 	return &common.Event{
 		Id:            event.ID.Hex(),
 		Title:         event.Title,
-		MerchantId:    event.MerchantID,
 		Summary:       event.Summary,
 		Status:        event.Status,
 		Visibility:    event.Visibility,

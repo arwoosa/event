@@ -140,7 +140,6 @@ func TestEventService_PatchPublishedEvent_Integration(t *testing.T) {
 	eventService := NewEventService(eventRepo, sessionService, orderService)
 
 	ctx := context.Background()
-	merchantID := testMerchantID
 
 	// Create a published event
 	publishedEvent := testutils.TestPublishedEvent()
@@ -182,12 +181,12 @@ func TestEventService_PatchPublishedEvent_Integration(t *testing.T) {
 			if !tt.expectError {
 				// Mock successful update - use MatchedBy to allow for field modifications
 				eventRepo.On("Update", ctx, eventID, mock.MatchedBy(func(event *models.Event) bool {
-					return event.ID == publishedEvent.ID && event.MerchantID == publishedEvent.MerchantID
+					return event.ID == publishedEvent.ID
 				})).Return(publishedEvent, nil)
 			}
 
 			// Execute
-			result, err := eventService.PatchEvent(ctx, merchantID, tt.req)
+			result, err := eventService.PatchEvent(ctx, tt.req)
 
 			// Assert
 			if tt.expectError {

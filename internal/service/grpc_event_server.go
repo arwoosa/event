@@ -34,8 +34,8 @@ func NewEventServiceServer(eventService *EventService, paginationConfig *conf.Pa
 
 // CreateEvent implements the gRPC CreateEvent method
 func (s *EventServiceServer) CreateEvent(ctx context.Context, req *consolepb.CreateEventRequest) (*consolepb.CreateEventResponse, error) {
-	// Extract user and merchant information from context
-	userID, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
+	// Extract user information from context
+	userID, err := s.extractUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,6 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *consolepb.Cre
 		Sessions:      s.converter.ConvertSessionsFromPB(req.Sessions),
 		Detail:        s.converter.ConvertDetailFromPB(req.Detail),
 		FAQ:           s.converter.ConvertFAQFromPB(req.Faq),
-		MerchantID:    merchantID,
 		UserID:        userID,
 	}
 
@@ -69,18 +68,12 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *consolepb.Cre
 
 // GetEventList implements the gRPC GetEventList method
 func (s *EventServiceServer) GetEventList(ctx context.Context, req *consolepb.GetEventListRequest) (*common.EventListResponse, error) {
-	// Extract merchant information from context
-	_, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	// Process request parameters into filter
 	processor := NewRequestParameterProcessor()
 	filter := processor.ProcessAllFilters(req, s.paginationConfig)
 
 	// Get events from service
-	result, err := s.eventService.GetEventList(ctx, merchantID, filter)
+	result, err := s.eventService.GetEventList(ctx, filter)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -92,14 +85,8 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *consolepb.Ge
 
 // GetEvent implements the gRPC GetEvent method
 func (s *EventServiceServer) GetEvent(ctx context.Context, req *common.ID) (*common.Event, error) {
-	// Extract merchant information from context
-	_, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	// Get event
-	event, err := s.eventService.GetEvent(ctx, merchantID, req.Id)
+	event, err := s.eventService.GetEvent(ctx, req.Id)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -109,8 +96,8 @@ func (s *EventServiceServer) GetEvent(ctx context.Context, req *common.ID) (*com
 
 // PatchEvent implements the gRPC PatchEvent method
 func (s *EventServiceServer) PatchEvent(ctx context.Context, req *consolepb.PatchEventRequest) (*common.Event, error) {
-	// Extract user and merchant information from context
-	userID, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
+	// Extract user information from context
+	userID, err := s.extractUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +136,7 @@ func (s *EventServiceServer) PatchEvent(ctx context.Context, req *consolepb.Patc
 	}
 
 	// Patch event
-	event, err := s.eventService.PatchEvent(ctx, merchantID, serviceReq)
+	event, err := s.eventService.PatchEvent(ctx, serviceReq)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -159,14 +146,14 @@ func (s *EventServiceServer) PatchEvent(ctx context.Context, req *consolepb.Patc
 
 // DeleteEvent implements the gRPC DeleteEvent method
 func (s *EventServiceServer) DeleteEvent(ctx context.Context, req *common.ID) (*emptypb.Empty, error) {
-	// Extract user and merchant information from context
-	userID, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
+	// Extract user information from context
+	userID, err := s.extractUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Delete event
-	err = s.eventService.DeleteEvent(ctx, merchantID, req.Id, userID)
+	err = s.eventService.DeleteEvent(ctx, req.Id, userID)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -177,14 +164,14 @@ func (s *EventServiceServer) DeleteEvent(ctx context.Context, req *common.ID) (*
 
 // UpdateEventStatus implements the gRPC UpdateEventStatus method
 func (s *EventServiceServer) UpdateEventStatus(ctx context.Context, req *consolepb.UpdateEventStatusRequest) (*common.Event, error) {
-	// Extract user and merchant information from context
-	userID, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
+	// Extract user information from context
+	userID, err := s.extractUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Update status
-	event, err := s.eventService.UpdateEventStatus(ctx, merchantID, req.Id, req.Status, userID)
+	event, err := s.eventService.UpdateEventStatus(ctx, req.Id, req.Status, userID)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -194,27 +181,20 @@ func (s *EventServiceServer) UpdateEventStatus(ctx context.Context, req *console
 
 // Helper methods
 
-func (s *EventServiceServer) extractUserAndMerchantFromContext(ctx context.Context) (userID, merchantID string, err error) {
+func (s *EventServiceServer) extractUserFromContext(ctx context.Context) (userID string, err error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return "", "", status.Error(codes.Unauthenticated, "missing metadata")
+		return "", status.Error(codes.Unauthenticated, "missing metadata")
 	}
 
 	// Extract user ID
 	userIDValues := md.Get("user-id")
 	if len(userIDValues) == 0 {
-		return "", "", status.Error(codes.Unauthenticated, "missing user-id header")
+		return "", status.Error(codes.Unauthenticated, "missing user-id header")
 	}
 	userID = userIDValues[0]
 
-	// Extract merchant ID
-	merchantIDValues := md.Get("merchant-id")
-	if len(merchantIDValues) == 0 {
-		return "", "", status.Error(codes.Unauthenticated, "missing merchant-id header")
-	}
-	merchantID = merchantIDValues[0]
-
-	return userID, merchantID, nil
+	return userID, nil
 }
 
 func (s *EventServiceServer) handleServiceError(err error) error {
@@ -249,14 +229,8 @@ func (s *EventServiceServer) handleServiceError(err error) error {
 
 // DeleteSession implements the gRPC DeleteSession method
 func (s *EventServiceServer) DeleteSession(ctx context.Context, req *consolepb.DeleteSessionRequest) (*emptypb.Empty, error) {
-	// Extract user and merchant information from context
-	_, merchantID, err := s.extractUserAndMerchantFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	// Call session service to delete the session
-	err = s.eventService.sessionService.DeleteSessionById(ctx, req.Id, req.SessionId, merchantID)
+	err := s.eventService.sessionService.DeleteSessionById(ctx, req.Id, req.SessionId)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}

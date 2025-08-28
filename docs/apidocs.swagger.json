@@ -544,9 +544,6 @@
         "title": {
           "type": "string"
         },
-        "merchant_id": {
-          "type": "string"
-        },
         "summary": {
           "type": "string"
         },

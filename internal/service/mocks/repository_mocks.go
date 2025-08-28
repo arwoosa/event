@@ -50,19 +50,13 @@ func (m *MockEventRepository) Delete(ctx context.Context, id string) error {
 	return args.Error(0)
 }
 
-// FindByMerchantID implements EventRepository interface
-func (m *MockEventRepository) FindByMerchantID(ctx context.Context, merchantID string, filter *repository.EventFilter) (*repository.EventListResult, error) {
-	args := m.Called(ctx, merchantID, filter)
+// Find implements EventRepository interface
+func (m *MockEventRepository) Find(ctx context.Context, filter *repository.EventFilter) (*repository.EventListResult, error) {
+	args := m.Called(ctx, filter)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*repository.EventListResult), args.Error(1)
-}
-
-// ExistsByMerchantAndID implements EventRepository interface
-func (m *MockEventRepository) ExistsByMerchantAndID(ctx context.Context, merchantID, eventID string) (bool, error) {
-	args := m.Called(ctx, merchantID, eventID)
-	return args.Bool(0), args.Error(1)
 }
 
 // FindPublic implements EventRepository interface
@@ -83,9 +77,9 @@ func (m *MockEventRepository) FindPublicByID(ctx context.Context, id string) (*m
 	return args.Get(0).(*models.Event), args.Error(1)
 }
 
-// CountByMerchantAndStatus implements EventRepository interface
-func (m *MockEventRepository) CountByMerchantAndStatus(ctx context.Context, merchantID, status string) (int64, error) {
-	args := m.Called(ctx, merchantID, status)
+// CountByStatus implements EventRepository interface
+func (m *MockEventRepository) CountByStatus(ctx context.Context, status string) (int64, error) {
+	args := m.Called(ctx, status)
 	return args.Get(0).(int64), args.Error(1)
 }
 
@@ -113,11 +107,6 @@ func (m *MockEventRepository) SetupFindByIDSuccess(id string, event *models.Even
 // SetupFindByIDNotFound sets up the mock to return not found error
 func (m *MockEventRepository) SetupFindByIDNotFound(id string) {
 	m.On("FindByID", mock.Anything, id).Return(nil, errors.ErrEventNotFound)
-}
-
-// SetupExistsByMerchantAndID sets up the mock for existence check
-func (m *MockEventRepository) SetupExistsByMerchantAndID(merchantID, eventID string, exists bool) {
-	m.On("ExistsByMerchantAndID", mock.Anything, merchantID, eventID).Return(exists, nil)
 }
 
 // MockSessionRepository is a mock implementation of SessionRepository
@@ -197,15 +186,6 @@ func (m *MockSessionRepository) CountByEventID(ctx context.Context, eventID stri
 	return args.Get(0).(int64), args.Error(1)
 }
 
-// FindByMerchantID implements SessionRepository interface
-func (m *MockSessionRepository) FindByMerchantID(ctx context.Context, merchantID string, filter *repository.SessionFilter) ([]*models.Session, error) {
-	args := m.Called(ctx, merchantID, filter)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*models.Session), args.Error(1)
-}
-
 // BulkUpdateSessions implements SessionRepository interface
 func (m *MockSessionRepository) BulkUpdateSessions(ctx context.Context, create []*models.Session, update []*models.Session, deleteIDs []string) error {
 	args := m.Called(ctx, create, update, deleteIDs)
@@ -221,12 +201,6 @@ func (m *MockSessionRepository) DeleteByEventIDs(ctx context.Context, eventIDs [
 // ExistsByID implements SessionRepository interface
 func (m *MockSessionRepository) ExistsByID(ctx context.Context, id string) (bool, error) {
 	args := m.Called(ctx, id)
-	return args.Bool(0), args.Error(1)
-}
-
-// ExistsByEventAndMerchant implements SessionRepository interface
-func (m *MockSessionRepository) ExistsByEventAndMerchant(ctx context.Context, eventID, merchantID string) (bool, error) {
-	args := m.Called(ctx, eventID, merchantID)
 	return args.Bool(0), args.Error(1)
 }
 

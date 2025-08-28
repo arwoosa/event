@@ -32,12 +32,10 @@ func TestPublicService_SearchEvents_Success(t *testing.T) {
 	ctx := context.Background()
 
 	// Create search request
-	merchantID := testMerchantID
 	titleSearch := "test event"
 	pageSize := int32(20)
 
 	req := &SearchEventsRequest{
-		MerchantID:  &merchantID,
 		TitleSearch: &titleSearch,
 		PageSize:    &pageSize,
 	}
@@ -259,12 +257,6 @@ func TestPublicService_SearchEvents_FilterValidation(t *testing.T) {
 		name string
 		req  *SearchEventsRequest
 	}{
-		{
-			name: "With merchant filter",
-			req: &SearchEventsRequest{
-				MerchantID: testutils.StringPtr(testMerchantID),
-			},
-		},
 		{
 			name: "With title search",
 			req: &SearchEventsRequest{

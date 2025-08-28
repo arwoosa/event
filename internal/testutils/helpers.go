@@ -48,7 +48,6 @@ func AssertEventEqual(t *testing.T, expected, actual *models.Event, ignoreTimest
 	require.NotNil(t, actual, "Actual event is nil")
 
 	assert.Equal(t, expected.Title, actual.Title, "Title mismatch")
-	assert.Equal(t, expected.MerchantID, actual.MerchantID, "MerchantID mismatch")
 	assert.Equal(t, expected.Summary, actual.Summary, "Summary mismatch")
 	assert.Equal(t, expected.Status, actual.Status, "Status mismatch")
 	assert.Equal(t, expected.Visibility, actual.Visibility, "Visibility mismatch")
