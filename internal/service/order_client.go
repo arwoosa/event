@@ -56,7 +56,7 @@ func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) 
 	resp, err := ezgrpc.Invoke[*IsEventHasOrdersRequest, *IsEventHasOrdersResponse](
 		timeoutCtx,
 		c.endpoint,                 // service endpoint
-		"order.OrdersAdminService", // service name
+		"api.orders.OrdersAdminService", // service name
 		"IsEventHasOpenOrders",     // method name
 		req,
 	)
