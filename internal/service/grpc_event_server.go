@@ -76,11 +76,6 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *consolepb.Ge
 		return nil, err
 	}
 
-	// Validate merchant_id is provided for multi-tenant security
-	if user.Merchant == "" {
-		return nil, status.Error(codes.Unauthenticated, "missing merchant-id header")
-	}
-
 	// Process request parameters into filter
 	processor := NewRequestParameterProcessor()
 	filter := processor.ProcessAllFilters(req, s.paginationConfig)
