@@ -43,8 +43,9 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *consolepb.Cre
 
 	// Convert gRPC request to service request
 	serviceReq := &CreateEventRequest{
-		Title:   req.Title,
-		Summary: req.Summary,
+		Title:      req.Title,
+		MerchantID: user.Merchant,
+		Summary:    req.Summary,
 		// Status field removed - events are always created as draft
 		Visibility:    req.Visibility,
 		CoverImageURL: req.CoverImageUrl,
@@ -83,7 +84,7 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *consolepb.Ge
 	// Process request parameters into filter
 	processor := NewRequestParameterProcessor()
 	filter := processor.ProcessAllFilters(req, s.paginationConfig)
-	
+
 	// Set merchant_id filter for multi-tenant isolation
 	filter.MerchantID = &user.Merchant
 

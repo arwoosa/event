@@ -38,8 +38,9 @@ func NewEventService(
 
 // CreateEventRequest represents the request to create an event
 type CreateEventRequest struct {
-	Title   string
-	Summary string
+	Title      string
+	MerchantID string
+	Summary    string
 	// Status field removed - events are always created as draft
 	Visibility    string
 	CoverImageURL string

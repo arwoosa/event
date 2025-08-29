@@ -17,7 +17,7 @@ keto:
 
 # external:
 #   order_service:
-#     endpoint: "192.168.1.134:8081"
+#     endpoint: "192.168.1.122:8081"
 #     timeout: "10s"
 
 pagination:

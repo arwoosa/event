@@ -18,6 +18,7 @@ func TestEvent() *models.Event {
 	return &models.Event{
 		ID:            primitive.NewObjectID(),
 		Title:         "Test Event",
+		MerchantID:    TestMerchantIDValue,
 		Summary:       "Test event summary",
 		Status:        models.StatusDraft,
 		Visibility:    models.VisibilityPrivate,

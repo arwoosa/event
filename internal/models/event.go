@@ -12,6 +12,7 @@ import (
 type Event struct {
 	ID            primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Title         string             `json:"title" bson:"title"`
+	MerchantID    string             `json:"merchant_id" bson:"merchant_id"`
 	Summary       string             `json:"summary" bson:"summary"`
 	Status        string             `json:"status" bson:"status"`         // draft, published, archived
 	Visibility    string             `json:"visibility" bson:"visibility"` // public, private

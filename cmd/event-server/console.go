@@ -48,12 +48,12 @@ func runConsoleServer(cmd *cobra.Command, args []string) {
 	// Initialize Keto relation client
 	if appConfig.KetoConfig != nil {
 		vulpeslog.Info("Initializing Keto relation client",
-			vulpeslog.String("write_addr", appConfig.WriteAddr),
-			vulpeslog.String("read_addr", appConfig.ReadAddr))
+			vulpeslog.String("write_addr", appConfig.KetoConfig.WriteAddr),
+			vulpeslog.String("read_addr", appConfig.KetoConfig.ReadAddr))
 
 		relation.Initialize(
-			relation.WithWriteAddr(appConfig.WriteAddr),
-			relation.WithReadAddr(appConfig.ReadAddr),
+			relation.WithWriteAddr(appConfig.KetoConfig.WriteAddr),
+			relation.WithReadAddr(appConfig.KetoConfig.ReadAddr),
 		)
 
 		// Ensure relation connection is closed when server shuts down

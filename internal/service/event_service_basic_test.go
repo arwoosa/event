@@ -29,6 +29,7 @@ func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
 
 	req := &CreateEventRequest{
 		Title:      "Test Event",
+		MerchantID: "test-merchant-123",
 		Summary:    "Test Summary",
 		UserID:     userID,
 		Visibility: models.VisibilityPrivate,

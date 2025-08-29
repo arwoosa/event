@@ -55,9 +55,9 @@ func (c *OrderServiceClientImpl) HasOrders(ctx context.Context, eventID string) 
 	// Call gRPC service using reflection
 	resp, err := ezgrpc.Invoke[*IsEventHasOrdersRequest, *IsEventHasOrdersResponse](
 		timeoutCtx,
-		c.endpoint,                 // service endpoint
+		c.endpoint,                      // service endpoint
 		"api.orders.OrdersAdminService", // service name
-		"IsEventHasOpenOrders",     // method name
+		"IsEventHasOpenOrders",          // method name
 		req,
 	)
 	if err != nil {
