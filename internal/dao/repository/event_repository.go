@@ -9,6 +9,7 @@ import (
 
 // EventFilter represents filtering options for event queries
 type EventFilter struct {
+	MerchantID           *string
 	Status               *string
 	Visibility           *string
 	SessionStartTimeFrom *time.Time

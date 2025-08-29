@@ -138,6 +138,11 @@ func (r *MongoEventRepository) Delete(ctx context.Context, id string) error {
 func (r *MongoEventRepository) Find(ctx context.Context, filter *EventFilter) (*EventListResult, error) {
 	baseQuery := bson.M{}
 
+	// Apply merchant_id filter for multi-tenant isolation
+	if filter.MerchantID != nil {
+		baseQuery["merchant_id"] = *filter.MerchantID
+	}
+
 	// Apply filters
 	if filter.Status != nil {
 		baseQuery["status"] = *filter.Status

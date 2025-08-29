@@ -69,9 +69,23 @@ func (s *EventServiceServer) CreateEvent(ctx context.Context, req *consolepb.Cre
 
 // GetEventList implements the gRPC GetEventList method
 func (s *EventServiceServer) GetEventList(ctx context.Context, req *consolepb.GetEventListRequest) (*common.EventListResponse, error) {
+	// Extract user information from context (including merchant)
+	user, err := ezgrpc.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate merchant_id is provided for multi-tenant security
+	if user.Merchant == "" {
+		return nil, status.Error(codes.Unauthenticated, "missing merchant-id header")
+	}
+
 	// Process request parameters into filter
 	processor := NewRequestParameterProcessor()
 	filter := processor.ProcessAllFilters(req, s.paginationConfig)
+	
+	// Set merchant_id filter for multi-tenant isolation
+	filter.MerchantID = &user.Merchant
 
 	// Get events from service
 	result, err := s.eventService.GetEventList(ctx, filter)
