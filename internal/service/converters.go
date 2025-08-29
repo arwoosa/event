@@ -34,9 +34,9 @@ func (c *ProtobufConverter) ConvertEventToPB(event *models.Event) *common.Event 
 		Detail:        c.ConvertDetailToPB(event.Detail),
 		Faq:           c.ConvertFAQToPB(event.FAQ),
 		CreatedAt:     event.CreatedAt.Format(time.RFC3339),
-		CreatedBy:     event.CreatedBy.Hex(),
+		CreatedBy:     event.CreatedBy,
 		UpdatedAt:     event.UpdatedAt.Format(time.RFC3339),
-		UpdatedBy:     event.UpdatedBy.Hex(),
+		UpdatedBy:     event.UpdatedBy,
 	}
 }
 

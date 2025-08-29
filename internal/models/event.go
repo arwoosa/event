@@ -22,9 +22,9 @@ type Event struct {
 	Detail        []DetailBlock      `json:"detail" bson:"detail"`
 	FAQ           []FAQ              `json:"faq" bson:"faq"`
 	CreatedAt     time.Time          `json:"created_at" bson:"created_at"`
-	CreatedBy     primitive.ObjectID `json:"created_by" bson:"created_by"`
+	CreatedBy     string             `json:"created_by" bson:"created_by"`
 	UpdatedAt     time.Time          `json:"updated_at" bson:"updated_at"`
-	UpdatedBy     primitive.ObjectID `json:"updated_by" bson:"updated_by"`
+	UpdatedBy     string             `json:"updated_by" bson:"updated_by"`
 }
 
 // Location represents the event location with geospatial data

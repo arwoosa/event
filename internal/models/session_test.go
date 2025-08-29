@@ -610,6 +610,8 @@ func TestSession_FieldAccessors(t *testing.T) {
 	assert.NotNil(t, session.Capacity)
 	assert.Equal(t, 75, *session.Capacity)
 	assert.Equal(t, eventID, session.EventID)
+	assert.Equal(t, baseTime.Add(time.Hour), session.StartTime)
+	assert.Equal(t, baseTime.Add(time.Hour*2), session.EndTime)
 
 	// Test unlimited capacity (nil pointer)
 	unlimitedSession := &Session{

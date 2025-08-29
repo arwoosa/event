@@ -53,9 +53,9 @@ func TestEvent() *models.Event {
 			},
 		},
 		CreatedAt: time.Now(),
-		CreatedBy: primitive.NewObjectID(),
+		CreatedBy: "created_user",
 		UpdatedAt: time.Now(),
-		UpdatedBy: primitive.NewObjectID(),
+		UpdatedBy: "updated_user",
 	}
 }
 

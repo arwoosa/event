@@ -7,7 +7,6 @@ import (
 	"time"
 
 	vulpeslog "github.com/arwoosa/vulpes/log"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/arwoosa/vulpes/relation"
 
@@ -263,7 +262,7 @@ func (s *EventService) UpdateEventStatus(ctx context.Context, eventID, newStatus
 
 	// Update status
 	existingEvent.Status = newStatus
-	existingEvent.UpdatedBy, _ = primitive.ObjectIDFromHex(userID)
+	existingEvent.UpdatedBy = userID
 	existingEvent.UpdatedAt = time.Now()
 
 	return s.eventRepo.Update(ctx, eventID, existingEvent)
@@ -402,11 +401,6 @@ func (s *EventService) validatePublishRequirements(ctx context.Context, event *m
 // Conversion methods
 
 func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*models.Event, error) {
-	userID, err := primitive.ObjectIDFromHex(req.UserID)
-	if err != nil {
-		return nil, errors.NewValidationError("user_id", "invalid user_id")
-	}
-
 	// Force draft status for all created events
 	status := models.StatusDraft
 
@@ -484,14 +478,13 @@ func (s *EventService) convertCreateRequestToModel(req *CreateEventRequest) (*mo
 		Location:      location,
 		Detail:        detail,
 		FAQ:           faq,
-		CreatedBy:     userID,
-		UpdatedBy:     userID,
+		CreatedBy:     req.UserID,
+		UpdatedBy:     req.UserID,
 	}, nil
 }
 
 func (s *EventService) applyPatchToEvent(existing *models.Event, req *PatchEventRequest) *models.Event {
-	userID, _ := primitive.ObjectIDFromHex(req.UserID)
-	existing.UpdatedBy = userID
+	existing.UpdatedBy = req.UserID
 	existing.UpdatedAt = time.Now()
 
 	// Sessions are handled separately by SessionService
