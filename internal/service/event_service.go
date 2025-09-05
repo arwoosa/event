@@ -118,10 +118,8 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 		return nil, err
 	}
 
-	// Write Keto tuple: event:{eventID} owner user:{userID}
-	tuples := relation.NewTupleBuilder()
-	tuples.AppendInsertTupleWithSubjectId("Event", createdEvent.ID.Hex(), "owner", req.UserID)
-	if err := relation.WriteTuple(ctx, tuples); err != nil {
+	// Write Keto tuple
+	if err := relation.AddUserResourceRole(ctx, req.UserID, "Event", createdEvent.ID.Hex(), relation.RoleOwner); err != nil {
 		vulpeslog.Error("Failed to write Keto tuple for event ownership",
 			vulpeslog.String("eventID", createdEvent.ID.Hex()),
 			vulpeslog.String("userID", req.UserID),
@@ -152,13 +150,11 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 			}
 
 			// Delete the Keto tuple to avoid orphaned authorization data
-			deleteTuples := relation.NewTupleBuilder()
-			deleteTuples.AppendDeleteTupleWithSubjectId("Event", createdEvent.ID.Hex(), "owner", req.UserID)
-			if tupleErr := relation.WriteTuple(ctx, deleteTuples); tupleErr != nil {
-				vulpeslog.Error("Failed to rollback Keto tuple after session creation failure",
+			if err := relation.DeleteObjectId(ctx, "Event", createdEvent.ID.Hex()); err != nil {
+				vulpeslog.Error("Failed to delete Keto tuple for event ownership",
 					vulpeslog.String("eventID", createdEvent.ID.Hex()),
 					vulpeslog.String("userID", req.UserID),
-					vulpeslog.Err(tupleErr))
+					vulpeslog.Err(err))
 			}
 
 			return nil, fmt.Errorf("failed to create sessions: %w", err)
@@ -239,12 +235,26 @@ func (s *EventService) DeleteEvent(ctx context.Context, eventID, userID string) 
 		return err
 	}
 
+	// Delete Keto tuple
+	if err := relation.DeleteObjectId(ctx, "Event", eventID); err != nil {
+		vulpeslog.Error("Failed to delete Keto tuple for event ownership",
+			vulpeslog.String("eventID", eventID),
+			vulpeslog.String("userID", userID),
+			vulpeslog.Err(err))
+		return fmt.Errorf("failed to delete access control: %w", err)
+	}
+
 	// Delete sessions first
 	if err := s.sessionService.DeleteSessionsForEvent(ctx, eventID); err != nil {
 		return fmt.Errorf("failed to delete sessions: %w", err)
 	}
 
-	return s.eventRepo.Delete(ctx, eventID)
+	// Delete event
+	if err := s.eventRepo.Delete(ctx, eventID); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // UpdateEventStatus updates the status of an event
