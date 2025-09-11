@@ -126,14 +126,6 @@ func (e *Event) CanTransitionTo(newStatus string) bool {
 	return false
 }
 
-func (e *Event) IsValidStatusForUpdate() error {
-	// Archived events cannot be updated
-	if e.Status == StatusArchived {
-		return errors.NewBusinessError("ARCHIVED_IMMUTABLE", "archived events cannot be updated", nil)
-	}
-	return nil
-}
-
 func (e *Event) IsValidStatusForDelete() error {
 	switch e.Status {
 	case StatusDraft:

@@ -222,7 +222,7 @@ func (s *EventService) PatchEvent(ctx context.Context, req *PatchEventRequest) (
 
 		_, err = s.sessionService.UpdateSessionsForEvent(ctx, req.ID, req.Sessions, existingEvent, existingSessionPtrs)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update sessions: %w", err)
+			return nil, err
 		}
 	}
 
@@ -262,7 +262,7 @@ func (s *EventService) DeleteEvent(ctx context.Context, eventID, userID string) 
 
 	// Delete sessions first
 	if err := s.sessionService.DeleteSessionsForEvent(ctx, eventID); err != nil {
-		return fmt.Errorf("failed to delete sessions: %w", err)
+		return err
 	}
 
 	// Delete event
@@ -317,8 +317,8 @@ func (s *EventService) UpdateEventStatus(ctx context.Context, eventID, newStatus
 // validateEventChanges validates field-level restrictions for published events
 func (s *EventService) validateEventChanges(existing *models.Event, req *PatchEventRequest) error {
 	// Archived events cannot be updated
-	if err := existing.IsValidStatusForUpdate(); err != nil {
-		return err
+	if existing.Status == models.StatusArchived {
+		return errors.NewBusinessError("ARCHIVED_IMMUTABLE", "archived events cannot be updated", nil)
 	}
 	if existing.Status == models.StatusDraft {
 		return nil // No restrictions for draft events
@@ -622,6 +622,10 @@ func (s *EventService) SetEventForm(ctx context.Context, req *SetEventFormReques
 		}
 		return nil, fmt.Errorf("failed to verify event: %w", err)
 	}
+	// check if event status allows form update
+	if event.Status != models.StatusDraft {
+		return nil, errors.NewBusinessError("FORM_UPDATE_IMMUTABLE", "only draft events can create or update forms", nil)
+	}
 
 	// Create form model
 	form := &models.EventForm{
@@ -645,10 +649,6 @@ func (s *EventService) SetEventForm(ctx context.Context, req *SetEventFormReques
 			return nil, fmt.Errorf("failed to create event form: %w", err)
 		}
 	} else {
-		// check if event status allows form update
-		if err := event.IsValidStatusForUpdate(); err != nil {
-			return nil, err
-		}
 		// Form exists, update existing form
 		form.SetUpdateInfo(req.UserID)
 		result, err = s.formRepo.Update(ctx, existingForm.ID, form)
@@ -691,7 +691,7 @@ func (s *EventService) DeleteEventForm(ctx context.Context, eventID primitive.Ob
 	}
 
 	// check if event status allows form deletion
-	if err := event.IsValidStatusForUpdate(); err != nil {
+	if err := event.IsValidStatusForDelete(); err != nil {
 		return err
 	}
 
