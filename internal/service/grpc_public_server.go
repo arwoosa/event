@@ -105,13 +105,19 @@ func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *common.ID)
 
 // GetEventForm implements the gRPC GetEventForm method for public access
 func (s *PublicEventServiceServer) GetEventForm(ctx context.Context, req *common.ID) (*common.EventForm, error) {
+	// First check if the event is public and published
+	_, err := s.publicService.GetEvent(ctx, req.Id)
+	if err != nil {
+		return nil, s.handleServiceError(err)
+	}
+
 	// Validate and convert EventID from string to ObjectID
 	eventID, err := primitive.ObjectIDFromHex(req.Id)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid event ID format")
 	}
 
-	// Get event form
+	// Get event form (only if event is published)
 	form, err := s.publicService.eventService.GetEventForm(ctx, eventID)
 	if err != nil {
 		return nil, s.handleServiceError(err)
