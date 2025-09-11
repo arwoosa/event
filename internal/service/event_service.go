@@ -129,7 +129,7 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 			vulpeslog.String("userID", req.UserID),
 			vulpeslog.Err(err))
 		// Rollback event creation - without Keto tuple, the event cannot be operated on
-		if deleteErr := s.eventRepo.Delete(ctx, createdEvent.ID.Hex()); deleteErr != nil {
+		if deleteErr := s.eventRepo.Delete(ctx, createdEvent.ID); deleteErr != nil {
 			vulpeslog.Error("Failed to rollback event creation after Keto failure",
 				vulpeslog.String("eventID", createdEvent.ID.Hex()),
 				vulpeslog.Err(deleteErr))
