@@ -5,6 +5,7 @@ option go_package = "github.com/arwoosa/event/gen/pb/common";
 package common;
 
 import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
 import "validate/validate.proto";
 
 message User {
@@ -106,4 +107,16 @@ message Pagination {
   optional int32 total_count = 5;
   optional int32 current_page = 6;     // for page-based
   optional int32 total_pages = 7;      // for page-based
+}
+
+// EventForm message for form management within events
+message EventForm {
+  string id = 1;
+  string event_id = 2;
+  google.protobuf.Struct schema = 3;    // JSON Schema defining data structure and validation rules
+  google.protobuf.Struct uischema = 4;  // UI Schema defining form layout and appearance
+  string created_at = 5;
+  string created_by = 6;
+  string updated_at = 7;
+  string updated_by = 8;
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -31,8 +32,14 @@ func NewInternalServiceServer(eventRepo repository.EventRepository, sessionRepo 
 
 // GetEventById implements the gRPC GetEventById method for internal services
 func (s *InternalServiceServer) GetEventById(ctx context.Context, req *common.ID) (*common.Event, error) {
+	// Convert ID to ObjectID
+	eventID, err := primitive.ObjectIDFromHex(req.Id)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid event ID format")
+	}
+
 	// Get event without merchant validation (for internal service use)
-	event, err := s.eventRepo.FindByID(ctx, req.Id)
+	event, err := s.eventRepo.FindByID(ctx, eventID)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
@@ -61,9 +68,11 @@ func (s *InternalServiceServer) handleServiceError(err error) error {
 	case *errors.BusinessError:
 		return status.Error(codes.InvalidArgument, e.Error())
 	default:
-		if err == errors.ErrEventNotFound {
+		switch err {
+		case errors.ErrEventNotFound, errors.ErrSessionNotFound:
 			return status.Error(codes.NotFound, err.Error())
+		default:
+			return status.Error(codes.Internal, err.Error())
 		}
-		return status.Error(codes.Internal, err.Error())
 	}
 }

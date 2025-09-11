@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/arwoosa/event/internal/errors"
 	"github.com/arwoosa/event/internal/models"
@@ -17,10 +18,11 @@ func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
 	// Setup
 	eventRepo := &mocks.MockEventRepository{}
 	sessionRepo := &mocks.MockSessionRepository{}
+	formRepo := &mocks.MockFormRepository{}
 	orderService := &mocks.MockOrderService{}
 
 	sessionService := NewSessionService(sessionRepo, eventRepo)
-	eventService := NewEventService(eventRepo, sessionService, orderService)
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
 
 	ctx := context.Background()
 
@@ -40,16 +42,13 @@ func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
 	createdEvent := testutils.TestEvent()
 	eventRepo.On("Create", ctx, testutils.MatchAnyEvent()).Return(createdEvent, nil)
 
-	// Mock deletion for rollback when Keto fails (expected in test environment)
-	eventRepo.On("Delete", ctx, createdEvent.ID.Hex()).Return(nil)
-
 	// Execute
 	result, err := eventService.CreateEvent(ctx, req)
 
-	// Assert - expect failure due to Keto connection not initialized in test
-	require.Error(t, err)
-	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "failed to establish event ownership in authorization system")
+	// Assert - should succeed since Keto code is now commented out
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, createdEvent.ID, result.ID)
 
 	// Verify mocks
 	eventRepo.AssertExpectations(t)
@@ -58,18 +57,23 @@ func TestEventService_CreateEvent_WithoutSessions_Success(t *testing.T) {
 func TestEventService_GetEvent_Success(t *testing.T) {
 	// Setup
 	eventRepo := &mocks.MockEventRepository{}
+	formRepo := &mocks.MockFormRepository{}
 	sessionService := &SessionService{} // Minimal setup for this test
 	orderService := &mocks.MockOrderService{}
 
-	eventService := NewEventService(eventRepo, sessionService, orderService)
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
 
 	event := testutils.TestEvent()
 
+	// Convert string ID to ObjectID for the mock
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	require.NoError(t, err)
+	
 	// Mock direct findByID (no permission check in service layer anymore)
-	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
+	eventRepo.On("FindByID", ctx, objectID).Return(event, nil)
 
 	// Execute
 	result, err := eventService.GetEvent(ctx, eventID)
@@ -85,16 +89,21 @@ func TestEventService_GetEvent_Success(t *testing.T) {
 func TestEventService_GetEvent_NotFound(t *testing.T) {
 	// Setup
 	eventRepo := &mocks.MockEventRepository{}
+	formRepo := &mocks.MockFormRepository{}
 	sessionService := &SessionService{}
 	orderService := &mocks.MockOrderService{}
 
-	eventService := NewEventService(eventRepo, sessionService, orderService)
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
 
+	// Convert string ID to ObjectID for the mock
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	require.NoError(t, err)
+	
 	// Mock FindByID returns not found error
-	eventRepo.On("FindByID", ctx, eventID).Return(nil, errors.ErrEventNotFound)
+	eventRepo.On("FindByID", ctx, objectID).Return(nil, errors.ErrEventNotFound)
 
 	// Execute
 	result, err := eventService.GetEvent(ctx, eventID)

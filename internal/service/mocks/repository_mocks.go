@@ -27,7 +27,7 @@ func (m *MockEventRepository) Create(ctx context.Context, event *models.Event) (
 }
 
 // FindByID implements EventRepository interface
-func (m *MockEventRepository) FindByID(ctx context.Context, id string) (*models.Event, error) {
+func (m *MockEventRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*models.Event, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -36,7 +36,7 @@ func (m *MockEventRepository) FindByID(ctx context.Context, id string) (*models.
 }
 
 // Update implements EventRepository interface
-func (m *MockEventRepository) Update(ctx context.Context, id string, event *models.Event) (*models.Event, error) {
+func (m *MockEventRepository) Update(ctx context.Context, id primitive.ObjectID, event *models.Event) (*models.Event, error) {
 	args := m.Called(ctx, id, event)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -45,7 +45,7 @@ func (m *MockEventRepository) Update(ctx context.Context, id string, event *mode
 }
 
 // Delete implements EventRepository interface
-func (m *MockEventRepository) Delete(ctx context.Context, id string) error {
+func (m *MockEventRepository) Delete(ctx context.Context, id primitive.ObjectID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
@@ -69,7 +69,7 @@ func (m *MockEventRepository) FindPublic(ctx context.Context, filter *repository
 }
 
 // FindPublicByID implements EventRepository interface
-func (m *MockEventRepository) FindPublicByID(ctx context.Context, id string) (*models.Event, error) {
+func (m *MockEventRepository) FindPublicByID(ctx context.Context, id primitive.ObjectID) (*models.Event, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -84,7 +84,7 @@ func (m *MockEventRepository) CountByStatus(ctx context.Context, status string) 
 }
 
 // ExistsByID implements EventRepository interface
-func (m *MockEventRepository) ExistsByID(ctx context.Context, id string) (bool, error) {
+func (m *MockEventRepository) ExistsByID(ctx context.Context, id primitive.ObjectID) (bool, error) {
 	args := m.Called(ctx, id)
 	return args.Bool(0), args.Error(1)
 }
@@ -231,4 +231,88 @@ func (m *MockSessionRepository) SetupCountByEventIDSuccess(eventID string, count
 // SetupBulkUpdateSuccess sets up the mock for successful bulk update
 func (m *MockSessionRepository) SetupBulkUpdateSuccess() {
 	m.On("BulkUpdateSessions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+}
+
+// MockFormRepository is a mock implementation of FormRepository
+type MockFormRepository struct {
+	mock.Mock
+}
+
+// Create implements FormRepository interface
+func (m *MockFormRepository) Create(ctx context.Context, form *models.EventForm) (*models.EventForm, error) {
+	args := m.Called(ctx, form)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.EventForm), args.Error(1)
+}
+
+// FindByEventID implements FormRepository interface
+func (m *MockFormRepository) FindByEventID(ctx context.Context, eventID primitive.ObjectID) (*models.EventForm, error) {
+	args := m.Called(ctx, eventID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.EventForm), args.Error(1)
+}
+
+// FindByID implements FormRepository interface
+func (m *MockFormRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*models.EventForm, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.EventForm), args.Error(1)
+}
+
+
+// Update implements FormRepository interface
+func (m *MockFormRepository) Update(ctx context.Context, id primitive.ObjectID, form *models.EventForm) (*models.EventForm, error) {
+	args := m.Called(ctx, id, form)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.EventForm), args.Error(1)
+}
+
+// Delete implements FormRepository interface
+func (m *MockFormRepository) Delete(ctx context.Context, id primitive.ObjectID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+// DeleteByEventID implements FormRepository interface
+func (m *MockFormRepository) DeleteByEventID(ctx context.Context, eventID primitive.ObjectID) error {
+	args := m.Called(ctx, eventID)
+	return args.Error(0)
+}
+
+// ExistsByEventID implements FormRepository interface
+func (m *MockFormRepository) ExistsByEventID(ctx context.Context, eventID primitive.ObjectID) (bool, error) {
+	args := m.Called(ctx, eventID)
+	return args.Bool(0), args.Error(1)
+}
+
+// ExistsByID implements FormRepository interface
+func (m *MockFormRepository) ExistsByID(ctx context.Context, id primitive.ObjectID) (bool, error) {
+	args := m.Called(ctx, id)
+	return args.Bool(0), args.Error(1)
+}
+
+// Helper methods for setting up common mock scenarios
+
+
+// SetupFindByEventIDSuccess sets up the mock to return a form for FindByEventID
+func (m *MockFormRepository) SetupFindByEventIDSuccess(eventID primitive.ObjectID, form *models.EventForm) {
+	m.On("FindByEventID", mock.Anything, eventID).Return(form, nil)
+}
+
+// SetupFindByEventIDNotFound sets up the mock to return not found error
+func (m *MockFormRepository) SetupFindByEventIDNotFound(eventID primitive.ObjectID) {
+	m.On("FindByEventID", mock.Anything, eventID).Return(nil, errors.ErrFormNotFound)
+}
+
+// SetupDeleteByEventIDSuccess sets up the mock to return successful deletion
+func (m *MockFormRepository) SetupDeleteByEventIDSuccess(eventID primitive.ObjectID) {
+	m.On("DeleteByEventID", mock.Anything, eventID).Return(nil)
 }

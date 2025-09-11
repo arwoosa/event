@@ -4,22 +4,27 @@ import (
 	"context"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	"github.com/arwoosa/event/conf"
 	"github.com/arwoosa/event/internal/dao/repository"
+	"github.com/arwoosa/event/internal/errors"
 	"github.com/arwoosa/event/internal/models"
 )
 
 // PublicService implements the business logic for public event access
 type PublicService struct {
 	eventRepo        repository.EventRepository
+	eventService     *EventService
 	sessionService   *SessionService
 	paginationConfig *conf.PaginationConfig
 }
 
 // NewPublicService creates a new public service
-func NewPublicService(eventRepo repository.EventRepository, sessionService *SessionService, paginationConfig *conf.PaginationConfig) *PublicService {
+func NewPublicService(eventRepo repository.EventRepository, eventService *EventService, sessionService *SessionService, paginationConfig *conf.PaginationConfig) *PublicService {
 	return &PublicService{
 		eventRepo:        eventRepo,
+		eventService:     eventService,
 		sessionService:   sessionService,
 		paginationConfig: paginationConfig,
 	}
@@ -114,13 +119,25 @@ func (s *PublicService) SearchEvents(ctx context.Context, req *SearchEventsReque
 
 // GetEvent retrieves a public event by ID (for sharing links)
 func (s *PublicService) GetEvent(ctx context.Context, eventID string) (*models.Event, error) {
-	return s.eventRepo.FindPublicByID(ctx, eventID)
+	// Convert string ID to ObjectID
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	if err != nil {
+		return nil, errors.NewValidationError("event_id", "invalid event_id")
+	}
+
+	return s.eventRepo.FindPublicByID(ctx, objectID)
 }
 
 // IsPublished checks if an event is published (for OrderService)
 func (s *PublicService) IsPublished(ctx context.Context, eventID string) (bool, error) {
+	// Convert string ID to ObjectID
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	if err != nil {
+		return false, errors.NewValidationError("event_id", "invalid event_id")
+	}
+
 	// Find event by ID without merchant filtering (for internal service use)
-	event, err := s.eventRepo.FindByID(ctx, eventID)
+	event, err := s.eventRepo.FindByID(ctx, objectID)
 	if err != nil {
 		return false, err
 	}

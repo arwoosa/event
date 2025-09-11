@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -96,6 +97,10 @@ func (s *EventServiceServer) GetEventList(ctx context.Context, req *consolepb.Ge
 
 // GetEvent implements the gRPC GetEvent method
 func (s *EventServiceServer) GetEvent(ctx context.Context, req *common.ID) (*common.Event, error) {
+	// Validate ObjectID format
+	if _, err := primitive.ObjectIDFromHex(req.Id); err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid event ID format")
+	}
 	// Get event
 	event, err := s.eventService.GetEvent(ctx, req.Id)
 	if err != nil {
@@ -188,6 +193,101 @@ func (s *EventServiceServer) UpdateEventStatus(ctx context.Context, req *console
 	return s.converter.ConvertEventToPB(event), nil
 }
 
+// === Form Management gRPC Methods ===
+
+// SetEventForm implements the gRPC SetEventForm method
+func (s *EventServiceServer) SetEventForm(ctx context.Context, req *consolepb.SetEventFormRequest) (*common.EventForm, error) {
+	// Extract user information from context
+	user, err := ezgrpc.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate and convert EventID from string to ObjectID
+	eventID, err := primitive.ObjectIDFromHex(req.Id)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid event ID format")
+	}
+
+	// Convert protobuf request to service request
+	var schema, uiSchema map[string]interface{}
+	if req.Schema != nil {
+		schema = req.Schema.AsMap()
+	}
+	if req.Uischema != nil {
+		uiSchema = req.Uischema.AsMap()
+	}
+
+	// Call service
+	serviceReq := &SetEventFormRequest{
+		EventID:  eventID,
+		Schema:   schema,
+		UISchema: uiSchema,
+		UserID:   user.ID,
+	}
+	form, err := s.eventService.SetEventForm(ctx, serviceReq)
+	if err != nil {
+		return nil, s.handleServiceError(err)
+	}
+
+	// Convert to protobuf response
+	return s.converter.EventFormToProtobuf(form)
+}
+
+// GetEventForm implements the gRPC GetEventForm method
+func (s *EventServiceServer) GetEventForm(ctx context.Context, req *common.ID) (*common.EventForm, error) {
+	// Validate and convert EventID from string to ObjectID
+	eventID, err := primitive.ObjectIDFromHex(req.Id)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid event ID format")
+	}
+	// Call service
+	form, err := s.eventService.GetEventForm(ctx, eventID)
+	if err != nil {
+		return nil, s.handleServiceError(err)
+	}
+
+	// Convert to protobuf response
+	return s.converter.EventFormToProtobuf(form)
+}
+
+// DeleteEventForm implements the gRPC DeleteEventForm method
+func (s *EventServiceServer) DeleteEventForm(ctx context.Context, req *common.ID) (*emptypb.Empty, error) {
+	// Extract user information from context
+	user, err := ezgrpc.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate and convert EventID from string to ObjectID
+	eventID, err := primitive.ObjectIDFromHex(req.Id)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid event ID format")
+	}
+
+	// Call service
+	err = s.eventService.DeleteEventForm(ctx, eventID, user.ID)
+	if err != nil {
+		return nil, s.handleServiceError(err)
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+// === Session Management gRPC Methods ===
+
+// DeleteSession implements the gRPC DeleteSession method
+func (s *EventServiceServer) DeleteSession(ctx context.Context, req *consolepb.DeleteSessionRequest) (*emptypb.Empty, error) {
+	// Call session service to delete the session
+	err := s.eventService.sessionService.DeleteSessionById(ctx, req.Id, req.SessionId)
+	if err != nil {
+		return nil, s.handleServiceError(err)
+	}
+
+	// Return empty response for successful deletion
+	return &emptypb.Empty{}, nil
+}
+
 // Helper methods
 
 func (s *EventServiceServer) handleServiceError(err error) error {
@@ -216,18 +316,12 @@ func (s *EventServiceServer) handleServiceError(err error) error {
 		if err == errors.ErrSessionNotFound {
 			return status.Error(codes.NotFound, err.Error())
 		}
+		if err == errors.ErrFormNotFound {
+			return status.Error(codes.NotFound, err.Error())
+		}
+		if err == errors.ErrFormAlreadyExists {
+			return status.Error(codes.AlreadyExists, err.Error())
+		}
 		return status.Error(codes.Internal, err.Error())
 	}
-}
-
-// DeleteSession implements the gRPC DeleteSession method
-func (s *EventServiceServer) DeleteSession(ctx context.Context, req *consolepb.DeleteSessionRequest) (*emptypb.Empty, error) {
-	// Call session service to delete the session
-	err := s.eventService.sessionService.DeleteSessionById(ctx, req.Id, req.SessionId)
-	if err != nil {
-		return nil, s.handleServiceError(err)
-	}
-
-	// Return empty response for successful deletion
-	return &emptypb.Empty{}, nil
 }

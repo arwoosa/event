@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -102,6 +103,24 @@ func (s *PublicEventServiceServer) GetEvent(ctx context.Context, req *common.ID)
 	return s.converter.ConvertEventToPB(event), nil
 }
 
+// GetEventForm implements the gRPC GetEventForm method for public access
+func (s *PublicEventServiceServer) GetEventForm(ctx context.Context, req *common.ID) (*common.EventForm, error) {
+	// Validate and convert EventID from string to ObjectID
+	eventID, err := primitive.ObjectIDFromHex(req.Id)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid event ID format")
+	}
+
+	// Get event form
+	form, err := s.publicService.eventService.GetEventForm(ctx, eventID)
+	if err != nil {
+		return nil, s.handleServiceError(err)
+	}
+
+	// Convert to protobuf response
+	return s.converter.EventFormToProtobuf(form)
+}
+
 // Helper methods
 
 func (s *PublicEventServiceServer) handleServiceError(err error) error {
@@ -122,6 +141,9 @@ func (s *PublicEventServiceServer) handleServiceError(err error) error {
 		}
 	default:
 		if err == errors.ErrEventNotFound {
+			return status.Error(codes.NotFound, err.Error())
+		}
+		if err == errors.ErrFormNotFound {
 			return status.Error(codes.NotFound, err.Error())
 		}
 		return status.Error(codes.Internal, err.Error())

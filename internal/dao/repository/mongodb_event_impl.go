@@ -54,15 +54,10 @@ func (r *MongoEventRepository) Create(ctx context.Context, event *models.Event) 
 }
 
 // FindByID finds an event by ID with sessions populated
-func (r *MongoEventRepository) FindByID(ctx context.Context, id string) (*models.Event, error) {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, fmt.Errorf("invalid event ID: %w", err)
-	}
-
+func (r *MongoEventRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*models.Event, error) {
 	pipeline := []bson.M{
 		// Match the specific event
-		{"$match": bson.M{"_id": objectID}},
+		{"$match": bson.M{"_id": id}},
 		// Lookup sessions
 		{"$lookup": bson.M{
 			"from":         "sessions",
@@ -95,15 +90,10 @@ func (r *MongoEventRepository) FindByID(ctx context.Context, id string) (*models
 }
 
 // Update updates an existing event
-func (r *MongoEventRepository) Update(ctx context.Context, id string, event *models.Event) (*models.Event, error) {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, fmt.Errorf("invalid event ID: %w", err)
-	}
-
+func (r *MongoEventRepository) Update(ctx context.Context, id primitive.ObjectID, event *models.Event) (*models.Event, error) {
 	event.UpdatedAt = time.Now()
 
-	result, err := r.collection.ReplaceOne(ctx, bson.M{"_id": objectID}, event)
+	result, err := r.collection.ReplaceOne(ctx, bson.M{"_id": id}, event)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update event: %w", err)
 	}
@@ -116,13 +106,8 @@ func (r *MongoEventRepository) Update(ctx context.Context, id string, event *mod
 }
 
 // Delete removes an event
-func (r *MongoEventRepository) Delete(ctx context.Context, id string) error {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return fmt.Errorf("invalid event ID: %w", err)
-	}
-
-	result, err := r.collection.DeleteOne(ctx, bson.M{"_id": objectID})
+func (r *MongoEventRepository) Delete(ctx context.Context, id primitive.ObjectID) error {
+	result, err := r.collection.DeleteOne(ctx, bson.M{"_id": id})
 	if err != nil {
 		return fmt.Errorf("failed to delete event: %w", err)
 	}
@@ -192,16 +177,11 @@ func (r *MongoEventRepository) FindPublic(ctx context.Context, filter *PublicEve
 }
 
 // FindPublicByID finds a public event by ID with sessions populated
-func (r *MongoEventRepository) FindPublicByID(ctx context.Context, id string) (*models.Event, error) {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, fmt.Errorf("invalid event ID: %w", err)
-	}
-
+func (r *MongoEventRepository) FindPublicByID(ctx context.Context, id primitive.ObjectID) (*models.Event, error) {
 	pipeline := []bson.M{
 		// Match public event
 		{"$match": bson.M{
-			"_id":    objectID,
+			"_id":    id,
 			"status": models.StatusPublished,
 		}},
 		// Lookup sessions
@@ -250,13 +230,8 @@ func (r *MongoEventRepository) CountByStatus(ctx context.Context, status string)
 }
 
 // ExistsByID checks if an event exists by ID
-func (r *MongoEventRepository) ExistsByID(ctx context.Context, id string) (bool, error) {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return false, fmt.Errorf("invalid event ID: %w", err)
-	}
-
-	count, err := r.collection.CountDocuments(ctx, bson.M{"_id": objectID})
+func (r *MongoEventRepository) ExistsByID(ctx context.Context, id primitive.ObjectID) (bool, error) {
+	count, err := r.collection.CountDocuments(ctx, bson.M{"_id": id})
 	if err != nil {
 		return false, fmt.Errorf("failed to check event existence: %w", err)
 	}

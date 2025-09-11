@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/arwoosa/event/internal/models"
 	"github.com/arwoosa/event/internal/service/mocks"
@@ -16,10 +17,11 @@ import (
 func TestEventService_ValidatePublishedEventChanges(t *testing.T) {
 	// Setup
 	eventRepo := &mocks.MockEventRepository{}
+	formRepo := &mocks.MockFormRepository{}
 	sessionService := &SessionService{}
 	orderService := &mocks.MockOrderService{}
 
-	eventService := NewEventService(eventRepo, sessionService, orderService)
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
 
 	// Create a published event
 	publishedEvent := testutils.TestPublishedEvent()
@@ -134,10 +136,11 @@ func TestEventService_ValidatePublishedEventChanges(t *testing.T) {
 func TestEventService_PatchPublishedEvent_Integration(t *testing.T) {
 	// Setup
 	eventRepo := &mocks.MockEventRepository{}
+	formRepo := &mocks.MockFormRepository{}
 	sessionService := &SessionService{}
 	orderService := &mocks.MockOrderService{}
 
-	eventService := NewEventService(eventRepo, sessionService, orderService)
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
 
 	ctx := context.Background()
 
@@ -175,12 +178,16 @@ func TestEventService_PatchPublishedEvent_Integration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Mock the repository calls
+			// Convert string ID to ObjectID for the mock
+			objectID, err := primitive.ObjectIDFromHex(eventID)
+			require.NoError(t, err)
+			
 			// No permission check in service layer - authorization handled by API Gateway
-			eventRepo.On("FindByID", ctx, eventID).Return(publishedEvent, nil)
+			eventRepo.On("FindByID", ctx, objectID).Return(publishedEvent, nil)
 
 			if !tt.expectError {
 				// Mock successful update - use MatchedBy to allow for field modifications
-				eventRepo.On("Update", ctx, eventID, mock.MatchedBy(func(event *models.Event) bool {
+				eventRepo.On("Update", ctx, objectID, mock.MatchedBy(func(event *models.Event) bool {
 					return event.ID == publishedEvent.ID
 				})).Return(publishedEvent, nil)
 			}

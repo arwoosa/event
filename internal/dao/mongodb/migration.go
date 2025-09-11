@@ -88,6 +88,27 @@ var migrations = []Migration{
 			{Keys: bson.D{{Key: "start_time", Value: 1}, {Key: "end_time", Value: 1}}},
 		},
 	},
+	{
+		Collection: "forms",
+		Indexes: []mongo.IndexModel{
+			// Primary query index - forms are accessed by event_id
+			{
+				Keys: bson.D{{Key: "event_id", Value: 1}},
+			},
+			// Sorting by creation time (for potential future list operations)
+			{
+				Keys: bson.D{
+					{Key: "created_at", Value: -1},
+				},
+			},
+			// Sorting by updated time (for potential future list operations)
+			{
+				Keys: bson.D{
+					{Key: "updated_at", Value: -1},
+				},
+			},
+		},
+	},
 }
 
 // Migrate runs all the defined migrations.

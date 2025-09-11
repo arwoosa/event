@@ -39,7 +39,9 @@ func TestSessionService_CreateSessionsForEvent_Success(t *testing.T) {
 
 	// Mock event validation
 	event := testutils.TestEvent()
-	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	require.NoError(t, err)
+	eventRepo.On("FindByID", ctx, objectID).Return(event, nil)
 
 	// Mock successful session creation
 	createdSessions := testutils.TestSessionsForEvent(event.ID, 2)
@@ -76,7 +78,9 @@ func TestSessionService_CreateSessionsForEvent_EventNotFound(t *testing.T) {
 	}
 
 	// Mock event not found
-	eventRepo.On("FindByID", ctx, eventID).Return(nil, errors.ErrEventNotFound)
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	require.NoError(t, err)
+	eventRepo.On("FindByID", ctx, objectID).Return(nil, errors.ErrEventNotFound)
 
 	// Execute
 	result, err := sessionService.CreateSessionsForEvent(ctx, eventID, sessionReqs)
@@ -108,7 +112,9 @@ func TestSessionService_CreateSessionsForEvent_WrongMerchant(t *testing.T) {
 
 	// Mock event exists (authorization is handled by API Gateway)
 	event := testutils.TestEvent()
-	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	require.NoError(t, err)
+	eventRepo.On("FindByID", ctx, objectID).Return(event, nil)
 
 	// Mock successful session creation
 	createdSessions := testutils.TestSessionsForEvent(event.ID, 1)

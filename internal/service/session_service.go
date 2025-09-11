@@ -32,8 +32,14 @@ func NewSessionService(
 // CreateSessionsForEvent creates sessions for an event
 // Authorization is handled by API Gateway before reaching this service
 func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID string, sessionReqs []*SessionRequest) ([]*models.Session, error) {
+	// Convert string ID to ObjectID
 	// Validate event exists
-	_, err := s.eventRepo.FindByID(ctx, eventID)
+	eventObjectID, err := primitive.ObjectIDFromHex(eventID)
+	if err != nil {
+		return nil, errors.NewValidationError("event_id", "invalid event_id")
+	}
+
+	_, err = s.eventRepo.FindByID(ctx, eventObjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +188,13 @@ func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, session
 	}
 
 	// Get event to check status (still needed for business logic)
-	event, err := s.eventRepo.FindByID(ctx, eventID)
+	// Convert string ID to ObjectID
+	eventObjectID, err := primitive.ObjectIDFromHex(eventID)
+	if err != nil {
+		return errors.NewValidationError("event_id", "invalid event_id")
+	}
+
+	event, err := s.eventRepo.FindByID(ctx, eventObjectID)
 	if err != nil {
 		return err
 	}

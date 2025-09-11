@@ -28,6 +28,9 @@ const (
 	EventService_DeleteEvent_FullMethodName       = "/event.console.EventService/DeleteEvent"
 	EventService_UpdateEventStatus_FullMethodName = "/event.console.EventService/UpdateEventStatus"
 	EventService_DeleteSession_FullMethodName     = "/event.console.EventService/DeleteSession"
+	EventService_SetEventForm_FullMethodName      = "/event.console.EventService/SetEventForm"
+	EventService_GetEventForm_FullMethodName      = "/event.console.EventService/GetEventForm"
+	EventService_DeleteEventForm_FullMethodName   = "/event.console.EventService/DeleteEventForm"
 )
 
 // EventServiceClient is the client API for EventService service.
@@ -48,6 +51,12 @@ type EventServiceClient interface {
 	UpdateEventStatus(ctx context.Context, in *UpdateEventStatusRequest, opts ...grpc.CallOption) (*common.Event, error)
 	// Delete a specific session by ID
 	DeleteSession(ctx context.Context, in *DeleteSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Create or update form for an event (PUT semantics, supports upsert)
+	SetEventForm(ctx context.Context, in *SetEventFormRequest, opts ...grpc.CallOption) (*common.EventForm, error)
+	// Get form by event ID
+	GetEventForm(ctx context.Context, in *common.ID, opts ...grpc.CallOption) (*common.EventForm, error)
+	// Delete event form
+	DeleteEventForm(ctx context.Context, in *common.ID, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type eventServiceClient struct {
@@ -121,6 +130,33 @@ func (c *eventServiceClient) DeleteSession(ctx context.Context, in *DeleteSessio
 	return out, nil
 }
 
+func (c *eventServiceClient) SetEventForm(ctx context.Context, in *SetEventFormRequest, opts ...grpc.CallOption) (*common.EventForm, error) {
+	out := new(common.EventForm)
+	err := c.cc.Invoke(ctx, EventService_SetEventForm_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eventServiceClient) GetEventForm(ctx context.Context, in *common.ID, opts ...grpc.CallOption) (*common.EventForm, error) {
+	out := new(common.EventForm)
+	err := c.cc.Invoke(ctx, EventService_GetEventForm_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *eventServiceClient) DeleteEventForm(ctx context.Context, in *common.ID, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, EventService_DeleteEventForm_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EventServiceServer is the server API for EventService service.
 // All implementations must embed UnimplementedEventServiceServer
 // for forward compatibility
@@ -139,6 +175,12 @@ type EventServiceServer interface {
 	UpdateEventStatus(context.Context, *UpdateEventStatusRequest) (*common.Event, error)
 	// Delete a specific session by ID
 	DeleteSession(context.Context, *DeleteSessionRequest) (*emptypb.Empty, error)
+	// Create or update form for an event (PUT semantics, supports upsert)
+	SetEventForm(context.Context, *SetEventFormRequest) (*common.EventForm, error)
+	// Get form by event ID
+	GetEventForm(context.Context, *common.ID) (*common.EventForm, error)
+	// Delete event form
+	DeleteEventForm(context.Context, *common.ID) (*emptypb.Empty, error)
 	mustEmbedUnimplementedEventServiceServer()
 }
 
@@ -166,6 +208,15 @@ func (UnimplementedEventServiceServer) UpdateEventStatus(context.Context, *Updat
 }
 func (UnimplementedEventServiceServer) DeleteSession(context.Context, *DeleteSessionRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSession not implemented")
+}
+func (UnimplementedEventServiceServer) SetEventForm(context.Context, *SetEventFormRequest) (*common.EventForm, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetEventForm not implemented")
+}
+func (UnimplementedEventServiceServer) GetEventForm(context.Context, *common.ID) (*common.EventForm, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEventForm not implemented")
+}
+func (UnimplementedEventServiceServer) DeleteEventForm(context.Context, *common.ID) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteEventForm not implemented")
 }
 func (UnimplementedEventServiceServer) mustEmbedUnimplementedEventServiceServer() {}
 
@@ -306,6 +357,60 @@ func _EventService_DeleteSession_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EventService_SetEventForm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetEventFormRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EventServiceServer).SetEventForm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EventService_SetEventForm_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EventServiceServer).SetEventForm(ctx, req.(*SetEventFormRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EventService_GetEventForm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.ID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EventServiceServer).GetEventForm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EventService_GetEventForm_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EventServiceServer).GetEventForm(ctx, req.(*common.ID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EventService_DeleteEventForm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.ID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EventServiceServer).DeleteEventForm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EventService_DeleteEventForm_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EventServiceServer).DeleteEventForm(ctx, req.(*common.ID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EventService_ServiceDesc is the grpc.ServiceDesc for EventService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -340,6 +445,18 @@ var EventService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteSession",
 			Handler:    _EventService_DeleteSession_Handler,
+		},
+		{
+			MethodName: "SetEventForm",
+			Handler:    _EventService_SetEventForm_Handler,
+		},
+		{
+			MethodName: "GetEventForm",
+			Handler:    _EventService_GetEventForm_Handler,
+		},
+		{
+			MethodName: "DeleteEventForm",
+			Handler:    _EventService_DeleteEventForm_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

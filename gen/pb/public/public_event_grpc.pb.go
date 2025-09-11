@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	PublicEventService_SearchEvents_FullMethodName = "/event.public.PublicEventService/SearchEvents"
 	PublicEventService_GetEvent_FullMethodName     = "/event.public.PublicEventService/GetEvent"
+	PublicEventService_GetEventForm_FullMethodName = "/event.public.PublicEventService/GetEventForm"
 )
 
 // PublicEventServiceClient is the client API for PublicEventService service.
@@ -32,6 +33,8 @@ type PublicEventServiceClient interface {
 	SearchEvents(ctx context.Context, in *SearchEventsRequest, opts ...grpc.CallOption) (*common.EventListResponse, error)
 	// Get a public event by ID (for sharing links)
 	GetEvent(ctx context.Context, in *common.ID, opts ...grpc.CallOption) (*common.Event, error)
+	// Get public form by event ID
+	GetEventForm(ctx context.Context, in *common.ID, opts ...grpc.CallOption) (*common.EventForm, error)
 }
 
 type publicEventServiceClient struct {
@@ -60,6 +63,15 @@ func (c *publicEventServiceClient) GetEvent(ctx context.Context, in *common.ID, 
 	return out, nil
 }
 
+func (c *publicEventServiceClient) GetEventForm(ctx context.Context, in *common.ID, opts ...grpc.CallOption) (*common.EventForm, error) {
+	out := new(common.EventForm)
+	err := c.cc.Invoke(ctx, PublicEventService_GetEventForm_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PublicEventServiceServer is the server API for PublicEventService service.
 // All implementations must embed UnimplementedPublicEventServiceServer
 // for forward compatibility
@@ -68,6 +80,8 @@ type PublicEventServiceServer interface {
 	SearchEvents(context.Context, *SearchEventsRequest) (*common.EventListResponse, error)
 	// Get a public event by ID (for sharing links)
 	GetEvent(context.Context, *common.ID) (*common.Event, error)
+	// Get public form by event ID
+	GetEventForm(context.Context, *common.ID) (*common.EventForm, error)
 	mustEmbedUnimplementedPublicEventServiceServer()
 }
 
@@ -80,6 +94,9 @@ func (UnimplementedPublicEventServiceServer) SearchEvents(context.Context, *Sear
 }
 func (UnimplementedPublicEventServiceServer) GetEvent(context.Context, *common.ID) (*common.Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEvent not implemented")
+}
+func (UnimplementedPublicEventServiceServer) GetEventForm(context.Context, *common.ID) (*common.EventForm, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEventForm not implemented")
 }
 func (UnimplementedPublicEventServiceServer) mustEmbedUnimplementedPublicEventServiceServer() {}
 
@@ -130,6 +147,24 @@ func _PublicEventService_GetEvent_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PublicEventService_GetEventForm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.ID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PublicEventServiceServer).GetEventForm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PublicEventService_GetEventForm_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PublicEventServiceServer).GetEventForm(ctx, req.(*common.ID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PublicEventService_ServiceDesc is the grpc.ServiceDesc for PublicEventService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -144,6 +179,10 @@ var PublicEventService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetEvent",
 			Handler:    _PublicEventService_GetEvent_Handler,
+		},
+		{
+			MethodName: "GetEventForm",
+			Handler:    _PublicEventService_GetEventForm_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -9,6 +9,7 @@ import (
 	"github.com/arwoosa/event/internal/models"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // ProtobufConverter provides methods to convert between domain models and protobuf messages
@@ -288,4 +289,121 @@ func extractStringFromPrimitiveD(d primitive.D, key string) string {
 		}
 	}
 	return ""
+}
+
+// === Form Conversion Methods ===
+
+// EventFormToProtobuf converts a domain EventForm to protobuf EventForm
+func (c *ProtobufConverter) EventFormToProtobuf(form *models.EventForm) (*common.EventForm, error) {
+	// Convert interface{} to *structpb.Struct for protobuf
+	var schema, uiSchema *structpb.Struct
+	var err error
+
+	if form.Schema != nil {
+		schemaMap := c.convertMongoDataToMap(form.Schema)
+		if schemaMap != nil {
+			schema, err = structpb.NewStruct(schemaMap)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if form.UISchema != nil {
+		uiSchemaMap := c.convertMongoDataToMap(form.UISchema)
+		if uiSchemaMap != nil {
+			uiSchema, err = structpb.NewStruct(uiSchemaMap)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	formpb := &common.EventForm{
+		Id:        form.ID.Hex(),
+		EventId:   form.EventID.Hex(),
+		Schema:    schema,
+		Uischema:  uiSchema,
+		CreatedAt: form.CreatedAt.Format(time.RFC3339),
+		CreatedBy: form.CreatedBy,
+		UpdatedAt: form.UpdatedAt.Format(time.RFC3339),
+		UpdatedBy: form.UpdatedBy,
+	}
+	return formpb, nil
+}
+
+func (c *ProtobufConverter) convertMongoDataToMap(data interface{}) map[string]interface{} {
+	if data == nil {
+		return nil
+	}
+
+	switch v := data.(type) {
+	case primitive.D:
+		result := make(map[string]interface{})
+		for _, elem := range v {
+			result[elem.Key] = c.convertValue(elem.Value)
+		}
+		return result
+	case map[string]interface{}:
+		// Already correct type, but need to recursively process values
+		result := make(map[string]interface{})
+		for key, value := range v {
+			result[key] = c.convertValue(value)
+		}
+		return result
+	case primitive.M:
+		result := make(map[string]interface{})
+		for key, value := range v {
+			result[key] = c.convertValue(value)
+		}
+		return result
+	default:
+		// If not a map type, try to convert to single value map
+		if converted := c.convertValue(v); converted != nil {
+			return map[string]interface{}{"value": converted}
+		}
+		return nil
+	}
+}
+
+// convertValue converts single MongoDB values, handling nested primitive.D, primitive.A etc
+func (s *ProtobufConverter) convertValue(data interface{}) interface{} {
+	if data == nil {
+		return nil
+	}
+
+	switch v := data.(type) {
+	case primitive.D:
+		result := make(map[string]interface{})
+		for _, elem := range v {
+			result[elem.Key] = s.convertValue(elem.Value)
+		}
+		return result
+	case primitive.A:
+		result := make([]interface{}, len(v))
+		for i, elem := range v {
+			result[i] = s.convertValue(elem)
+		}
+		return result
+	case primitive.M:
+		result := make(map[string]interface{})
+		for key, value := range v {
+			result[key] = s.convertValue(value)
+		}
+		return result
+	case map[string]interface{}:
+		result := make(map[string]interface{})
+		for key, value := range v {
+			result[key] = s.convertValue(value)
+		}
+		return result
+	case []interface{}:
+		result := make([]interface{}, len(v))
+		for i, elem := range v {
+			result[i] = s.convertValue(elem)
+		}
+		return result
+	default:
+		return data
+	}
 }

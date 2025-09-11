@@ -23,6 +23,13 @@ service PublicEventService {
       get: "/events/{id}"
     };
   }
+  
+  // Get public form by event ID
+  rpc GetEventForm(common.ID) returns (common.EventForm) {
+    option (google.api.http) = {
+      get: "/events/{id}/form"
+    };
+  }
 }
 
 // Request messages for public service

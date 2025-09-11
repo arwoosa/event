@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/arwoosa/event/internal/models"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // EventFilter represents filtering options for event queries
@@ -59,20 +60,20 @@ type EventListResult struct {
 type EventRepository interface {
 	// CRUD operations
 	Create(ctx context.Context, event *models.Event) (*models.Event, error)
-	FindByID(ctx context.Context, id string) (*models.Event, error)
-	Update(ctx context.Context, id string, event *models.Event) (*models.Event, error)
-	Delete(ctx context.Context, id string) error
+	FindByID(ctx context.Context, id primitive.ObjectID) (*models.Event, error)
+	Update(ctx context.Context, id primitive.ObjectID, event *models.Event) (*models.Event, error)
+	Delete(ctx context.Context, id primitive.ObjectID) error
 
 	// Console API queries (with sessions populated)
 	Find(ctx context.Context, filter *EventFilter) (*EventListResult, error)
 
 	// Public API queries (with sessions populated)
 	FindPublic(ctx context.Context, filter *PublicEventFilter) (*EventListResult, error)
-	FindPublicByID(ctx context.Context, id string) (*models.Event, error)
+	FindPublicByID(ctx context.Context, id primitive.ObjectID) (*models.Event, error)
 
 	// Specialized queries (with sessions populated)
 	CountByStatus(ctx context.Context, status string) (int64, error)
 
 	// Existence checks
-	ExistsByID(ctx context.Context, id string) (bool, error)
+	ExistsByID(ctx context.Context, id primitive.ObjectID) (bool, error)
 }

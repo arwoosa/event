@@ -4,6 +4,7 @@ package event.console;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 import "proto/common.proto";
 import "validate/validate.proto";
 
@@ -61,6 +62,30 @@ service EventService {
   rpc DeleteSession(DeleteSessionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete: "/console/events/{id}/sessions/{session_id}"
+    };
+  }
+  
+  // === Event Form Management APIs ===
+  
+  // Create or update form for an event (PUT semantics, supports upsert)
+  rpc SetEventForm(SetEventFormRequest) returns (common.EventForm) {
+    option (google.api.http) = {
+      put: "/console/events/{id}/form"
+      body: "*"
+    };
+  }
+  
+  // Get form by event ID
+  rpc GetEventForm(common.ID) returns (common.EventForm) {
+    option (google.api.http) = {
+      get: "/console/events/{id}/form"
+    };
+  }
+  
+  // Delete event form
+  rpc DeleteEventForm(common.ID) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/console/events/{id}/form"
     };
   }
 }
@@ -131,5 +156,12 @@ message DeleteSessionRequest {
 message CreateEventResponse {
   string id = 1;
   string created_at = 2;
+}
+
+// Form request messages
+message SetEventFormRequest {
+  string id = 1 [(validate.rules).string.min_len = 1];
+  google.protobuf.Struct schema = 2 [(validate.rules).message.required = true];
+  google.protobuf.Struct uischema = 3 [(validate.rules).message.required = true];
 }
 

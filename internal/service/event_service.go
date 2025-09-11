@@ -9,6 +9,7 @@ import (
 	vulpeslog "github.com/arwoosa/vulpes/log"
 
 	"github.com/arwoosa/vulpes/relation"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/arwoosa/event/internal/dao/repository"
 	"github.com/arwoosa/event/internal/errors"
@@ -18,6 +19,7 @@ import (
 // EventService implements the business logic for event management
 type EventService struct {
 	eventRepo      repository.EventRepository
+	formRepo       repository.FormRepository
 	sessionService *SessionService
 	orderService   OrderServiceClient
 }
@@ -25,11 +27,13 @@ type EventService struct {
 // NewEventService creates a new event service
 func NewEventService(
 	eventRepo repository.EventRepository,
+	formRepo repository.FormRepository,
 	sessionService *SessionService,
 	orderService OrderServiceClient,
 ) *EventService {
 	return &EventService{
 		eventRepo:      eventRepo,
+		formRepo:       formRepo,
 		sessionService: sessionService,
 		orderService:   orderService,
 	}
@@ -143,7 +147,7 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 				vulpeslog.Err(err))
 
 			// Delete the event from database
-			if deleteErr := s.eventRepo.Delete(ctx, createdEvent.ID.Hex()); deleteErr != nil {
+			if deleteErr := s.eventRepo.Delete(ctx, createdEvent.ID); deleteErr != nil {
 				vulpeslog.Error("Failed to rollback event creation",
 					vulpeslog.String("eventID", createdEvent.ID.Hex()),
 					vulpeslog.Err(deleteErr))
@@ -167,7 +171,13 @@ func (s *EventService) CreateEvent(ctx context.Context, req *CreateEventRequest)
 // GetEvent retrieves an event by ID
 // Authorization is handled by API Gateway before reaching this service
 func (s *EventService) GetEvent(ctx context.Context, eventID string) (*models.Event, error) {
-	return s.eventRepo.FindByID(ctx, eventID)
+	// Convert string ID to ObjectID
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	if err != nil {
+		return nil, errors.NewValidationError("event_id", "invalid event ID")
+	}
+
+	return s.eventRepo.FindByID(ctx, objectID)
 }
 
 // GetEventList retrieves a list of events with filtering
@@ -219,7 +229,13 @@ func (s *EventService) PatchEvent(ctx context.Context, req *PatchEventRequest) (
 	// Apply partial updates
 	updatedEvent := s.applyPatchToEvent(existingEvent, req)
 
-	return s.eventRepo.Update(ctx, req.ID, updatedEvent)
+	// Convert string ID to ObjectID
+	objectID, err := primitive.ObjectIDFromHex(req.ID)
+	if err != nil {
+		return nil, errors.NewValidationError("event_id", "invalid event ID")
+	}
+
+	return s.eventRepo.Update(ctx, objectID, updatedEvent)
 }
 
 // DeleteEvent deletes an event
@@ -250,7 +266,19 @@ func (s *EventService) DeleteEvent(ctx context.Context, eventID, userID string) 
 	}
 
 	// Delete event
-	if err := s.eventRepo.Delete(ctx, eventID); err != nil {
+	// Convert string ID to ObjectID
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	if err != nil {
+		return errors.NewValidationError("event_id", "invalid event ID")
+	}
+
+	// Delete form if exists
+	if err := s.formRepo.DeleteByEventID(ctx, objectID); err != nil && err != errors.ErrFormNotFound {
+		return fmt.Errorf("failed to delete form: %w", err)
+	}
+
+	// Delete event
+	if err := s.eventRepo.Delete(ctx, objectID); err != nil {
 		return err
 	}
 
@@ -275,7 +303,13 @@ func (s *EventService) UpdateEventStatus(ctx context.Context, eventID, newStatus
 	existingEvent.UpdatedBy = userID
 	existingEvent.UpdatedAt = time.Now()
 
-	return s.eventRepo.Update(ctx, eventID, existingEvent)
+	// Convert string ID to ObjectID
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	if err != nil {
+		return nil, errors.NewValidationError("event_id", "invalid event ID")
+	}
+
+	return s.eventRepo.Update(ctx, objectID, existingEvent)
 }
 
 // Validation methods
@@ -564,6 +598,115 @@ func validateDetailSize(detail []models.DetailBlock) error {
 		return errors.NewValidationError("detail",
 			fmt.Sprintf("detail size exceeds limit: %d bytes (max: %d bytes)", len(data), maxSize))
 	}
+
+	return nil
+}
+
+// === Form Management Business Logic ===
+
+// SetEventFormRequest represents the request to create or update event form
+type SetEventFormRequest struct {
+	EventID  primitive.ObjectID
+	Schema   interface{}
+	UISchema interface{}
+	UserID   string
+}
+
+// SetEventForm creates or updates a form for an event
+func (s *EventService) SetEventForm(ctx context.Context, req *SetEventFormRequest) (*models.EventForm, error) {
+	// Verify event exists
+	event, err := s.eventRepo.FindByID(ctx, req.EventID)
+	if err != nil {
+		if err == errors.ErrEventNotFound {
+			return nil, err
+		}
+		return nil, fmt.Errorf("failed to verify event: %w", err)
+	}
+
+	// Create form model
+	form := &models.EventForm{
+		EventID:  req.EventID,
+		Schema:   req.Schema,
+		UISchema: req.UISchema,
+	}
+
+	// Check if form already exists to determine create vs update
+	existingForm, err := s.formRepo.FindByEventID(ctx, req.EventID)
+	if err != nil && err != errors.ErrFormNotFound {
+		return nil, fmt.Errorf("failed to check existing form: %w", err)
+	}
+
+	var result *models.EventForm
+	if err == errors.ErrFormNotFound {
+		// Form doesn't exist, create new form
+		form.SetCreateInfo(req.UserID)
+		result, err = s.formRepo.Create(ctx, form)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create event form: %w", err)
+		}
+	} else {
+		// check if event status allows form update
+		if err := event.IsValidStatusForUpdate(); err != nil {
+			return nil, err
+		}
+		// Form exists, update existing form
+		form.SetUpdateInfo(req.UserID)
+		result, err = s.formRepo.Update(ctx, existingForm.ID, form)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update event form: %w", err)
+		}
+	}
+
+	vulpeslog.Info("Event form set successfully",
+		vulpeslog.String("event_id", req.EventID.Hex()),
+		vulpeslog.String("form_id", result.ID.Hex()),
+		vulpeslog.String("user_id", req.UserID))
+
+	return result, nil
+}
+
+// GetEventForm gets the form for an event
+func (s *EventService) GetEventForm(ctx context.Context, eventID primitive.ObjectID) (*models.EventForm, error) {
+	// Get form
+	form, err := s.formRepo.FindByEventID(ctx, eventID)
+	if err != nil {
+		if err == errors.ErrFormNotFound {
+			return nil, err
+		}
+		return nil, fmt.Errorf("failed to get event form: %w", err)
+	}
+
+	return form, nil
+}
+
+// DeleteEventForm deletes the form for an event
+func (s *EventService) DeleteEventForm(ctx context.Context, eventID primitive.ObjectID, userID string) error {
+	// Verify event exists
+	event, err := s.eventRepo.FindByID(ctx, eventID)
+	if err != nil {
+		if err == errors.ErrEventNotFound {
+			return err
+		}
+		return fmt.Errorf("failed to verify event: %w", err)
+	}
+
+	// check if event status allows form deletion
+	if err := event.IsValidStatusForUpdate(); err != nil {
+		return err
+	}
+
+	// Delete form
+	err = s.formRepo.DeleteByEventID(ctx, eventID)
+	if err != nil {
+		if err == errors.ErrFormNotFound {
+			return err
+		}
+		return fmt.Errorf("failed to delete event form: %w", err)
+	}
+
+	vulpeslog.Info("Event form deleted successfully",
+		vulpeslog.String("event_id", eventID.Hex()),
+		vulpeslog.String("user_id", userID))
 
 	return nil
 }

@@ -2,7 +2,7 @@ name: "partivo_event"
 mode: "dev"
 port: 8081
 version: 1.0.0
-time_zone: "Asia/Taipei"
+time_zone: "UTC"
 log:
   level: "debug"
 mongodb:

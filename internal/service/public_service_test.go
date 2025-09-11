@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/arwoosa/event/internal/dao/repository"
 	"github.com/arwoosa/event/internal/errors"
@@ -25,9 +26,12 @@ func matchPublicEventFilter() interface{} {
 func TestPublicService_SearchEvents_Success(t *testing.T) {
 	// Setup
 	eventRepo := &mocks.MockEventRepository{}
+	formRepo := &mocks.MockFormRepository{}
 	sessionService := &SessionService{} // Minimal setup
+	orderService := &mocks.MockOrderService{}
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
 
-	publicService := NewPublicService(eventRepo, sessionService, nil)
+	publicService := NewPublicService(eventRepo, eventService, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -73,7 +77,10 @@ func TestPublicService_SearchEvents_WithLocationFilter(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService, nil)
+	formRepo := &mocks.MockFormRepository{}
+	orderService := &mocks.MockOrderService{}
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
+	publicService := NewPublicService(eventRepo, eventService, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -121,7 +128,10 @@ func TestPublicService_SearchEvents_EmptyRequest(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService, nil)
+	formRepo := &mocks.MockFormRepository{}
+	orderService := &mocks.MockOrderService{}
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
+	publicService := NewPublicService(eventRepo, eventService, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -155,7 +165,10 @@ func TestPublicService_SearchEvents_WithPagination(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService, nil)
+	formRepo := &mocks.MockFormRepository{}
+	orderService := &mocks.MockOrderService{}
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
+	publicService := NewPublicService(eventRepo, eventService, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -196,7 +209,10 @@ func TestPublicService_GetEvent_Success(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService, nil)
+	formRepo := &mocks.MockFormRepository{}
+	orderService := &mocks.MockOrderService{}
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
+	publicService := NewPublicService(eventRepo, eventService, sessionService, nil)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
@@ -204,8 +220,12 @@ func TestPublicService_GetEvent_Success(t *testing.T) {
 	// Expected published event
 	event := testutils.TestPublishedEvent()
 
+	// Convert string ID to ObjectID for the mock
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	require.NoError(t, err)
+	
 	// Mock repository call
-	eventRepo.On("FindPublicByID", ctx, eventID).Return(event, nil)
+	eventRepo.On("FindPublicByID", ctx, objectID).Return(event, nil)
 
 	// Execute
 	result, err := publicService.GetEvent(ctx, eventID)
@@ -224,13 +244,20 @@ func TestPublicService_GetEvent_NotFound(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService, nil)
+	formRepo := &mocks.MockFormRepository{}
+	orderService := &mocks.MockOrderService{}
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
+	publicService := NewPublicService(eventRepo, eventService, sessionService, nil)
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
 
+	// Convert string ID to ObjectID for the mock
+	objectID, err := primitive.ObjectIDFromHex(eventID)
+	require.NoError(t, err)
+	
 	// Mock event not found
-	eventRepo.On("FindPublicByID", ctx, eventID).Return(nil, errors.ErrEventNotFound)
+	eventRepo.On("FindPublicByID", ctx, objectID).Return(nil, errors.ErrEventNotFound)
 
 	// Execute
 	result, err := publicService.GetEvent(ctx, eventID)
@@ -248,7 +275,10 @@ func TestPublicService_SearchEvents_FilterValidation(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService, nil)
+	formRepo := &mocks.MockFormRepository{}
+	orderService := &mocks.MockOrderService{}
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
+	publicService := NewPublicService(eventRepo, eventService, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -301,7 +331,10 @@ func TestPublicService_SearchEvents_LocationRequiresBoth(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService, nil)
+	formRepo := &mocks.MockFormRepository{}
+	orderService := &mocks.MockOrderService{}
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
+	publicService := NewPublicService(eventRepo, eventService, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -338,7 +371,10 @@ func TestPublicService_SearchEvents_DefaultPageSize(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService, nil)
+	formRepo := &mocks.MockFormRepository{}
+	orderService := &mocks.MockOrderService{}
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
+	publicService := NewPublicService(eventRepo, eventService, sessionService, nil)
 
 	ctx := context.Background()
 
@@ -371,7 +407,10 @@ func TestPublicService_SearchEvents_PageBasedPagination(t *testing.T) {
 	eventRepo := &mocks.MockEventRepository{}
 	sessionService := &SessionService{}
 
-	publicService := NewPublicService(eventRepo, sessionService, nil)
+	formRepo := &mocks.MockFormRepository{}
+	orderService := &mocks.MockOrderService{}
+	eventService := NewEventService(eventRepo, formRepo, sessionService, orderService)
+	publicService := NewPublicService(eventRepo, eventService, sessionService, nil)
 
 	ctx := context.Background()
 
