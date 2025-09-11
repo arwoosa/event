@@ -220,9 +220,15 @@ func (s *EventService) PatchEvent(ctx context.Context, req *PatchEventRequest) (
 			existingSessionPtrs[i] = &existingEvent.Sessions[i]
 		}
 
-		_, err = s.sessionService.UpdateSessionsForEvent(ctx, req.ID, req.Sessions, existingEvent, existingSessionPtrs)
+		updatedSessions, err := s.sessionService.UpdateSessionsForEvent(ctx, req.ID, req.Sessions, existingEvent, existingSessionPtrs)
 		if err != nil {
 			return nil, err
+		}
+
+		// Apply updated sessions to existingEvent to ensure consistency
+		existingEvent.Sessions = make([]models.Session, len(updatedSessions))
+		for i, session := range updatedSessions {
+			existingEvent.Sessions[i] = *session
 		}
 	}
 
