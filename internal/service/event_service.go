@@ -423,14 +423,16 @@ func (s *EventService) validateStatusTransition(ctx context.Context, event *mode
 }
 
 func (s *EventService) validatePublishRequirements(ctx context.Context, event *models.Event) error {
+	var missingFields []string
+
 	if event.Title == "" {
-		return errors.NewValidationError("title", "title is required for publishing")
+		missingFields = append(missingFields, "title")
 	}
 	if event.CoverImageURL == "" {
-		return errors.NewValidationError("cover_image_url", "cover image is required for publishing")
+		missingFields = append(missingFields, "cover_image_url")
 	}
 	if len(event.Detail) == 0 {
-		return errors.NewValidationError("detail", "detail blocks are required for publishing")
+		missingFields = append(missingFields, "detail")
 	}
 
 	// Check actual session count from database instead of cached count
@@ -439,12 +441,21 @@ func (s *EventService) validatePublishRequirements(ctx context.Context, event *m
 		return fmt.Errorf("failed to check session count: %w", err)
 	}
 	if sessionCount == 0 {
-		return errors.NewValidationError("sessions", "at least one session is required for publishing")
+		missingFields = append(missingFields, "sessions")
 	}
 
 	if event.Location.Name == "" || event.Location.Address == "" {
-		return errors.NewValidationError("location", "complete location information is required for publishing")
+		missingFields = append(missingFields, "location")
 	}
+
+	if len(missingFields) > 0 {
+		return errors.NewBusinessError(
+			errors.ErrorCodePublishRequirementsMissing,
+			fmt.Sprintf("missing required fields for publishing: %v", missingFields),
+			nil,
+		)
+	}
+
 	return nil
 }
 

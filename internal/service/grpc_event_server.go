@@ -298,6 +298,10 @@ func (s *EventServiceServer) handleServiceError(err error) error {
 		switch e.Code {
 		case errors.ErrorCodePublishedImmutable:
 			return status.Error(codes.FailedPrecondition, e.Error())
+		case errors.ErrorCodePublishedFieldRestricted:
+			return status.Error(codes.InvalidArgument, e.Error())
+		case errors.ErrorCodePublishRequirementsMissing:
+			return status.Error(codes.InvalidArgument, e.Error())
 		case errors.ErrorCodeHasOrders:
 			return status.Error(codes.FailedPrecondition, e.Error())
 		case errors.ErrorCodeSessionHasOrders:
