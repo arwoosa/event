@@ -259,7 +259,7 @@ func (r *MongoEventRepository) encodeCursor(cursor *Cursor) string {
 func (r *MongoEventRepository) decodeCursor(token string) (*Cursor, error) {
 	data, err := base64.URLEncoding.DecodeString(token)
 	if err != nil {
-		return nil, fmt.Errorf("invalid cursor token: %w", err)
+		return nil, errors.NewValidationError("page_token", "invalid base64 encoding")
 	}
 
 	var cursor Cursor

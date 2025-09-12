@@ -36,7 +36,7 @@ func (b *PipelineBuilder) AddMatchStage(baseQuery bson.M, pageToken *string, sor
 	if pageToken != nil && *pageToken != "" {
 		cursor, err := b.repo.decodeCursor(*pageToken)
 		if err != nil {
-			return fmt.Errorf("cursor validation failed: %w", err)
+			return err
 		}
 		if cursor.LastID != "" {
 			lastObjectID, err := primitive.ObjectIDFromHex(cursor.LastID)
