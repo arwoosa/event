@@ -21,13 +21,13 @@ func TestFormRepository_Interface(t *testing.T) {
 
 // MockFormRepository is a simple in-memory implementation for testing
 type MockFormRepository struct {
-	forms map[primitive.ObjectID]*models.EventForm
+	forms     map[primitive.ObjectID]*models.EventForm
 	byEventID map[primitive.ObjectID]*models.EventForm
 }
 
 func NewMockFormRepository() *MockFormRepository {
 	return &MockFormRepository{
-		forms: make(map[primitive.ObjectID]*models.EventForm),
+		forms:     make(map[primitive.ObjectID]*models.EventForm),
 		byEventID: make(map[primitive.ObjectID]*models.EventForm),
 	}
 }
@@ -36,12 +36,12 @@ func (r *MockFormRepository) Create(ctx context.Context, form *models.EventForm)
 	if form.ID.IsZero() {
 		form.ID = primitive.NewObjectID()
 	}
-	
+
 	// Check if form already exists for this event
 	if _, exists := r.byEventID[form.EventID]; exists {
 		return nil, errors.ErrFormAlreadyExists
 	}
-	
+
 	r.forms[form.ID] = form
 	r.byEventID[form.EventID] = form
 	return form, nil
@@ -68,7 +68,7 @@ func (r *MockFormRepository) Update(ctx context.Context, id primitive.ObjectID, 
 	if !exists {
 		return nil, errors.ErrFormNotFound
 	}
-	
+
 	// Update the form
 	form.ID = id
 	r.forms[id] = form
@@ -81,7 +81,7 @@ func (r *MockFormRepository) Delete(ctx context.Context, id primitive.ObjectID) 
 	if !exists {
 		return errors.ErrFormNotFound
 	}
-	
+
 	delete(r.forms, id)
 	delete(r.byEventID, form.EventID)
 	return nil
@@ -92,7 +92,7 @@ func (r *MockFormRepository) DeleteByEventID(ctx context.Context, eventID primit
 	if !exists {
 		return errors.ErrFormNotFound
 	}
-	
+
 	delete(r.forms, form.ID)
 	delete(r.byEventID, eventID)
 	return nil
@@ -112,7 +112,7 @@ func (r *MockFormRepository) ExistsByID(ctx context.Context, id primitive.Object
 func TestFormRepository_Create_Success(t *testing.T) {
 	repo := NewMockFormRepository()
 	ctx := context.Background()
-	
+
 	eventID := primitive.NewObjectID()
 	form := &models.EventForm{
 		EventID: eventID,
@@ -124,9 +124,9 @@ func TestFormRepository_Create_Success(t *testing.T) {
 		},
 	}
 	form.SetCreateInfo("test-user")
-	
+
 	result, err := repo.Create(ctx, form)
-	
+
 	require.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.False(t, result.ID.IsZero())
@@ -137,26 +137,26 @@ func TestFormRepository_Create_Success(t *testing.T) {
 func TestFormRepository_Create_DuplicateEventID(t *testing.T) {
 	repo := NewMockFormRepository()
 	ctx := context.Background()
-	
+
 	eventID := primitive.NewObjectID()
 	form1 := &models.EventForm{
-		EventID: eventID,
-		Schema: map[string]interface{}{"type": "object"},
+		EventID:  eventID,
+		Schema:   map[string]interface{}{"type": "object"},
 		UISchema: map[string]interface{}{"type": "VerticalLayout"},
 	}
 	form1.SetCreateInfo("test-user")
-	
+
 	form2 := &models.EventForm{
-		EventID: eventID,
-		Schema: map[string]interface{}{"type": "object"},
+		EventID:  eventID,
+		Schema:   map[string]interface{}{"type": "object"},
 		UISchema: map[string]interface{}{"type": "HorizontalLayout"},
 	}
 	form2.SetCreateInfo("test-user")
-	
+
 	// First creation should succeed
 	_, err := repo.Create(ctx, form1)
 	require.NoError(t, err)
-	
+
 	// Second creation with same eventID should fail
 	_, err = repo.Create(ctx, form2)
 	require.Error(t, err)
@@ -166,7 +166,7 @@ func TestFormRepository_Create_DuplicateEventID(t *testing.T) {
 func TestFormRepository_FindByEventID_Success(t *testing.T) {
 	repo := NewMockFormRepository()
 	ctx := context.Background()
-	
+
 	eventID := primitive.NewObjectID()
 	form := &models.EventForm{
 		EventID:  eventID,
@@ -174,14 +174,14 @@ func TestFormRepository_FindByEventID_Success(t *testing.T) {
 		UISchema: map[string]interface{}{"type": "VerticalLayout"},
 	}
 	form.SetCreateInfo("test-user")
-	
+
 	// Create form first
 	created, err := repo.Create(ctx, form)
 	require.NoError(t, err)
-	
+
 	// Find by event ID
 	result, err := repo.FindByEventID(ctx, eventID)
-	
+
 	require.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, created.ID, result.ID)
@@ -191,11 +191,11 @@ func TestFormRepository_FindByEventID_Success(t *testing.T) {
 func TestFormRepository_FindByEventID_NotFound(t *testing.T) {
 	repo := NewMockFormRepository()
 	ctx := context.Background()
-	
+
 	eventID := primitive.NewObjectID()
-	
+
 	result, err := repo.FindByEventID(ctx, eventID)
-	
+
 	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.Equal(t, errors.ErrFormNotFound, err)
@@ -204,19 +204,19 @@ func TestFormRepository_FindByEventID_NotFound(t *testing.T) {
 func TestFormRepository_Update_Success(t *testing.T) {
 	repo := NewMockFormRepository()
 	ctx := context.Background()
-	
+
 	eventID := primitive.NewObjectID()
 	form := &models.EventForm{
-		EventID: eventID,
-		Schema: map[string]interface{}{"type": "object"},
+		EventID:  eventID,
+		Schema:   map[string]interface{}{"type": "object"},
 		UISchema: map[string]interface{}{"type": "VerticalLayout"},
 	}
 	form.SetCreateInfo("test-user")
-	
+
 	// Create form first
 	created, err := repo.Create(ctx, form)
 	require.NoError(t, err)
-	
+
 	// Update the form
 	updatedForm := &models.EventForm{
 		EventID: eventID,
@@ -232,9 +232,9 @@ func TestFormRepository_Update_Success(t *testing.T) {
 	}
 	updatedForm.SetCreateInfo("test-user")
 	updatedForm.SetUpdateInfo("updater-user")
-	
+
 	result, err := repo.Update(ctx, created.ID, updatedForm)
-	
+
 	require.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, created.ID, result.ID)
@@ -245,16 +245,16 @@ func TestFormRepository_Update_Success(t *testing.T) {
 func TestFormRepository_Update_NotFound(t *testing.T) {
 	repo := NewMockFormRepository()
 	ctx := context.Background()
-	
+
 	formID := primitive.NewObjectID()
 	form := &models.EventForm{
-		EventID: primitive.NewObjectID(),
-		Schema: map[string]interface{}{"type": "object"},
+		EventID:  primitive.NewObjectID(),
+		Schema:   map[string]interface{}{"type": "object"},
 		UISchema: map[string]interface{}{"type": "VerticalLayout"},
 	}
-	
+
 	result, err := repo.Update(ctx, formID, form)
-	
+
 	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.Equal(t, errors.ErrFormNotFound, err)
@@ -263,24 +263,24 @@ func TestFormRepository_Update_NotFound(t *testing.T) {
 func TestFormRepository_Delete_Success(t *testing.T) {
 	repo := NewMockFormRepository()
 	ctx := context.Background()
-	
+
 	eventID := primitive.NewObjectID()
 	form := &models.EventForm{
-		EventID: eventID,
-		Schema: map[string]interface{}{"type": "object"},
+		EventID:  eventID,
+		Schema:   map[string]interface{}{"type": "object"},
 		UISchema: map[string]interface{}{"type": "VerticalLayout"},
 	}
 	form.SetCreateInfo("test-user")
-	
+
 	// Create form first
 	created, err := repo.Create(ctx, form)
 	require.NoError(t, err)
-	
+
 	// Delete the form
 	err = repo.Delete(ctx, created.ID)
-	
+
 	require.NoError(t, err)
-	
+
 	// Verify it's gone
 	_, err = repo.FindByID(ctx, created.ID)
 	assert.Equal(t, errors.ErrFormNotFound, err)
@@ -289,28 +289,28 @@ func TestFormRepository_Delete_Success(t *testing.T) {
 func TestFormRepository_DeleteByEventID_Success(t *testing.T) {
 	repo := NewMockFormRepository()
 	ctx := context.Background()
-	
+
 	eventID := primitive.NewObjectID()
 	form := &models.EventForm{
-		EventID: eventID,
-		Schema: map[string]interface{}{"type": "object"},
+		EventID:  eventID,
+		Schema:   map[string]interface{}{"type": "object"},
 		UISchema: map[string]interface{}{"type": "VerticalLayout"},
 	}
 	form.SetCreateInfo("test-user")
-	
+
 	// Create form first
 	created, err := repo.Create(ctx, form)
 	require.NoError(t, err)
-	
+
 	// Delete by event ID
 	err = repo.DeleteByEventID(ctx, eventID)
-	
+
 	require.NoError(t, err)
-	
+
 	// Verify it's gone
 	_, err = repo.FindByEventID(ctx, eventID)
 	assert.Equal(t, errors.ErrFormNotFound, err)
-	
+
 	_, err = repo.FindByID(ctx, created.ID)
 	assert.Equal(t, errors.ErrFormNotFound, err)
 }
@@ -318,25 +318,25 @@ func TestFormRepository_DeleteByEventID_Success(t *testing.T) {
 func TestFormRepository_ExistsByEventID(t *testing.T) {
 	repo := NewMockFormRepository()
 	ctx := context.Background()
-	
+
 	eventID := primitive.NewObjectID()
-	
+
 	// Check non-existing
 	exists, err := repo.ExistsByEventID(ctx, eventID)
 	require.NoError(t, err)
 	assert.False(t, exists)
-	
+
 	// Create form
 	form := &models.EventForm{
-		EventID: eventID,
-		Schema: map[string]interface{}{"type": "object"},
+		EventID:  eventID,
+		Schema:   map[string]interface{}{"type": "object"},
 		UISchema: map[string]interface{}{"type": "VerticalLayout"},
 	}
 	form.SetCreateInfo("test-user")
-	
+
 	_, err = repo.Create(ctx, form)
 	require.NoError(t, err)
-	
+
 	// Check existing
 	exists, err = repo.ExistsByEventID(ctx, eventID)
 	require.NoError(t, err)
@@ -346,26 +346,26 @@ func TestFormRepository_ExistsByEventID(t *testing.T) {
 func TestFormRepository_ExistsByID(t *testing.T) {
 	repo := NewMockFormRepository()
 	ctx := context.Background()
-	
+
 	formID := primitive.NewObjectID()
-	
+
 	// Check non-existing
 	exists, err := repo.ExistsByID(ctx, formID)
 	require.NoError(t, err)
 	assert.False(t, exists)
-	
+
 	// Create form
 	form := &models.EventForm{
-		ID: formID,
-		EventID: primitive.NewObjectID(),
-		Schema: map[string]interface{}{"type": "object"},
+		ID:       formID,
+		EventID:  primitive.NewObjectID(),
+		Schema:   map[string]interface{}{"type": "object"},
 		UISchema: map[string]interface{}{"type": "VerticalLayout"},
 	}
 	form.SetCreateInfo("test-user")
-	
+
 	_, err = repo.Create(ctx, form)
 	require.NoError(t, err)
-	
+
 	// Check existing
 	exists, err = repo.ExistsByID(ctx, formID)
 	require.NoError(t, err)

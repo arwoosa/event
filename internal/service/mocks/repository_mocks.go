@@ -265,7 +265,6 @@ func (m *MockFormRepository) FindByID(ctx context.Context, id primitive.ObjectID
 	return args.Get(0).(*models.EventForm), args.Error(1)
 }
 
-
 // Update implements FormRepository interface
 func (m *MockFormRepository) Update(ctx context.Context, id primitive.ObjectID, form *models.EventForm) (*models.EventForm, error) {
 	args := m.Called(ctx, id, form)
@@ -300,7 +299,6 @@ func (m *MockFormRepository) ExistsByID(ctx context.Context, id primitive.Object
 }
 
 // Helper methods for setting up common mock scenarios
-
 
 // SetupFindByEventIDSuccess sets up the mock to return a form for FindByEventID
 func (m *MockFormRepository) SetupFindByEventIDSuccess(eventID primitive.ObjectID, form *models.EventForm) {

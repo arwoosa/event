@@ -49,19 +49,19 @@ func TestEventService_SetEventForm_Create(t *testing.T) {
 		Status: models.StatusDraft,
 	}
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
-	
+
 	// Mock - form doesn't exist yet
 	formRepo.On("FindByEventID", ctx, eventID).Return(nil, errors.ErrFormNotFound)
-	
+
 	// Mock successful creation
 	createdForm := &models.EventForm{
-		ID:      primitive.NewObjectID(),
-		EventID: eventID,
-		Schema:  req.Schema,
+		ID:       primitive.NewObjectID(),
+		EventID:  eventID,
+		Schema:   req.Schema,
 		UISchema: req.UISchema,
 	}
 	createdForm.SetCreateInfo(userID)
-	
+
 	formRepo.On("Create", ctx, mock.MatchedBy(func(form *models.EventForm) bool {
 		return form.EventID == eventID && form.CreatedBy == userID
 	})).Return(createdForm, nil)
@@ -117,18 +117,18 @@ func TestEventService_SetEventForm_Update(t *testing.T) {
 		Status: models.StatusDraft,
 	}
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
-	
+
 	// Mock - existing form
 	existingForm := &models.EventForm{
-		ID:      primitive.NewObjectID(),
-		EventID: eventID,
-		Schema:  map[string]interface{}{"type": "object"},
+		ID:       primitive.NewObjectID(),
+		EventID:  eventID,
+		Schema:   map[string]interface{}{"type": "object"},
 		UISchema: map[string]interface{}{"type": "VerticalLayout"},
 	}
 	existingForm.SetCreateInfo("original-user")
-	
+
 	formRepo.On("FindByEventID", ctx, eventID).Return(existingForm, nil)
-	
+
 	// Mock successful update
 	updatedForm := &models.EventForm{
 		ID:       existingForm.ID,
@@ -138,7 +138,7 @@ func TestEventService_SetEventForm_Update(t *testing.T) {
 	}
 	updatedForm.SetCreateInfo("original-user")
 	updatedForm.SetUpdateInfo(userID)
-	
+
 	formRepo.On("Update", ctx, existingForm.ID, mock.MatchedBy(func(form *models.EventForm) bool {
 		return form.EventID == eventID && form.UpdatedBy == userID
 	})).Return(updatedForm, nil)
@@ -183,7 +183,7 @@ func TestEventService_GetEventForm_Success(t *testing.T) {
 		},
 	}
 	existingForm.SetCreateInfo("test-user")
-	
+
 	formRepo.On("FindByEventID", ctx, eventID).Return(existingForm, nil)
 
 	// Execute
@@ -211,7 +211,7 @@ func TestEventService_GetEventForm_NotFound(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := primitive.NewObjectID()
-	
+
 	formRepo.On("FindByEventID", ctx, eventID).Return(nil, errors.ErrFormNotFound)
 
 	// Execute
@@ -239,11 +239,11 @@ func TestEventService_DeleteEventForm_Success(t *testing.T) {
 	ctx := context.Background()
 	eventID := primitive.NewObjectID()
 	userID := "test-user-123"
-	
+
 	// Mock - event exists
 	event := &models.Event{ID: eventID}
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
-	
+
 	formRepo.On("DeleteByEventID", ctx, eventID).Return(nil)
 
 	// Execute
@@ -269,11 +269,11 @@ func TestEventService_DeleteEventForm_NotFound(t *testing.T) {
 	ctx := context.Background()
 	eventID := primitive.NewObjectID()
 	userID := "test-user-123"
-	
+
 	// Mock - event exists
 	event := &models.Event{ID: eventID}
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
-	
+
 	formRepo.On("DeleteByEventID", ctx, eventID).Return(errors.ErrFormNotFound)
 
 	// Execute

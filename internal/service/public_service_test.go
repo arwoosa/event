@@ -223,7 +223,7 @@ func TestPublicService_GetEvent_Success(t *testing.T) {
 	// Convert string ID to ObjectID for the mock
 	objectID, err := primitive.ObjectIDFromHex(eventID)
 	require.NoError(t, err)
-	
+
 	// Mock repository call
 	eventRepo.On("FindPublicByID", ctx, objectID).Return(event, nil)
 
@@ -255,7 +255,7 @@ func TestPublicService_GetEvent_NotFound(t *testing.T) {
 	// Convert string ID to ObjectID for the mock
 	objectID, err := primitive.ObjectIDFromHex(eventID)
 	require.NoError(t, err)
-	
+
 	// Mock event not found
 	eventRepo.On("FindPublicByID", ctx, objectID).Return(nil, errors.ErrEventNotFound)
 

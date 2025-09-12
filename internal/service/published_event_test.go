@@ -181,7 +181,7 @@ func TestEventService_PatchPublishedEvent_Integration(t *testing.T) {
 			// Convert string ID to ObjectID for the mock
 			objectID, err := primitive.ObjectIDFromHex(eventID)
 			require.NoError(t, err)
-			
+
 			// No permission check in service layer - authorization handled by API Gateway
 			eventRepo.On("FindByID", ctx, objectID).Return(publishedEvent, nil)
 

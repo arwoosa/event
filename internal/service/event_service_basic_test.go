@@ -71,7 +71,7 @@ func TestEventService_GetEvent_Success(t *testing.T) {
 	// Convert string ID to ObjectID for the mock
 	objectID, err := primitive.ObjectIDFromHex(eventID)
 	require.NoError(t, err)
-	
+
 	// Mock direct findByID (no permission check in service layer anymore)
 	eventRepo.On("FindByID", ctx, objectID).Return(event, nil)
 
@@ -101,7 +101,7 @@ func TestEventService_GetEvent_NotFound(t *testing.T) {
 	// Convert string ID to ObjectID for the mock
 	objectID, err := primitive.ObjectIDFromHex(eventID)
 	require.NoError(t, err)
-	
+
 	// Mock FindByID returns not found error
 	eventRepo.On("FindByID", ctx, objectID).Return(nil, errors.ErrEventNotFound)
 
