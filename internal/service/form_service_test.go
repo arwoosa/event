@@ -43,8 +43,11 @@ func TestEventService_SetEventForm_Create(t *testing.T) {
 		UserID: userID,
 	}
 
-	// Mock - event exists
-	event := &models.Event{ID: eventID}
+	// Mock - event exists and is in draft status (required for form creation)
+	event := &models.Event{
+		ID:     eventID,
+		Status: models.StatusDraft,
+	}
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 	
 	// Mock - form doesn't exist yet
@@ -108,8 +111,11 @@ func TestEventService_SetEventForm_Update(t *testing.T) {
 		UserID: userID,
 	}
 
-	// Mock - event exists
-	event := &models.Event{ID: eventID}
+	// Mock - event exists and is in draft status (required for form update)
+	event := &models.Event{
+		ID:     eventID,
+		Status: models.StatusDraft,
+	}
 	eventRepo.On("FindByID", ctx, eventID).Return(event, nil)
 	
 	// Mock - existing form

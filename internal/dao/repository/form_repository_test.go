@@ -169,8 +169,8 @@ func TestFormRepository_FindByEventID_Success(t *testing.T) {
 	
 	eventID := primitive.NewObjectID()
 	form := &models.EventForm{
-		EventID: eventID,
-		Schema: map[string]interface{}{"type": "object"},
+		EventID:  eventID,
+		Schema:   map[string]interface{}{"type": "object"},
 		UISchema: map[string]interface{}{"type": "VerticalLayout"},
 	}
 	form.SetCreateInfo("test-user")
