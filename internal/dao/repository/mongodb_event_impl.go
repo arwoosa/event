@@ -150,6 +150,11 @@ func (r *MongoEventRepository) FindPublic(ctx context.Context, filter *PublicEve
 		"visibility": models.VisibilityPublic,
 	}
 
+	// Apply merchant_id filter for multi-tenant isolation
+	if filter.MerchantID != nil && *filter.MerchantID != "" {
+		baseQuery["merchant_id"] = *filter.MerchantID
+	}
+
 	// Apply filters
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
 		baseQuery["$text"] = bson.M{"$search": *filter.TitleSearch}

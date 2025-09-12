@@ -33,6 +33,9 @@ func (s *PublicEventServiceServer) SearchEvents(ctx context.Context, req *public
 	serviceReq := &SearchEventsRequest{}
 
 	// Only set optional fields if they are provided and non-empty
+	if req.MerchantId != nil && *req.MerchantId != "" {
+		serviceReq.MerchantID = req.MerchantId
+	}
 	if req.TitleSearch != nil && *req.TitleSearch != "" {
 		serviceReq.TitleSearch = req.TitleSearch
 	}

@@ -32,6 +32,7 @@ func NewPublicService(eventRepo repository.EventRepository, eventService *EventS
 
 // SearchEventsRequest represents the request to search public events
 type SearchEventsRequest struct {
+	MerchantID           *string
 	TitleSearch          *string
 	SessionStartTimeFrom *string
 	SessionStartTimeTo   *string
@@ -53,6 +54,9 @@ func (s *PublicService) SearchEvents(ctx context.Context, req *SearchEventsReque
 	}
 
 	// Only set non-nil and non-empty values
+	if req.MerchantID != nil && *req.MerchantID != "" {
+		filter.MerchantID = req.MerchantID
+	}
 	if req.TitleSearch != nil && *req.TitleSearch != "" {
 		filter.TitleSearch = req.TitleSearch
 	}

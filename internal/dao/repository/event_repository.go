@@ -25,6 +25,7 @@ type EventFilter struct {
 
 // PublicEventFilter represents filtering options for public event queries
 type PublicEventFilter struct {
+	MerchantID           *string
 	TitleSearch          *string
 	SessionStartTimeFrom *time.Time
 	SessionStartTimeTo   *time.Time
