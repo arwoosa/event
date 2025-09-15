@@ -67,7 +67,7 @@ service EventService {
   
   // === Event Form Management APIs ===
   
-  // Create or update form for an event (PUT semantics, supports upsert)
+  // Upsert form for an event
   rpc SetEventForm(SetEventFormRequest) returns (common.EventForm) {
     option (google.api.http) = {
       put: "/console/events/{id}/form"
