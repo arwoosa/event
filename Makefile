@@ -108,7 +108,7 @@ grpc:
 		--grpc-gateway_out=. \
 		--grpc-gateway_opt=module=$(PROTO_MODULE) \
 		--validate_out="lang=go,module=$(PROTO_MODULE):." \
-		--openapiv2_out=docs --openapiv2_opt=logtostderr=true,json_names_for_fields=false,allow_merge=true \
+		--openapiv2_out=docs --openapiv2_opt=logtostderr=true,json_names_for_fields=true,allow_merge=true \
 		proto/*
 
 # 	# Generate Go code for all proto files (including order for client usage)

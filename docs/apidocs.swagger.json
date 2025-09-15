@@ -42,7 +42,7 @@
         },
         "parameters": [
           {
-            "name": "page_token",
+            "name": "pageToken",
             "description": "Pagination\n\nfor cursor-based pagination",
             "in": "query",
             "required": false,
@@ -57,7 +57,7 @@
             "format": "int32"
           },
           {
-            "name": "page_size",
+            "name": "pageSize",
             "description": "default 20, max 100",
             "in": "query",
             "required": false,
@@ -79,35 +79,35 @@
             "type": "string"
           },
           {
-            "name": "session_start_time_from",
+            "name": "sessionStartTimeFrom",
             "description": "RFC3339",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "session_start_time_to",
+            "name": "sessionStartTimeTo",
             "description": "RFC3339",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "title_search",
+            "name": "titleSearch",
             "description": "full-text search",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "sort_by",
+            "name": "sortBy",
             "description": "Sorting\n\ncreated_at|updated_at|session_start_time",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "sort_order",
+            "name": "sortOrder",
             "description": "asc|desc, default desc",
             "in": "query",
             "required": false,
@@ -309,7 +309,7 @@
         ]
       },
       "put": {
-        "summary": "Create or update form for an event (PUT semantics, supports upsert)",
+        "summary": "Upsert form for an event",
         "operationId": "EventService_SetEventForm",
         "responses": {
           "200": {
@@ -346,7 +346,7 @@
         ]
       }
     },
-    "/console/events/{id}/sessions/{session_id}": {
+    "/console/events/{id}/sessions/{sessionId}": {
       "delete": {
         "summary": "Delete a specific session by ID",
         "operationId": "EventService_DeleteSession",
@@ -373,7 +373,7 @@
             "type": "string"
           },
           {
-            "name": "session_id",
+            "name": "sessionId",
             "in": "path",
             "required": true,
             "type": "string"
@@ -443,7 +443,7 @@
         },
         "parameters": [
           {
-            "name": "page_token",
+            "name": "pageToken",
             "description": "Pagination",
             "in": "query",
             "required": false,
@@ -457,40 +457,40 @@
             "format": "int32"
           },
           {
-            "name": "page_size",
+            "name": "pageSize",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "merchant_id",
+            "name": "merchantId",
             "description": "Filters\n\nfilter by specific merchant",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "title_search",
+            "name": "titleSearch",
             "description": "full-text search",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "session_start_time_from",
+            "name": "sessionStartTimeFrom",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "session_start_time_to",
+            "name": "sessionStartTimeTo",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "location_lat",
+            "name": "locationLat",
             "description": "Location-based search",
             "in": "query",
             "required": false,
@@ -498,14 +498,14 @@
             "format": "double"
           },
           {
-            "name": "location_lng",
+            "name": "locationLng",
             "in": "query",
             "required": false,
             "type": "number",
             "format": "double"
           },
           {
-            "name": "location_radius",
+            "name": "locationRadius",
             "description": "in meters, default 1000",
             "in": "query",
             "required": false,
@@ -513,14 +513,14 @@
             "format": "int32"
           },
           {
-            "name": "sort_by",
+            "name": "sortBy",
             "description": "Sorting\n\nsession_start_time|created_at",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "sort_order",
+            "name": "sortOrder",
             "description": "asc|desc",
             "in": "query",
             "required": false,
@@ -608,7 +608,7 @@
         "visibility": {
           "type": "string"
         },
-        "cover_image_url": {
+        "coverImageUrl": {
           "type": "string"
         },
         "location": {
@@ -667,10 +667,10 @@
         "type": {
           "type": "string"
         },
-        "text_data": {
+        "textData": {
           "$ref": "#/definitions/commonTextData"
         },
-        "image_data": {
+        "imageData": {
           "$ref": "#/definitions/commonImageData"
         }
       },
@@ -696,7 +696,7 @@
           "type": "string",
           "title": "public, private"
         },
-        "cover_image_url": {
+        "coverImageUrl": {
           "type": "string"
         },
         "location": {
@@ -723,16 +723,16 @@
             "$ref": "#/definitions/commonFAQ"
           }
         },
-        "created_at": {
+        "createdAt": {
           "type": "string"
         },
-        "created_by": {
+        "createdBy": {
           "type": "string"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "string"
         },
-        "updated_by": {
+        "updatedBy": {
           "type": "string"
         }
       },
@@ -744,7 +744,7 @@
         "id": {
           "type": "string"
         },
-        "event_id": {
+        "eventId": {
           "type": "string"
         },
         "schema": {
@@ -755,16 +755,16 @@
           "type": "object",
           "title": "UI Schema defining form layout and appearance"
         },
-        "created_at": {
+        "createdAt": {
           "type": "string"
         },
-        "created_by": {
+        "createdBy": {
           "type": "string"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "string"
         },
-        "updated_by": {
+        "updatedBy": {
           "type": "string"
         }
       },
@@ -839,7 +839,7 @@
         "address": {
           "type": "string"
         },
-        "place_id": {
+        "placeId": {
           "type": "string"
         },
         "coordinates": {
@@ -851,30 +851,30 @@
     "commonPagination": {
       "type": "object",
       "properties": {
-        "next_page_token": {
+        "nextPageToken": {
           "type": "string",
           "title": "for cursor-based"
         },
-        "prev_page_token": {
+        "prevPageToken": {
           "type": "string",
           "title": "for cursor-based"
         },
-        "has_next": {
+        "hasNext": {
           "type": "boolean"
         },
-        "has_prev": {
+        "hasPrev": {
           "type": "boolean"
         },
-        "total_count": {
+        "totalCount": {
           "type": "integer",
           "format": "int32"
         },
-        "current_page": {
+        "currentPage": {
           "type": "integer",
           "format": "int32",
           "title": "for page-based"
         },
-        "total_pages": {
+        "totalPages": {
           "type": "integer",
           "format": "int32",
           "title": "for page-based"
@@ -896,11 +896,11 @@
           "format": "int32",
           "title": "Capacity limit (optional, null means unlimited)"
         },
-        "start_time": {
+        "startTime": {
           "type": "string",
           "title": "RFC3339 format"
         },
-        "end_time": {
+        "endTime": {
           "type": "string",
           "title": "RFC3339 format"
         }
@@ -929,7 +929,7 @@
           "type": "string",
           "title": "status field removed - events are always created as draft"
         },
-        "cover_image_url": {
+        "coverImageUrl": {
           "type": "string"
         },
         "location": {
@@ -965,7 +965,7 @@
         "id": {
           "type": "string"
         },
-        "created_at": {
+        "createdAt": {
           "type": "string"
         }
       },
