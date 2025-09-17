@@ -51,7 +51,7 @@ type EventServiceClient interface {
 	UpdateEventStatus(ctx context.Context, in *UpdateEventStatusRequest, opts ...grpc.CallOption) (*common.Event, error)
 	// Delete a specific session by ID
 	DeleteSession(ctx context.Context, in *DeleteSessionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// Create or update form for an event (PUT semantics, supports upsert)
+	// Upsert form for an event
 	SetEventForm(ctx context.Context, in *SetEventFormRequest, opts ...grpc.CallOption) (*common.EventForm, error)
 	// Get form by event ID
 	GetEventForm(ctx context.Context, in *common.ID, opts ...grpc.CallOption) (*common.EventForm, error)
@@ -175,7 +175,7 @@ type EventServiceServer interface {
 	UpdateEventStatus(context.Context, *UpdateEventStatusRequest) (*common.Event, error)
 	// Delete a specific session by ID
 	DeleteSession(context.Context, *DeleteSessionRequest) (*emptypb.Empty, error)
-	// Create or update form for an event (PUT semantics, supports upsert)
+	// Upsert form for an event
 	SetEventForm(context.Context, *SetEventFormRequest) (*common.EventForm, error)
 	// Get form by event ID
 	GetEventForm(context.Context, *common.ID) (*common.EventForm, error)
