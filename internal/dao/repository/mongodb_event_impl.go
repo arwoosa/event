@@ -136,7 +136,7 @@ func (r *MongoEventRepository) Find(ctx context.Context, filter *EventFilter) (*
 		baseQuery["visibility"] = *filter.Visibility
 	}
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
-		baseQuery["$text"] = bson.M{"$search": *filter.TitleSearch}
+		baseQuery["title"] = bson.M{"$regex": *filter.TitleSearch, "$options": "i"} // ignore case
 	}
 
 	return r.buildUnifiedPipeline(ctx, baseQuery, filter.SessionStartTimeFrom, filter.SessionStartTimeTo,
@@ -157,7 +157,7 @@ func (r *MongoEventRepository) FindPublic(ctx context.Context, filter *PublicEve
 
 	// Apply filters
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
-		baseQuery["$text"] = bson.M{"$search": *filter.TitleSearch}
+		baseQuery["title"] = bson.M{"$regex": *filter.TitleSearch, "$options": "i"} // ignore case
 	}
 
 	// Handle geospatial queries

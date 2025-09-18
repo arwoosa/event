@@ -41,9 +41,9 @@ var migrations = []Migration{
 			{
 				Keys: bson.D{{Key: "location.coordinates", Value: "2dsphere"}},
 			},
-			// Text search index for title
+			// Regular index for title (for regex search performance)
 			{
-				Keys: bson.D{{Key: "title", Value: "text"}},
+				Keys: bson.D{{Key: "title", Value: 1}},
 			},
 			// Sorting index for console list view
 			{
