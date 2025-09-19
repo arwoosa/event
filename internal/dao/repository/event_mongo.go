@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/arwoosa/vulpes/log"
@@ -33,6 +35,28 @@ func NewMongoEventRepository(client *mongo.Client, database string, paginationCo
 		collection:       client.Database(database).Collection("events"),
 		paginationConfig: paginationConfig,
 	}
+}
+
+// escapeRegexPattern escapes special regex characters to prevent regex injection attacks
+func escapeRegexPattern(pattern string) string {
+	return regexp.QuoteMeta(pattern)
+}
+
+// validateSearchPattern validates and sanitizes search patterns
+func validateSearchPattern(pattern string) (string, error) {
+	// Limit search pattern length to prevent DoS attacks
+	const maxPatternLength = 60
+	if len(pattern) > maxPatternLength {
+		return "", errors.NewValidationError("title_search", "search pattern too long")
+	}
+
+	// Trim whitespace
+	pattern = strings.TrimSpace(pattern)
+	if pattern == "" {
+		return "", errors.NewValidationError("title_search", "search pattern cannot be empty")
+	}
+
+	return pattern, nil
 }
 
 // Create inserts a new event
@@ -136,7 +160,12 @@ func (r *MongoEventRepository) Find(ctx context.Context, filter *EventFilter) (*
 		baseQuery["visibility"] = *filter.Visibility
 	}
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
-		baseQuery["title"] = bson.M{"$regex": *filter.TitleSearch, "$options": "i"} // ignore case
+		validatedPattern, err := validateSearchPattern(*filter.TitleSearch)
+		if err != nil {
+			return nil, err
+		}
+		escapedPattern := escapeRegexPattern(validatedPattern)
+		baseQuery["title"] = bson.M{"$regex": escapedPattern, "$options": "i"} // ignore case
 	}
 
 	return r.buildUnifiedPipeline(ctx, baseQuery, filter.SessionStartTimeFrom, filter.SessionStartTimeTo,
@@ -157,7 +186,12 @@ func (r *MongoEventRepository) FindPublic(ctx context.Context, filter *PublicEve
 
 	// Apply filters
 	if filter.TitleSearch != nil && *filter.TitleSearch != "" {
-		baseQuery["title"] = bson.M{"$regex": *filter.TitleSearch, "$options": "i"} // ignore case
+		validatedPattern, err := validateSearchPattern(*filter.TitleSearch)
+		if err != nil {
+			return nil, err
+		}
+		escapedPattern := escapeRegexPattern(validatedPattern)
+		baseQuery["title"] = bson.M{"$regex": escapedPattern, "$options": "i"} // ignore case
 	}
 
 	// Handle geospatial queries
