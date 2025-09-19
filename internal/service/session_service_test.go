@@ -141,12 +141,13 @@ func TestSessionService_GetSessionsForEvent_Success(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
+	eventObjectID, _ := primitive.ObjectIDFromHex(eventID)
 
 	// No permission check in service layer anymore - authorization handled by API Gateway
 
 	// Mock sessions retrieval
-	sessions := testutils.TestSessionsForEvent(primitive.NewObjectID(), 3)
-	sessionRepo.On("FindByEventID", ctx, eventID).Return(sessions, nil)
+	sessions := testutils.TestSessionsForEvent(eventObjectID, 3)
+	sessionRepo.On("FindByEventID", ctx, eventObjectID).Return(sessions, nil)
 
 	// Execute
 	result, err := sessionService.GetSessionsForEvent(ctx, eventID)
@@ -169,9 +170,10 @@ func TestSessionService_GetSessionsForEvent_EventNotExists(t *testing.T) {
 
 	ctx := context.Background()
 	eventID := testutils.ValidObjectIDString()
+	eventObjectID, _ := primitive.ObjectIDFromHex(eventID)
 
 	// Mock no sessions found for event
-	sessionRepo.On("FindByEventID", ctx, eventID).Return([]*models.Session{}, nil)
+	sessionRepo.On("FindByEventID", ctx, eventObjectID).Return([]*models.Session{}, nil)
 
 	// Execute
 	result, err := sessionService.GetSessionsForEvent(ctx, eventID)
@@ -193,6 +195,7 @@ func TestSessionService_GetSession_Success(t *testing.T) {
 
 	ctx := context.Background()
 	sessionID := testutils.ValidObjectIDString()
+	sessionObjectID, _ := primitive.ObjectIDFromHex(sessionID)
 
 	// Create session and matching event
 	session := testutils.TestSession()
@@ -200,7 +203,7 @@ func TestSessionService_GetSession_Success(t *testing.T) {
 	event.ID = session.EventID
 
 	// Mock session retrieval (no permission check in service layer)
-	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
+	sessionRepo.On("FindByID", ctx, sessionObjectID).Return(session, nil)
 
 	// Execute
 	result, err := sessionService.GetSession(ctx, sessionID)
@@ -222,6 +225,7 @@ func TestSessionService_GetSession_UnauthorizedMerchant(t *testing.T) {
 
 	ctx := context.Background()
 	sessionID := testutils.ValidObjectIDString()
+	sessionObjectID, _ := primitive.ObjectIDFromHex(sessionID)
 
 	// Create session and event with different merchant
 	session := testutils.TestSession()
@@ -229,7 +233,7 @@ func TestSessionService_GetSession_UnauthorizedMerchant(t *testing.T) {
 	event.ID = session.EventID
 
 	// Mock session retrieval (authorization is handled by API Gateway)
-	sessionRepo.On("FindByID", ctx, sessionID).Return(session, nil)
+	sessionRepo.On("FindByID", ctx, sessionObjectID).Return(session, nil)
 
 	// Execute
 	result, err := sessionService.GetSession(ctx, sessionID)

@@ -1,6 +1,9 @@
 package errors
 
-import "fmt"
+import (
+	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 // ValidationError represents a field validation error
 type ValidationError struct {
@@ -58,4 +61,18 @@ func NewBusinessError(code, message string, cause error) *BusinessError {
 		Message: message,
 		Cause:   cause,
 	}
+}
+
+// ValidateObjectID validates a string ID and converts it to ObjectID
+func ValidateObjectID(id, fieldName string) (primitive.ObjectID, error) {
+	if id == "" {
+		return primitive.NilObjectID, NewValidationError(fieldName, "cannot be empty")
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return primitive.NilObjectID, NewValidationError(fieldName, "invalid format")
+	}
+
+	return objectID, nil
 }

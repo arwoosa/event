@@ -436,7 +436,7 @@ func (s *EventService) validatePublishRequirements(ctx context.Context, event *m
 	}
 
 	// Check actual session count from database instead of cached count
-	sessionCount, err := s.sessionService.sessionRepo.CountByEventID(ctx, event.ID.Hex())
+	sessionCount, err := s.sessionService.sessionRepo.CountByEventID(ctx, event.ID)
 	if err != nil {
 		return fmt.Errorf("failed to check session count: %w", err)
 	}

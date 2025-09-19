@@ -91,14 +91,9 @@ func (r *MongoSessionRepository) CreateBatch(ctx context.Context, sessions []*mo
 }
 
 // FindByID finds a session by its ID
-func (r *MongoSessionRepository) FindByID(ctx context.Context, id string) (*models.Session, error) {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, fmt.Errorf("invalid session ID: %w", err)
-	}
-
+func (r *MongoSessionRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*models.Session, error) {
 	var session models.Session
-	err = r.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&session)
+	err := r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&session)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, errors.ErrSessionNotFound
@@ -110,14 +105,9 @@ func (r *MongoSessionRepository) FindByID(ctx context.Context, id string) (*mode
 }
 
 // FindByEventID finds all sessions for a specific event
-func (r *MongoSessionRepository) FindByEventID(ctx context.Context, eventID string) ([]*models.Session, error) {
-	eventObjectID, err := primitive.ObjectIDFromHex(eventID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid event ID: %w", err)
-	}
-
+func (r *MongoSessionRepository) FindByEventID(ctx context.Context, eventID primitive.ObjectID) ([]*models.Session, error) {
 	opts := options.Find().SetSort(bson.D{{Key: "start_time", Value: 1}})
-	cursor, err := r.collection.Find(ctx, bson.M{"event_id": eventObjectID}, opts)
+	cursor, err := r.collection.Find(ctx, bson.M{"event_id": eventID}, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find sessions: %w", err)
 	}
@@ -136,22 +126,13 @@ func (r *MongoSessionRepository) FindByEventID(ctx context.Context, eventID stri
 }
 
 // FindByEventIDs finds sessions for multiple events
-func (r *MongoSessionRepository) FindByEventIDs(ctx context.Context, eventIDs []string) (map[string][]*models.Session, error) {
+func (r *MongoSessionRepository) FindByEventIDs(ctx context.Context, eventIDs []primitive.ObjectID) (map[primitive.ObjectID][]*models.Session, error) {
 	if len(eventIDs) == 0 {
-		return make(map[string][]*models.Session), nil
-	}
-
-	eventObjectIDs := make([]primitive.ObjectID, len(eventIDs))
-	for i, id := range eventIDs {
-		objectID, err := primitive.ObjectIDFromHex(id)
-		if err != nil {
-			return nil, fmt.Errorf("invalid event ID %s: %w", id, err)
-		}
-		eventObjectIDs[i] = objectID
+		return make(map[primitive.ObjectID][]*models.Session), nil
 	}
 
 	opts := options.Find().SetSort(bson.D{{Key: "event_id", Value: 1}, {Key: "start_time", Value: 1}})
-	cursor, err := r.collection.Find(ctx, bson.M{"event_id": bson.M{"$in": eventObjectIDs}}, opts)
+	cursor, err := r.collection.Find(ctx, bson.M{"event_id": bson.M{"$in": eventIDs}}, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find sessions: %w", err)
 	}
@@ -161,7 +142,7 @@ func (r *MongoSessionRepository) FindByEventIDs(ctx context.Context, eventIDs []
 		}
 	}()
 
-	result := make(map[string][]*models.Session)
+	result := make(map[primitive.ObjectID][]*models.Session)
 	for _, eventID := range eventIDs {
 		result[eventID] = []*models.Session{}
 	}
@@ -172,19 +153,14 @@ func (r *MongoSessionRepository) FindByEventIDs(ctx context.Context, eventIDs []
 	}
 
 	for _, session := range sessions {
-		eventID := session.EventID.Hex()
-		result[eventID] = append(result[eventID], session)
+		result[session.EventID] = append(result[session.EventID], session)
 	}
 
 	return result, nil
 }
 
 // Update updates an existing session
-func (r *MongoSessionRepository) Update(ctx context.Context, id string, session *models.Session) (*models.Session, error) {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, fmt.Errorf("invalid session ID: %w", err)
-	}
+func (r *MongoSessionRepository) Update(ctx context.Context, id primitive.ObjectID, session *models.Session) (*models.Session, error) {
 
 	session.UpdatedAt = time.Now()
 
@@ -192,7 +168,7 @@ func (r *MongoSessionRepository) Update(ctx context.Context, id string, session 
 		return nil, fmt.Errorf("invalid session: %w", err)
 	}
 
-	result, err := r.collection.ReplaceOne(ctx, bson.M{"_id": objectID}, session)
+	result, err := r.collection.ReplaceOne(ctx, bson.M{"_id": id}, session)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update session: %w", err)
 	}
@@ -205,13 +181,9 @@ func (r *MongoSessionRepository) Update(ctx context.Context, id string, session 
 }
 
 // Delete removes a session
-func (r *MongoSessionRepository) Delete(ctx context.Context, id string) error {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return fmt.Errorf("invalid session ID: %w", err)
-	}
+func (r *MongoSessionRepository) Delete(ctx context.Context, id primitive.ObjectID) error {
 
-	result, err := r.collection.DeleteOne(ctx, bson.M{"_id": objectID})
+	result, err := r.collection.DeleteOne(ctx, bson.M{"_id": id})
 	if err != nil {
 		return fmt.Errorf("failed to delete session: %w", err)
 	}
@@ -224,13 +196,9 @@ func (r *MongoSessionRepository) Delete(ctx context.Context, id string) error {
 }
 
 // DeleteByEventID removes all sessions for an event
-func (r *MongoSessionRepository) DeleteByEventID(ctx context.Context, eventID string) error {
-	eventObjectID, err := primitive.ObjectIDFromHex(eventID)
-	if err != nil {
-		return fmt.Errorf("invalid event ID: %w", err)
-	}
+func (r *MongoSessionRepository) DeleteByEventID(ctx context.Context, eventID primitive.ObjectID) error {
 
-	_, err = r.collection.DeleteMany(ctx, bson.M{"event_id": eventObjectID})
+	_, err := r.collection.DeleteMany(ctx, bson.M{"event_id": eventID})
 	if err != nil {
 		return fmt.Errorf("failed to delete sessions: %w", err)
 	}
@@ -239,21 +207,12 @@ func (r *MongoSessionRepository) DeleteByEventID(ctx context.Context, eventID st
 }
 
 // DeleteByEventIDs removes sessions for multiple events
-func (r *MongoSessionRepository) DeleteByEventIDs(ctx context.Context, eventIDs []string) error {
+func (r *MongoSessionRepository) DeleteByEventIDs(ctx context.Context, eventIDs []primitive.ObjectID) error {
 	if len(eventIDs) == 0 {
 		return nil
 	}
 
-	eventObjectIDs := make([]primitive.ObjectID, len(eventIDs))
-	for i, id := range eventIDs {
-		objectID, err := primitive.ObjectIDFromHex(id)
-		if err != nil {
-			return fmt.Errorf("invalid event ID %s: %w", id, err)
-		}
-		eventObjectIDs[i] = objectID
-	}
-
-	_, err := r.collection.DeleteMany(ctx, bson.M{"event_id": bson.M{"$in": eventObjectIDs}})
+	_, err := r.collection.DeleteMany(ctx, bson.M{"event_id": bson.M{"$in": eventIDs}})
 	if err != nil {
 		return fmt.Errorf("failed to delete sessions: %w", err)
 	}
@@ -262,13 +221,9 @@ func (r *MongoSessionRepository) DeleteByEventIDs(ctx context.Context, eventIDs 
 }
 
 // CountByEventID counts sessions for an event
-func (r *MongoSessionRepository) CountByEventID(ctx context.Context, eventID string) (int64, error) {
-	eventObjectID, err := primitive.ObjectIDFromHex(eventID)
-	if err != nil {
-		return 0, fmt.Errorf("invalid event ID: %w", err)
-	}
+func (r *MongoSessionRepository) CountByEventID(ctx context.Context, eventID primitive.ObjectID) (int64, error) {
 
-	count, err := r.collection.CountDocuments(ctx, bson.M{"event_id": eventObjectID})
+	count, err := r.collection.CountDocuments(ctx, bson.M{"event_id": eventID})
 	if err != nil {
 		return 0, fmt.Errorf("failed to count sessions: %w", err)
 	}
@@ -277,13 +232,9 @@ func (r *MongoSessionRepository) CountByEventID(ctx context.Context, eventID str
 }
 
 // ExistsByID checks if a session exists by ID
-func (r *MongoSessionRepository) ExistsByID(ctx context.Context, id string) (bool, error) {
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return false, fmt.Errorf("invalid session ID: %w", err)
-	}
+func (r *MongoSessionRepository) ExistsByID(ctx context.Context, id primitive.ObjectID) (bool, error) {
 
-	count, err := r.collection.CountDocuments(ctx, bson.M{"_id": objectID})
+	count, err := r.collection.CountDocuments(ctx, bson.M{"_id": id})
 	if err != nil {
 		return false, fmt.Errorf("failed to check session existence: %w", err)
 	}
@@ -292,7 +243,7 @@ func (r *MongoSessionRepository) ExistsByID(ctx context.Context, id string) (boo
 }
 
 // BulkUpdateSessions performs bulk operations (create, update, delete) in a single request
-func (r *MongoSessionRepository) BulkUpdateSessions(ctx context.Context, creates []*models.Session, updates []*models.Session, deleteIDs []string) error {
+func (r *MongoSessionRepository) BulkUpdateSessions(ctx context.Context, creates []*models.Session, updates []*models.Session, deleteIDs []primitive.ObjectID) error {
 	if len(creates) == 0 && len(updates) == 0 && len(deleteIDs) == 0 {
 		return nil // No operations to perform
 	}
@@ -301,11 +252,7 @@ func (r *MongoSessionRepository) BulkUpdateSessions(ctx context.Context, creates
 	now := time.Now()
 
 	// Add delete operations first
-	for _, id := range deleteIDs {
-		objectID, err := primitive.ObjectIDFromHex(id)
-		if err != nil {
-			return fmt.Errorf("invalid session ID for delete %s: %w", id, err)
-		}
+	for _, objectID := range deleteIDs {
 		deleteModel := mongo.NewDeleteOneModel().SetFilter(bson.M{"_id": objectID})
 		writeModels = append(writeModels, deleteModel)
 	}

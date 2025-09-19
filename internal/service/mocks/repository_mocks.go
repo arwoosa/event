@@ -133,7 +133,7 @@ func (m *MockSessionRepository) CreateBatch(ctx context.Context, sessions []*mod
 }
 
 // FindByID implements SessionRepository interface
-func (m *MockSessionRepository) FindByID(ctx context.Context, id string) (*models.Session, error) {
+func (m *MockSessionRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*models.Session, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -142,7 +142,7 @@ func (m *MockSessionRepository) FindByID(ctx context.Context, id string) (*model
 }
 
 // FindByEventID implements SessionRepository interface
-func (m *MockSessionRepository) FindByEventID(ctx context.Context, eventID string) ([]*models.Session, error) {
+func (m *MockSessionRepository) FindByEventID(ctx context.Context, eventID primitive.ObjectID) ([]*models.Session, error) {
 	args := m.Called(ctx, eventID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -151,16 +151,16 @@ func (m *MockSessionRepository) FindByEventID(ctx context.Context, eventID strin
 }
 
 // FindByEventIDs implements SessionRepository interface
-func (m *MockSessionRepository) FindByEventIDs(ctx context.Context, eventIDs []string) (map[string][]*models.Session, error) {
+func (m *MockSessionRepository) FindByEventIDs(ctx context.Context, eventIDs []primitive.ObjectID) (map[primitive.ObjectID][]*models.Session, error) {
 	args := m.Called(ctx, eventIDs)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(map[string][]*models.Session), args.Error(1)
+	return args.Get(0).(map[primitive.ObjectID][]*models.Session), args.Error(1)
 }
 
 // Update implements SessionRepository interface
-func (m *MockSessionRepository) Update(ctx context.Context, id string, session *models.Session) (*models.Session, error) {
+func (m *MockSessionRepository) Update(ctx context.Context, id primitive.ObjectID, session *models.Session) (*models.Session, error) {
 	args := m.Called(ctx, id, session)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -169,37 +169,37 @@ func (m *MockSessionRepository) Update(ctx context.Context, id string, session *
 }
 
 // Delete implements SessionRepository interface
-func (m *MockSessionRepository) Delete(ctx context.Context, id string) error {
+func (m *MockSessionRepository) Delete(ctx context.Context, id primitive.ObjectID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
 
 // DeleteByEventID implements SessionRepository interface
-func (m *MockSessionRepository) DeleteByEventID(ctx context.Context, eventID string) error {
+func (m *MockSessionRepository) DeleteByEventID(ctx context.Context, eventID primitive.ObjectID) error {
 	args := m.Called(ctx, eventID)
 	return args.Error(0)
 }
 
 // CountByEventID implements SessionRepository interface
-func (m *MockSessionRepository) CountByEventID(ctx context.Context, eventID string) (int64, error) {
+func (m *MockSessionRepository) CountByEventID(ctx context.Context, eventID primitive.ObjectID) (int64, error) {
 	args := m.Called(ctx, eventID)
 	return args.Get(0).(int64), args.Error(1)
 }
 
 // BulkUpdateSessions implements SessionRepository interface
-func (m *MockSessionRepository) BulkUpdateSessions(ctx context.Context, create []*models.Session, update []*models.Session, deleteIDs []string) error {
+func (m *MockSessionRepository) BulkUpdateSessions(ctx context.Context, create []*models.Session, update []*models.Session, deleteIDs []primitive.ObjectID) error {
 	args := m.Called(ctx, create, update, deleteIDs)
 	return args.Error(0)
 }
 
 // DeleteByEventIDs implements SessionRepository interface
-func (m *MockSessionRepository) DeleteByEventIDs(ctx context.Context, eventIDs []string) error {
+func (m *MockSessionRepository) DeleteByEventIDs(ctx context.Context, eventIDs []primitive.ObjectID) error {
 	args := m.Called(ctx, eventIDs)
 	return args.Error(0)
 }
 
 // ExistsByID implements SessionRepository interface
-func (m *MockSessionRepository) ExistsByID(ctx context.Context, id string) (bool, error) {
+func (m *MockSessionRepository) ExistsByID(ctx context.Context, id primitive.ObjectID) (bool, error) {
 	args := m.Called(ctx, id)
 	return args.Bool(0), args.Error(1)
 }
@@ -219,12 +219,12 @@ func (m *MockSessionRepository) SetupCreateBatchSuccess(sessions []*models.Sessi
 }
 
 // SetupFindByEventIDSuccess sets up the mock to return sessions for an event
-func (m *MockSessionRepository) SetupFindByEventIDSuccess(eventID string, sessions []*models.Session) {
+func (m *MockSessionRepository) SetupFindByEventIDSuccess(eventID primitive.ObjectID, sessions []*models.Session) {
 	m.On("FindByEventID", mock.Anything, eventID).Return(sessions, nil)
 }
 
 // SetupCountByEventIDSuccess sets up the mock to return session count
-func (m *MockSessionRepository) SetupCountByEventIDSuccess(eventID string, count int64) {
+func (m *MockSessionRepository) SetupCountByEventIDSuccess(eventID primitive.ObjectID, count int64) {
 	m.On("CountByEventID", mock.Anything, eventID).Return(count, nil)
 }
 

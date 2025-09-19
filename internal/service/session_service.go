@@ -61,21 +61,38 @@ func (s *SessionService) CreateSessionsForEvent(ctx context.Context, eventID str
 
 // GetSessionsForEvent retrieves all sessions for an event
 func (s *SessionService) GetSessionsForEvent(ctx context.Context, eventID string) ([]*models.Session, error) {
-	return s.sessionRepo.FindByEventID(ctx, eventID)
+	eventObjectID, err := errors.ValidateObjectID(eventID, "event_id")
+	if err != nil {
+		return nil, err
+	}
+	return s.sessionRepo.FindByEventID(ctx, eventObjectID)
 }
 
 // GetSessionsForEvents retrieves sessions for multiple events (batch operation)
-func (s *SessionService) GetSessionsForEvents(ctx context.Context, eventIDs []string) (map[string][]*models.Session, error) {
-	return s.sessionRepo.FindByEventIDs(ctx, eventIDs)
+func (s *SessionService) GetSessionsForEvents(ctx context.Context, eventIDs []string) (map[primitive.ObjectID][]*models.Session, error) {
+	eventObjectIDs := make([]primitive.ObjectID, len(eventIDs))
+	for i, id := range eventIDs {
+		objectID, err := errors.ValidateObjectID(id, "event_id")
+		if err != nil {
+			return nil, err
+		}
+		eventObjectIDs[i] = objectID
+	}
+	return s.sessionRepo.FindByEventIDs(ctx, eventObjectIDs)
 }
 
 // UpdateSessionsForEvent updates sessions for an event with smart diff-based approach
 // Handles create, update operations based on session IDs in the request
 // existingEvent and existingSessions are optional - if provided, skips database queries for better performance
 func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID string, sessionReqs []*SessionRequest, existingEvent *models.Event, existingSessions []*models.Session) ([]*models.Session, error) {
+	// Validate event ID
+	eventObjectID, err := errors.ValidateObjectID(eventID, "event_id")
+	if err != nil {
+		return nil, err
+	}
+
 	// Use provided data or fetch from database
 	var sessions []*models.Session
-	var err error
 
 	// Authorization is handled by API Gateway
 
@@ -83,7 +100,7 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID str
 		sessions = existingSessions
 	} else {
 		// Get existing sessions from database
-		sessions, err = s.sessionRepo.FindByEventID(ctx, eventID)
+		sessions, err = s.sessionRepo.FindByEventID(ctx, eventObjectID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch existing sessions: %w", err)
 		}
@@ -153,18 +170,27 @@ func (s *SessionService) UpdateSessionsForEvent(ctx context.Context, eventID str
 	}
 
 	// Return final session list
-	return s.sessionRepo.FindByEventID(ctx, eventID)
+	return s.sessionRepo.FindByEventID(ctx, eventObjectID)
 }
 
 // DeleteSessionsForEvent removes all sessions for an event
 func (s *SessionService) DeleteSessionsForEvent(ctx context.Context, eventID string) error {
 	// Authorization is handled by API Gateway
-	return s.sessionRepo.DeleteByEventID(ctx, eventID)
+	eventObjectID, err := errors.ValidateObjectID(eventID, "event_id")
+	if err != nil {
+		return err
+	}
+	return s.sessionRepo.DeleteByEventID(ctx, eventObjectID)
 }
 
 // GetSession retrieves a single session by ID
 func (s *SessionService) GetSession(ctx context.Context, sessionID string) (*models.Session, error) {
-	session, err := s.sessionRepo.FindByID(ctx, sessionID)
+	sessionObjectID, err := errors.ValidateObjectID(sessionID, "session_id")
+	if err != nil {
+		return nil, err
+	}
+
+	session, err := s.sessionRepo.FindByID(ctx, sessionObjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -176,24 +202,28 @@ func (s *SessionService) GetSession(ctx context.Context, sessionID string) (*mod
 // DeleteSessionById removes a session by session ID for a specific event
 func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, sessionID string) error {
 	// Authorization is handled by API Gateway
+	// Validate IDs
+	eventObjectID, err := errors.ValidateObjectID(eventID, "event_id")
+	if err != nil {
+		return err
+	}
+	sessionObjectID, err := errors.ValidateObjectID(sessionID, "session_id")
+	if err != nil {
+		return err
+	}
+
 	// Get the specific session
-	session, err := s.sessionRepo.FindByID(ctx, sessionID)
+	session, err := s.sessionRepo.FindByID(ctx, sessionObjectID)
 	if err != nil {
 		return err
 	}
 
 	// Verify session belongs to the specified event
-	if session.EventID.Hex() != eventID {
+	if session.EventID != eventObjectID {
 		return errors.NewBusinessError(errors.ErrorCodeSessionNotFound, "session does not belong to this event", errors.ErrSessionNotFound)
 	}
 
 	// Get event to check status (still needed for business logic)
-	// Convert string ID to ObjectID
-	eventObjectID, err := primitive.ObjectIDFromHex(eventID)
-	if err != nil {
-		return errors.NewValidationError("event_id", "invalid event_id")
-	}
-
 	event, err := s.eventRepo.FindByID(ctx, eventObjectID)
 	if err != nil {
 		return err
@@ -203,7 +233,7 @@ func (s *SessionService) DeleteSessionById(ctx context.Context, eventID, session
 		return errors.NewBusinessError(errors.ErrorCodePublishedImmutable, "cannot delete sessions for published or archived events", nil)
 	}
 
-	return s.sessionRepo.Delete(ctx, sessionID)
+	return s.sessionRepo.Delete(ctx, sessionObjectID)
 }
 
 // ValidateSessionsForEvent validates sessions without creating them

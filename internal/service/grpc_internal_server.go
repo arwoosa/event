@@ -49,8 +49,14 @@ func (s *InternalServiceServer) GetEventById(ctx context.Context, req *common.ID
 
 // GetSessionById implements the gRPC GetSessionById method for internal services
 func (s *InternalServiceServer) GetSessionById(ctx context.Context, req *common.ID) (*common.Session, error) {
+	// Validate and convert session ID
+	sessionObjectID, err := errors.ValidateObjectID(req.Id, "session_id")
+	if err != nil {
+		return nil, s.handleServiceError(err)
+	}
+
 	// Get session without merchant validation (for internal service use)
-	session, err := s.sessionRepo.FindByID(ctx, req.Id)
+	session, err := s.sessionRepo.FindByID(ctx, sessionObjectID)
 	if err != nil {
 		return nil, s.handleServiceError(err)
 	}
