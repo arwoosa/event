@@ -2,135 +2,65 @@
 
 ## 概述
 
-本文件詳細列出 Event 微服務所需的權限檢查項目，供 API Gateway 開發者參考實作。
+本文件詳細列出 Event 微服務的權限設計和檢查項目。本文檔旨在闡明服務自身的職責以及對 API Gateway 的依賴。
 
 ## 權限檢查原則
 
-- **統一驗證**: 所有權限檢查由 API Gateway 統一處理
-- **Merchant 隔離**: 確保用戶只能存取所屬 Merchant 的資源
-- **請求傳遞**: 經過驗證的請求會包含用戶和 Merchant 資訊
+- **信任邊界 (Trust Boundary)**: Event 微服務信任來自 API Gateway 的請求。所有對外 API 的身份驗證和權限檢查均由 API Gateway 統一處理。
+- **集中式授權 (Centralized Authorization)**: API Gateway 整合 Ory Keto，負責資源級別的存取控制。例如，在請求 `GET /console/events/{id}` 時，Gateway 會驗證發起請求的用戶是否有權限存取 `{id}` 這個資源。
+- **商戶隔離 (Merchant Isolation)**: 對於**列表查詢** (如 `GET /console/events`)，服務內部會使用 API Gateway 傳遞的 `X-Merchant-Id` Header 來實現嚴格的資料隔離。
 
-## Console 管理 API 權限需求
+## Console 管理 API (`/console/*`)
 
-### 通用權限檢查
-所有 Console API (`/console/*`) 都需要進行以下檢查：
+### 通用權限模型
 
-1. **用戶身份驗證**
-   - 檢查用戶是否已登入
-   - 驗證 JWT Token 有效性
+所有 Console API 都依賴 API Gateway 執行以下檢查：
 
-2. **Merchant 成員驗證**  
-   - 驗證用戶是否為指定 Merchant 的成員
-   - 從請求路徑或參數中取得 Merchant ID
-   - 確認用戶有存取該 Merchant 資源的權限
+1.  **用戶身份驗證**: 檢查用戶 JWT Token 的有效性。
+2.  **資源權限驗證 (使用 Ory Keto)**: 針對單一資源的操作 (如 `GET`, `PATCH`, `DELETE` 到 `/{id}` 的請求)，Gateway 會驗證用戶對該資源 ID 的存取權限。
 
-3. **Header 傳遞**
-   - 驗證通過後，傳遞以下 Headers 給微服務：
-     - `X-User-Id`: 用戶 ID
-     - `X-User-Email`: 用戶 Email  
-     - `X-User-Name`: 用戶名稱
-     - `X-User-Avatar`: 用戶頭像 URL
-     - `X-Merchant-Id`: Merchant ID
+驗證通過後，API Gateway 必須將以下 Headers 傳遞給 Event 微服務：
 
-### 具體 API 權限
-
-#### 1. 建立 Event
-- **端點**: `POST /console/events`
-- **權限**: 用戶為 Merchant 成員
-- **額外檢查**: 從請求 body 中的 `merchant_id` 進行 Merchant 成員驗證
-
-#### 2. 查看 Event 列表
-- **端點**: `GET /console/events`
-- **權限**: 用戶為 Merchant 成員
-- **範圍**: 只返回該 Merchant 下的 Events
-
-#### 3. 查看單一 Event
-- **端點**: `GET /console/events/{id}`
-- **權限**: 用戶為 Merchant 成員 + Event 屬於該 Merchant
-- **檢查方式**: 需先查詢 Event 的 merchant_id，再驗證權限
-
-#### 4. 更新 Event
-- **端點**: `PUT /console/events/{id}`, `PATCH /console/events/{id}`
-- **權限**: 用戶為 Merchant 成員 + Event 屬於該 Merchant
-- **額外規則**: published 狀態的 Event 不可修改（由微服務處理）
-
-#### 5. 刪除 Event
-- **端點**: `DELETE /console/events/{id}`
-- **權限**: 用戶為 Merchant 成員 + Event 屬於該 Merchant
-- **額外規則**: published 狀態的 Event 不可刪除（由微服務處理）
-
-#### 6. 變更 Event 狀態
-- **端點**: `PUT /console/events/{id}/status`
-- **權限**: 用戶為 Merchant 成員 + Event 屬於該 Merchant
-
-## Public API 權限需求
-
-### 1. 公開搜尋
-- **端點**: `GET /events`
-- **權限**: 無需身份驗證（匿名存取）
-- **限制**: 僅返回 `status: "published"` 且 `visibility: "public"` 的 Events
-
-### 2. 分享連結查詢
-- **端點**: `GET /events/{id}`
-- **權限**: 無需身份驗證（匿名存取）
-- **限制**: 僅返回 `status: "published"` 的 Events（不限 visibility）
-
-## 實作建議
-
-### 1. Merchant 成員驗證邏輯
-```
-IF user_id NOT IN merchant_members(merchant_id) THEN
-    RETURN 403 PermissionDenied
-END IF
-```
-
-### 2. 資源隔離檢查
-```
-IF event.merchant_id != user.merchant_id THEN
-    RETURN 403 PermissionDenied  
-END IF
-```
-
-### 3. 錯誤回應
-權限不足時返回：
-- HTTP Status: 403 Forbidden
-- gRPC Code: 7 (PermissionDenied)
-- Message: "權限不足" 或 "Access denied"
-
-## Headers 設定需求
-
-### 新增 AllowedHeaders
-需要在 API Gateway 的 CORS 設定中新增：
+- `X-User-Id`, `X-User-Email`, `X-User-Name`, `X-User-Avatar`
 - `X-Merchant-Id`
 
-### Headers 傳遞映射
-```
-x-user-id → X-User-Id
-x-user-email → X-User-Email  
-x-user-name → X-User-Name
-x-user-avatar → X-User-Avatar
-x-merchant-id → X-Merchant-Id
-```
+### 各 API 的資料存取邏輯
 
-## 權限檢查流程圖
+- **`POST /console/events` (建立 Event)**
+  - **邏輯**: 這是唯一一個在服務層設定資源歸屬的寫入操作。由於資源尚不存在，Gateway 無法檢查權限。服務會使用 Header 中的 `X-Merchant-Id` 作為新 Event 的 `merchant_id`。
 
-```
-請求 → API Gateway
-    ↓
-身份驗證（JWT）
-    ↓
-Merchant 成員驗證
-    ↓  
-設定 Headers
-    ↓
-轉發到 Event 微服務
-    ↓
-微服務處理業務邏輯
-```
+- **`GET /console/events` (查看 Event 列表)**
+  - **邏輯**: 這是一個集合查詢，權限無法在 Gateway 層針對每一筆資料進行檢查。因此，服務**必須**使用 `X-Merchant-Id` 作為資料庫查詢條件，確保只返回該商戶下的 Events。
 
-## 注意事項
+- **`GET /console/events/{id}` (查看單一 Event)**
+  - **邏輯**: Gateway 已驗證用戶對 `{id}` 的權限。因此，服務層**不再需要**使用 `merchant_id` 進行二次過濾，而是直接透過 `_id: {id}` 查詢資源以提升效能。如果資源不存在，則返回 `Not Found`。
 
-1. **不需要角色細分**: 目前所有 Merchant 成員都有相同權限
-2. **業務規則檢查**: 狀態轉換等業務規則由微服務處理
-3. **快取考量**: 未來可考慮快取 Merchant 成員資訊以提升效能
-4. **錯誤處理**: 統一錯誤格式，避免洩露內部資訊
+- **`PATCH /console/events/{id}` (更新 Event)**
+  - **邏輯**: 同上。服務信任 Gateway 的授權，直接透過 ID 查找並更新資源。
+
+- **`DELETE /console/events/{id}` (刪除 Event)**
+  - **邏輯**: 同上。服務信任 Gateway 的授權，直接透過 ID 查找並刪除資源。
+
+- **`PUT /console/events/{id}/status` (變更 Event 狀態)**
+  - **邏輯**: 同上。服務信任 Gateway 的授權，直接透過 ID 查找並變更狀態。
+
+- **`/console/events/{id}/form` (報名表單操作)**
+  - **邏輯**: 同上。所有對表單的操作都信賴 Gateway 對其主資源 Event `{id}` 的權限校驗。
+
+- **`/console/events/{id}/sessions/{sessionId}` (場次操作)**
+  - **邏輯**: 同上。所有對場次的操作都信賴 Gateway 對其主資源 Event `{id}` 的權限校驗。
+
+## Public API (`/events/*`)
+
+Public API 無需身份驗證，權限控制由服務內部的業務邏輯實現。
+
+- **`GET /events` (公開搜尋)**
+  - **限制**: 服務邏輯只返回 `status: "published"` 且 `visibility: "public"` 的 Events。
+
+- **`GET /events/{id}` (分享連結查詢)**
+  - **限制**: 服務邏輯只返回 `status: "published"` 的 Events（不限 `visibility`）。如果活動為 `draft` 或 `archived` 狀態，將返回 `Not Found`。
+
+## Internal API (gRPC only)
+
+- **服務**: `InternalService`
+- **權限**: **無任何權限檢查**。此服務僅供內部其他微服務（如 Order Service）透過 gRPC 呼叫，且必須部署在受信任的內部網路中。它能夠跨商戶查詢任何狀態的活動或場次資料。

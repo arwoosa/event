@@ -1,9 +1,17 @@
 package docs
 
 import (
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// ===================================================================
+// Collection: events
+// ===================================================================
+
+// Event 儲存核心活動資訊。
+// 注意：Sessions 不再嵌入此文檔中，而是儲存在獨立的 `sessions` collection。
 type Event struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Title         string             `bson:"title" json:"title"`
@@ -13,13 +21,12 @@ type Event struct {
 	Visibility    string             `bson:"visibility" json:"visibility"`           // 可見性: "public", "private"
 	CoverImageURL string             `bson:"cover_image_url" json:"cover_image_url"` // 封面圖片 URL
 	Location      Location           `bson:"location" json:"location"`
-	Sessions      []Session          `bson:"sessions" json:"sessions"`
 	Detail        []DetailBlock      `bson:"detail" json:"detail"`
 	FAQ           []FAQ              `bson:"faq" json:"faq"`
-	CreatedAt     primitive.DateTime `bson:"created_at" json:"created_at"`
-	CreatedBy     primitive.ObjectID `bson:"created_by" json:"created_by"`
-	UpdatedAt     primitive.DateTime `bson:"updated_at" json:"updated_at"`
-	UpdatedBy     primitive.ObjectID `bson:"updated_by" json:"updated_by"`
+	CreatedAt     time.Time          `bson:"created_at" json:"created_at"`
+	CreatedBy     string             `bson:"created_by" json:"created_by"`
+	UpdatedAt     time.Time          `bson:"updated_at" json:"updated_at"`
+	UpdatedBy     string             `bson:"updated_by" json:"updated_by"`
 }
 
 // Location 地點資訊，支援 Google Maps 整合
@@ -30,9 +37,10 @@ type Location struct {
 	Coordinates GeoJSONPoint `bson:"coordinates" json:"coordinates"` // 經緯度資訊
 }
 
+// GeoJSONPoint GeoJSON Point 結構，用於地理空間索引
 type GeoJSONPoint struct {
-	Type        string    `bson:"type" json:"type"`               // 固定為 "Point"
-	Coordinates []float64 `bson:"coordinates" json:"coordinates"` // [lng, lat]
+	Type        string     `bson:"type" json:"type"`               // 固定為 "Point"
+	Coordinates [2]float64 `bson:"coordinates" json:"coordinates"` // [longitude, latitude]
 }
 
 // DetailBlock 活動詳細內容區塊，支援多種類型內容
@@ -43,14 +51,14 @@ type DetailBlock struct {
 
 // TextData 文字區塊資料
 type TextData struct {
-	Content string `bson:"content" json:"content"` // 文字內容，最大 10,000 字
+	Content string `bson:"content" json:"content"` // 文字內容
 }
 
 // ImageData 圖片區塊資料
 type ImageData struct {
-	URL     string `bson:"url" json:"url"`         // 圖片 URL (必填)
-	Alt     string `bson:"alt" json:"alt"`         // 替代文字，最大 200 字
-	Caption string `bson:"caption" json:"caption"` // 圖片說明，最大 500 字
+	URL     string `bson:"url" json:"url"`         // 圖片 URL
+	Alt     string `bson:"alt" json:"alt"`         // 替代文字
+	Caption string `bson:"caption" json:"caption"` // 圖片說明
 }
 
 // FAQ 常見問題
@@ -59,11 +67,34 @@ type FAQ struct {
 	Answer   string `bson:"answer" json:"answer"`     // 回答
 }
 
-// Session 活動場次
+// ===================================================================
+// Collection: sessions
+// ===================================================================
+
+// Session 獨立儲存活動場次，透過 event_id 與 events collection 關聯。
 type Session struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Name      string             `bson:"name" json:"name"`             // 場次名稱 (可選)
-	Capacity  *int32             `bson:"capacity" json:"capacity"`     // 容量限制 (可選，null 表示不限制)
-	StartTime primitive.DateTime `bson:"start_time" json:"start_time"` // 開始時間
-	EndTime   primitive.DateTime `bson:"end_time" json:"end_time"`     // 結束時間
+	EventID   primitive.ObjectID `bson:"event_id" json:"event_id"`
+	Name      string             `bson:"name" json:"name"`         // 場次名稱 (可選)
+	Capacity  *int               `bson:"capacity" json:"capacity"` // 容量限制 (可選，null 表示不限制)
+	StartTime time.Time          `bson:"start_time" json:"start_time"`
+	EndTime   time.Time          `bson:"end_time" json:"end_time"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
+}
+
+// ===================================================================
+// Collection: event_forms
+// ===================================================================
+
+// EventForm 獨立儲存活動的報名表單，透過 event_id 與 events collection 關聯。
+type EventForm struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	EventID   primitive.ObjectID `bson:"event_id" json:"event_id"`
+	Schema    interface{}        `bson:"schema" json:"schema"`     // JSON Schema
+	UISchema  interface{}        `bson:"uischema" json:"uischema"` // UI Schema
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	CreatedBy string             `bson:"created_by" json:"created_by"`
+	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
+	UpdatedBy string             `bson:"updated_by" json:"updated_by"`
 }
